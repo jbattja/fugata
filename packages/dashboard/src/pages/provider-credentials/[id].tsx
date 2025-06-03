@@ -1,0 +1,167 @@
+import { useSession } from 'next-auth/react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useRouter } from 'next/router';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Provider, ProviderCredential } from '@/lib/api/settings';
+import { useState, useEffect } from 'react';
+import { CancelButton, SubmitButton } from '@/components/ui/Button';
+import { FormInput } from '@/components/ui/forms/FormInput';
+import { FormSelect } from '@/components/ui/forms/FormSelect';
+import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
+import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import Form from '@/components/ui/forms/Form';
+
+interface FormData {
+  providerCredentialCode: string;
+  providerCode: string;
+  isActive: boolean;
+  settings: Record<string, string>;
+}
+
+export default function EditProviderCredential() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { id } = router.query;
+  const providerCode = router.query.providerCode as string | undefined;
+
+  const [formData, setFormData] = useState<FormData>({
+    providerCredentialCode: '',
+    providerCode: '',
+    isActive: true,
+    settings: {},
+  });
+
+  const { data: credential, isLoading: isLoadingCredential } = useQuery<ProviderCredential>({
+    queryKey: ['provider-credential', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/provider-credentials/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch provider credential');
+      }
+      return response.json();
+    },
+    enabled: !!session && !!id,
+  });
+
+  // Update form data when credential is loaded
+  useEffect(() => {
+    if (credential) {
+      setFormData({
+        providerCredentialCode: credential.providerCredentialCode,
+        providerCode: credential.provider?.providerCode || '',
+        isActive: credential.isActive,
+        settings: credential.settings || {},
+      });
+    }
+  }, [credential]);
+
+  const { data: providers } = useQuery<Provider[]>({
+    queryKey: ['providers'],
+    queryFn: async () => {
+      const response = await fetch('/api/providers');
+      if (!response.ok) {
+        throw new Error('Failed to fetch providers');
+      }
+      return response.json();
+    },
+    enabled: !!session,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const response = await fetch(`/api/provider-credentials/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update provider credential');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      router.push('/provider-credentials' + (providerCode ? `?providerCode=${providerCode}` : ''));
+    },
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  if (isLoadingCredential) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMutation.mutate(formData);
+  };
+
+  const addSetting = (key: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        [key]: value,
+      },
+    }));
+  };
+
+  const removeSetting = (key: string) => {
+    setFormData(prev => {
+      const newSettings = { ...prev.settings };
+      delete newSettings[key];
+      return { ...prev, settings: newSettings };
+    });
+  };
+
+  return (
+    <DashboardLayout>
+      <Form title="Edit Provider Credential" handleSubmit={handleSubmit}>
+        <FormInput
+            label="Credential Code"
+            value={formData.providerCredentialCode}
+            onChange={(e) => setFormData(prev => ({ ...prev, providerCredentialCode: e.target.value }))}
+            required
+          />
+
+          <FormSelect
+            label="Provider"
+            value={formData.providerCode}
+            onChange={(e) => setFormData(prev => ({ ...prev, providerCode: e.target.value }))}
+            options={providers?.map(provider => ({
+              value: provider.providerCode,
+              label: `${provider.name} (${provider.providerCode})`
+            })) || []}
+            required
+          />
+
+          <FormCheckbox
+            label="Active"
+            checked={formData.isActive}
+            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+          />
+
+          <KeyValueInput
+            label="Settings"
+            pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
+            onAdd={addSetting}
+            onRemove={removeSetting}
+          />
+
+          <div className="flex justify-end gap-4">
+            <CancelButton onClick={() => router.back()}>Cancel</CancelButton>
+            <SubmitButton type="submit" isLoading={updateMutation.isPending}>
+              Save Changes
+            </SubmitButton>
+          </div>
+      </Form>
+    </DashboardLayout>
+  );
+} 

@@ -1,0 +1,40 @@
+{
+  "name": "@fugata/payment-data",
+  "version": "1.0.0",
+  "description": "Payment data warehouse service for Fugata",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "nest start --exec \"node dist/payment-data/src/main.js\"  ",
+    "start:dev": "nest start --watch --exec \"node dist/payment-data/src/main.js\"",
+    "start:debug": "nest start --debug --watch --exec \"node dist/payment-data/src/main.js\"",
+    "start:prod": "node dist/payment-data/src/main.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@fugata/shared": "1.0.0",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.11.3",
+    "typeorm": "^0.3.20",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "winston": "^3.12.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.2",
+    "@types/node": "^20.11.24",
+    "@types/pg": "^8.11.2",
+    "@types/supertest": "^2.0.12",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0"
+  }
+} 

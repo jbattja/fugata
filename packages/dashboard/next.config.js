@@ -1,0 +1,20 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  webpack: (config, { isServer }) => {
+    // Enable hot reloading
+    config.watchOptions = {
+      poll: 1000, // Check for changes every second
+      aggregateTimeout: 300, // Delay before rebuilding
+    };
+    return config;
+  },
+  // Enable watching for file changes
+  experimental: {
+    watchOptions: {
+      poll: 1000,
+    },
+  },
+}
+
+module.exports = nextConfig 
