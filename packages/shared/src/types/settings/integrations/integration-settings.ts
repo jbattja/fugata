@@ -1,36 +1,44 @@
-import { validate } from 'class-validator';
-import { AdyenSettings } from './adyen-settings';
-import { StripeSettings } from './stripe-settings';
-import { Logger } from '@nestjs/common';
-import { ValidationError } from 'class-validator';
+import { AccountSettingKey, AccountSettingsConfig, ProviderCredentialSettings } from '../account-settings';
+import { Provider } from '../settings';
 
-export * from './adyen-settings';
-export * from './stripe-settings';
-
-const logger = new Logger('IntegrationSettings');
-
+// Type for integration-specific settings
 export interface IntegrationSettings {
     providerCode: string;
-}
+    requiredSettings: AccountSettingsConfig;
+}  
 
-export async function validateSettingsForProvider(providerCode: string, settings: Record<string, any>): Promise<ValidationError[]> {
-    // Get all integration settings classes
-    const integrationSettingsClasses = [AdyenSettings, StripeSettings];
-    
-    // Find the matching integration settings class
-    const matchingClass = integrationSettingsClasses.find(cls => new cls().providerCode === providerCode);
-    if (!matchingClass) {
-        // nothing to validate against, so no errors
-        logger.log(`No matching integration settings class found for provider code: ${providerCode}`);
-        return [] as ValidationError[];
+export function getSettingsConfigForProviderCredential(providerCode: string): AccountSettingsConfig {
+    let settingsConfig = ProviderCredentialSettings;
+    if (providerCode == null) {
+        throw new Error('Provider code is null');
     }
+    // Get all integration settings
+    const integrationSettings = [AdyenSettings, StripeSettings];
 
-    // Create an instance of the matching class and assign the settings
-    const instance = new matchingClass();
-    Object.assign(instance, settings);
-
-    // Validate the instance
-    const errors = await validate(instance);
-    return errors;
+    // Find the matching integration settings
+    const matchingSettings = integrationSettings.find(integration => integration.providerCode.toLowerCase() === providerCode.toLowerCase());
+    if (!matchingSettings) {
+        // nothing to validate against, so no errors
+        console.log(`No matching integration settings found for provider code: ${providerCode}`);
+    } else {
+        settingsConfig = { ...settingsConfig, ...matchingSettings.requiredSettings };
+    }
+    return settingsConfig;
 }
 
+// Integration-specific settings configurations
+export const AdyenSettings: IntegrationSettings = {
+    providerCode: 'adyen',
+    requiredSettings: {
+      [AccountSettingKey.API_KEY]: { type: 'string', required: true },
+      [AccountSettingKey.MERCHANT_ACCOUNT]: { type: 'string', required: true },
+    },
+};
+  
+export const StripeSettings: IntegrationSettings = {
+    providerCode: 'stripe',
+    requiredSettings: {
+      [AccountSettingKey.SECRET_KEY]: { type: 'string', required: true },
+    },
+};
+  

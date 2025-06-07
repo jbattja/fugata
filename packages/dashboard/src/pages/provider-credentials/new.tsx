@@ -10,11 +10,13 @@ import { FormSelect } from '@/components/ui/forms/FormSelect';
 import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { AccountType, getSettingsConfig } from '@fugata/shared';
 
 export default function NewProviderCredential() {
   const { data: session } = useSession();
   const router = useRouter();
-  const providerCode = router.query.providerCode as string | undefined;
+  const providerCode = router.query.providerCode as string;
 
   const [formData, setFormData] = useState({
     providerCredentialCode: '',
@@ -22,6 +24,9 @@ export default function NewProviderCredential() {
     isActive: true,
     settings: {} as Record<string, string>,
   });
+  const [error, setError] = useState<JSX.Element | null>(null);
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode));
+
 
   const { data: providers } = useQuery<Provider[]>({
     queryKey: ['providers'],
@@ -43,7 +48,10 @@ export default function NewProviderCredential() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to create provider credential');
+        const errorData = await response.json();
+        setError(
+          <ErrorMessage message={errorData.message} errors={errorData.errors} />
+        );
       }
       return response.json();
     },
@@ -59,24 +67,6 @@ export default function NewProviderCredential() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
-  };
-
-  const addSetting = (key: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        [key]: value,
-      },
-    }));
-  };
-
-  const removeSetting = (key: string) => {
-    setFormData(prev => {
-      const newSettings = { ...prev.settings };
-      delete newSettings[key];
-      return { ...prev, settings: newSettings };
-    });
   };
 
   return (
@@ -109,8 +99,8 @@ export default function NewProviderCredential() {
           <KeyValueInput
             label="Settings"
             pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
-            onAdd={addSetting}
-            onRemove={removeSetting}
+            onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
+            availableKeys={availableSettings}
           />
 
           <div className="flex justify-end gap-4">
@@ -120,6 +110,7 @@ export default function NewProviderCredential() {
             </SubmitButton>
           </div>
       </Form>
+      {error}
     </DashboardLayout>
   );
 } 

@@ -10,6 +10,8 @@ import { FormSelect } from '@/components/ui/forms/FormSelect';
 import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { getSettingsConfig, AccountType } from '@fugata/shared';
 
 interface FormData {
   providerCredentialCode: string;
@@ -22,7 +24,9 @@ export default function EditProviderCredential() {
   const { data: session } = useSession();
   const router = useRouter();
   const { id } = router.query;
-  const providerCode = router.query.providerCode as string | undefined;
+  const providerCode = router.query.providerCode as string;
+  const [error, setError] = useState<JSX.Element | null>(null);
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode));
 
   const [formData, setFormData] = useState<FormData>({
     providerCredentialCode: '',
@@ -68,14 +72,17 @@ export default function EditProviderCredential() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await fetch(`/api/provider-credentials/${id}`, {
+    mutationFn: async (data: typeof formData) => {
+      const response = await fetch(`/api/provider-credentials/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({...data, id}),
       });
       if (!response.ok) {
-        throw new Error('Failed to update provider credential');
+        const errorData = await response.json();
+        setError(
+          <ErrorMessage message={errorData.message} errors={errorData.errors} />
+        );
       }
       return response.json();
     },
@@ -101,24 +108,6 @@ export default function EditProviderCredential() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate(formData);
-  };
-
-  const addSetting = (key: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        [key]: value,
-      },
-    }));
-  };
-
-  const removeSetting = (key: string) => {
-    setFormData(prev => {
-      const newSettings = { ...prev.settings };
-      delete newSettings[key];
-      return { ...prev, settings: newSettings };
-    });
   };
 
   return (
@@ -151,8 +140,8 @@ export default function EditProviderCredential() {
           <KeyValueInput
             label="Settings"
             pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
-            onAdd={addSetting}
-            onRemove={removeSetting}
+            onChange={(settings) => setFormData(prev => ({ ...prev, settings }))}
+            availableKeys={availableSettings}
           />
 
           <div className="flex justify-end gap-4">
@@ -162,6 +151,7 @@ export default function EditProviderCredential() {
             </SubmitButton>
           </div>
       </Form>
+      {error}
     </DashboardLayout>
   );
 } 

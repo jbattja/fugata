@@ -21,6 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
 
         case 'PUT':
+          console.log("Provider Credential PUT request received", req.body);
           const { id, ...updates } = req.body;
           if (!id) {
             return res.status(400).json({ error: 'Provider ID is required' });
@@ -34,8 +35,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           res.status(405).json({ error: `Method ${req.method} not allowed` });
   
         }
-      } catch (error) {
-        console.error('Error handling provider credential request:', error);
-        res.status(500).json({ error: 'Failed to process provider credential request' });
+      } catch (error: any) {
+        if (error.response.status == 400) {
+          res.status(400).json(error.response.data);
+        } else {  
+          console.error('Error handling provider credential request:', error);
+          res.status(500).json({ error: 'Failed to process provider credential request' });
+        }
       }
     } 

@@ -12,11 +12,11 @@ export class Provider {
   @Column({ unique: true, name: 'provider_code' })
   providerCode: string;
 
-  @Column({ name: 'default_settings', type: 'jsonb', nullable: true })
-  defaultSettings: Record<string, any>;
-
   @OneToMany(() => ProviderCredential, providerCredential => providerCredential.provider)
   providerCredentials: ProviderCredential[];
+  
+  @Column('jsonb', { nullable: true })
+  settings: Record<string, any>;
 
   @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

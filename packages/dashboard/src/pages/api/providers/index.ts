@@ -10,11 +10,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
 
       case 'POST':
-        const { name, providerCode } = req.body;
+        const { name, providerCode, settings } = req.body;
         if (!name || !providerCode) {
           return res.status(400).json({ error: 'Name and provider code are required' });
         }
-        const provider = await settingsApiClient.providers.createProvider(name, providerCode);
+        const provider = await settingsApiClient.providers.createProvider(name, providerCode, settings);
         res.status(201).json(provider);
         break;
 
@@ -32,8 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           res.status(405).json({ error: `Method ${req.method} not allowed` });
   
         }
-      } catch (error) {
-        console.error('Error handling provider request:', error);
-        res.status(500).json({ error: 'Failed to process provider request' });
+      } catch (error: any) {
+        if (error.response.status == 400) {
+          res.status(400).json(error.response.data);
+        } else {
+          console.error('Error handling provider request:', error);
+          res.status(500).json({ error: 'Failed to process provider request' });
+        }
       }
     } 

@@ -6,14 +6,26 @@ import { useMutation } from '@tanstack/react-query';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import Form from '@/components/ui/forms/Form';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import { getSettingsConfig, AccountType } from '@fugata/shared';
+
+interface FormData {
+  name: string;
+  providerCode: string;
+  settings: Record<string, string>;
+}
 
 export default function NewProvider() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     providerCode: '',
+    settings: {},
   });
+  const [error, setError] = useState<JSX.Element | null>(null);
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER, null));
 
   const createProviderMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -26,7 +38,10 @@ export default function NewProvider() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create provider');
+        const errorData = await response.json();
+        setError(
+          <ErrorMessage message={errorData.message} errors={errorData.errors} />
+        );
       }
 
       return response.json();
@@ -60,6 +75,12 @@ export default function NewProvider() {
           onChange={(e) => setFormData({ ...formData, providerCode: e.target.value })}
           required
         />
+        <KeyValueInput
+          label="Settings"
+          pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
+          onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
+          availableKeys={availableSettings}
+        />
           <div className="flex justify-end space-x-4">
             <CancelButton onClick={() => router.push('/providers')}/>
             <SubmitButton
@@ -69,6 +90,7 @@ export default function NewProvider() {
             </SubmitButton>
           </div>
       </Form>
+      {error}
     </DashboardLayout>
   );
 } 

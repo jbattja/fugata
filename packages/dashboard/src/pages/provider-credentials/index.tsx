@@ -74,7 +74,7 @@ export default function ProviderCredentials() {
         actionButtons={[
           {
             name: 'Edit',
-            action: (cred) => router.push(`/provider-credentials/${cred.id}`),
+            action: (cred) => router.push(`/provider-credentials/${cred.id}?providerCode=${providerCode}`),
           },
         ]}
       />

@@ -5,7 +5,7 @@ import { Merchant } from '../entities/merchant.entity';
 import { ProviderCredential } from '../entities/provider-credential.entity';
 import { RoutingRule } from '../entities/routing-rule.entity';
 import { Provider } from 'src/entities/provider.entity';
-import { validateSettingsForProvider } from '@fugata/shared';
+import { Account, AccountType, validateAccountSettings } from '@fugata/shared';
 
 @Injectable()
 export class SettingsService {
@@ -21,16 +21,17 @@ export class SettingsService {
   ) {}
 
   // Merchant CRUD operations
-  async createMerchant(name: string, merchantCode: string): Promise<Merchant> {
+  async createMerchant(name: string, merchantCode: string, settings: Record<string, any>): Promise<Merchant> {
     const merchant = this.merchantRepository.create({
       name,
       merchantCode: merchantCode,
+      settings: settings,
     });
+    await this.validateSettings(merchant, AccountType.MERCHANT, merchant.name);
     return this.merchantRepository.save(merchant);
   }
 
   async getMerchant(id: string): Promise<Merchant> {
-    Logger.log(`Getting merchant with id: ${id}`, SettingsService.name);
     const merchant = await this.merchantRepository.findOne({
       where: { id: id },
       relations: ['routingRules'],
@@ -61,6 +62,7 @@ export class SettingsService {
   async updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant> {
     const merchant = await this.getMerchant(id);
     Object.assign(merchant, updates);
+    await this.validateSettings(merchant, AccountType.MERCHANT, merchant.name);
     return this.merchantRepository.save(merchant);
   }
 
@@ -70,11 +72,13 @@ export class SettingsService {
   }
 
     // Provider CRUD operations
-    async createProvider(name: string, providerCode: string): Promise<Provider> {
+    async createProvider(name: string, providerCode: string, settings: Record<string, any>): Promise<Provider> {
       const provider = this.providerRepository.create({
         name,
         providerCode: providerCode,
+        settings: settings,
       });
+      await this.validateSettings(provider, AccountType.PROVIDER, name);
       return this.providerRepository.save(provider);
     }
   
@@ -105,6 +109,7 @@ export class SettingsService {
     async updateProvider(id: string, updates: Partial<Provider>): Promise<Provider> {
       const provider = await this.getProvider(id);
       Object.assign(provider, updates);
+      await this.validateSettings(provider, AccountType.PROVIDER, provider.name);
       return this.providerRepository.save(provider);
     }
   
@@ -124,19 +129,14 @@ export class SettingsService {
     if (!provider) {
       throw new NotFoundException(`Provider ${providerCode} not found`);
     }
-    const settingValidationErrors = await validateSettingsForProvider(providerCode, settings);
-    if (settingValidationErrors.length > 0) {
-      const errorMessages = settingValidationErrors.flatMap(error => 
-        Object.values(error.constraints)
-      );
-      throw new BadRequestException(`Invalid settings for provider ${providerCode}: ${errorMessages.join(', ')}`);
-    }
     const providerCredential = this.providerCredentialRepository.create({
       providerCredentialCode: providerCredentialCode,
       providerId: provider.id,
       settings,
       isActive,
     });
+    providerCredential.provider = provider;
+    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL, providerCredentialCode);
     return this.providerCredentialRepository.save(providerCredential);
   }
 
@@ -180,6 +180,7 @@ export class SettingsService {
   async updateProviderCredential(id: string, updates: Partial<ProviderCredential>): Promise<ProviderCredential> {
     const providerCredential = await this.getProviderCredential(id);
     Object.assign(providerCredential, updates);
+    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL, providerCredential.providerCredentialCode);
     return this.providerCredentialRepository.save(providerCredential);
   }
 
@@ -275,6 +276,21 @@ export class SettingsService {
     const result = await this.routingRuleRepository.delete(routingRuleId);
     if (result.affected === 0) {
       throw new NotFoundException(`Routing rule ${routingRuleId} not found`);
+    }
+  }
+
+  async validateSettings(account: Account, accountType: AccountType, accountName: string): Promise<void> {
+    const settingValidationErrors = validateAccountSettings(account, accountType);
+    if (settingValidationErrors.length > 0) {
+      const formattedErrors = settingValidationErrors.map(error => {
+        const constraints = Object.values(error.constraints || {}).join(', ');
+        return `${error.property}: ${constraints}`;
+      }).join('\n');
+      
+      throw new BadRequestException({
+        message: `Invalid settings for ${AccountType[accountType]} ${accountName}`,
+        errors: formattedErrors
+      });
     }
   }
 } 

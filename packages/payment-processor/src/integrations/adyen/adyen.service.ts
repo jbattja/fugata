@@ -50,7 +50,7 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
       return paymentRequest;
     },
     fromPaymentRequest: (source: PaymentRequest): AdyenPaymentRequest => {
-      const adyenSettings = this.getProviderCredentials().settings as AdyenSettings;
+      const adyenSettings = this.getProviderCredentials().settings;
 
       const adyenRequest =  new AdyenPaymentRequestBuilder()
         .withAmount(this.mapMoneyToAdyenAmount(source.amount))
@@ -104,7 +104,7 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
 
   readonly connector: PaymentConnector<AdyenPaymentRequest, AdyenPaymentResponse> = {
     sendPayment: async (request: AdyenPaymentRequest): Promise<AdyenPaymentResponse> => {
-      const adyenSettings = this.getProviderCredentials().settings as AdyenSettings;
+      const adyenSettings = this.getProviderCredentials().settings;
       return AdyenConnector.createPayment(request, adyenSettings.apiKey);
     }
   };

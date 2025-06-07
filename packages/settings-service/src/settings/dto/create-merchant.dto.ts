@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMerchantDto {
@@ -17,4 +17,14 @@ export class CreateMerchantDto {
   @IsString()
   @IsNotEmpty({ message: 'Merchant code is required' })
   merchantCode: string;
+
+  @ApiProperty({
+    description: 'Settings for the provider credential',
+    example: {},
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  settings?: Record<string, any>;
+
 } 

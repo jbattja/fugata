@@ -8,21 +8,77 @@ interface KeyValuePair {
 interface KeyValueInputProps {
   label: string;
   pairs: KeyValuePair[];
-  onAdd: (key: string, value: string) => void;
-  onRemove: (key: string) => void;
   disabled?: boolean;
+  availableKeys?: string[];
+  onChange?: (values: Record<string, any>) => void;
 }
 
-export function KeyValueInput({ label, pairs, onAdd, onRemove, disabled = false }: KeyValueInputProps) {
+export function KeyValueInput({ 
+  label, 
+  disabled = false,
+  pairs = [],
+  availableKeys = [],
+  onChange
+}: KeyValueInputProps) {
   const [newKey, setNewKey] = React.useState('');
   const [newValue, setNewValue] = React.useState('');
+  const [editingValues, setEditingValues] = React.useState<Record<string, string>>({});
 
-  const handleAdd = () => {
-    if (newKey && newValue) {
-      onAdd(newKey, newValue);
-      setNewKey('');
-      setNewValue('');
-    }
+  const pairsToValues = (pairs: KeyValuePair[]): Record<string, any> => {
+    return pairs.reduce((acc, { key, value }) => {
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, any>);
+  };
+
+  const addValue = (key: string, value: string) => {
+    if (!key || !value) return;
+    
+    const currentValues = pairsToValues(pairs);
+    const updatedValues = {
+      ...currentValues,
+      [key]: value,
+    };
+    
+    onChange?.(updatedValues);
+    setNewKey('');
+    setNewValue('');
+  };
+
+  const removeValue = (key: string) => {
+    const currentValues = pairsToValues(pairs);
+    const updatedValues = { ...currentValues };
+    delete updatedValues[key];
+    
+    onChange?.(updatedValues);
+  };
+
+  const handleValueChange = (key: string, value: string) => {
+    setEditingValues(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleValueBlur = (key: string) => {
+    const currentValues = pairsToValues(pairs);
+    const updatedValues = {
+      ...currentValues,
+      [key]: editingValues[key]
+    };
+    
+    onChange?.(updatedValues);
+    setEditingValues(prev => {
+      const newValues = { ...prev };
+      delete newValues[key];
+      return newValues;
+    });
+  };
+
+  // Get available keys that haven't been used yet
+  const getAvailableKeys = () => {
+    const usedKeys = new Set(pairs.map(pair => pair.key));
+    return availableKeys.filter(option => !usedKeys.has(option));
   };
 
   return (
@@ -39,13 +95,15 @@ export function KeyValueInput({ label, pairs, onAdd, onRemove, disabled = false 
             />
             <input
               type="text"
-              value={value}
-              disabled
+              value={editingValues[key] !== undefined ? editingValues[key] : value}
+              onChange={(e) => handleValueChange(key, e.target.value)}
+              onBlur={() => handleValueBlur(key)}
               className="block w-1/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              disabled={disabled}
             />
             <button
               type="button"
-              onClick={() => onRemove(key)}
+              onClick={() => removeValue(key)}
               className="text-red-600 hover:text-red-800"
               disabled={disabled}
             >
@@ -54,25 +112,31 @@ export function KeyValueInput({ label, pairs, onAdd, onRemove, disabled = false 
           </div>
         ))}
         <div className="flex items-center gap-2">
-          <input
-            type="text"
+          <select
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
-            placeholder="Key"
             className="block w-1/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             disabled={disabled}
-          />
+          >
+            <option value="">Select a setting</option>
+            {getAvailableKeys().map((key) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
+            onBlur={() => addValue(newKey, newValue)}
             placeholder="Value"
             className="block w-1/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             disabled={disabled}
           />
           <button
             type="button"
-            onClick={handleAdd}
+            onClick={() => addValue(newKey, newValue)}
             className="text-indigo-600 hover:text-indigo-800"
             disabled={disabled}
           >

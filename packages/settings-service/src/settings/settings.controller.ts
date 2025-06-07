@@ -18,7 +18,7 @@ export class SettingsController {
   // Merchant CRUD endpoints
   @Post('merchants')
   async createMerchant(@Body() createMerchantDto: CreateMerchantDto): Promise<Merchant> {
-    return this.settingsService.createMerchant(createMerchantDto.name, createMerchantDto.merchantCode);
+    return this.settingsService.createMerchant(createMerchantDto.name, createMerchantDto.merchantCode, createMerchantDto.settings);
   }
 
   @Get('merchants')
@@ -47,7 +47,7 @@ export class SettingsController {
   // Provider CRUD endpoints
   @Post('providers')
   async createProvider(@Body() createProviderDto: CreateProviderDto): Promise<Provider> {
-    return this.settingsService.createProvider(createProviderDto.name, createProviderDto.providerCode);
+    return this.settingsService.createProvider(createProviderDto.name, createProviderDto.providerCode, createProviderDto.settings);
   }
 
   @Get('providers')

@@ -62,6 +62,7 @@ export function CancelButton({ href = '..', children = 'Cancel', ...props }: Omi
     <Button
       variant="secondary"
       href={href}
+      type="button"
       {...props}
     >
       {children}

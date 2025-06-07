@@ -16,6 +16,9 @@ export class Merchant {
   @OneToMany(() => RoutingRule, rule => rule.merchant)
   routingRules: RoutingRule[];
 
+  @Column('jsonb', { nullable: true })
+  settings: Record<string, any>;
+
   @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

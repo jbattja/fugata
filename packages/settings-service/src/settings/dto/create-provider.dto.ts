@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProviderDto {
@@ -17,4 +17,14 @@ export class CreateProviderDto {
   @IsString()
   @IsNotEmpty({ message: 'Provider code is required' })
   providerCode: string;
+
+  @ApiProperty({
+    description: 'Settings for the provider credential',
+    example: {},
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  settings?: Record<string, any>;
+
 } 

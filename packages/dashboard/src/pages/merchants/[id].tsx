@@ -7,15 +7,27 @@ import { Merchant } from '@/lib/api/settings';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import Form from '@/components/ui/forms/Form';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import { AccountType, getSettingsConfig } from '@fugata/shared';
+
+interface FormData {
+  name: string;
+  merchantCode: string;
+  settings: Record<string, string>;
+}
 
 export default function EditMerchant() {
   const { data: session } = useSession();
   const router = useRouter();
   const { id } = router.query;
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     merchantCode: '',
+    settings: {},
   });
+  const [error, setError] = useState<JSX.Element | null>(null);
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.MERCHANT, null));
 
   const { data: merchant, isLoading } = useQuery<Merchant>({
     queryKey: ['merchant', id],
@@ -39,7 +51,10 @@ export default function EditMerchant() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to update merchant');
+        const errorData = await response.json();
+        setError(
+          <ErrorMessage message={errorData.message} errors={errorData.errors} />
+        );
       }
       return response.json();
     },
@@ -50,9 +65,13 @@ export default function EditMerchant() {
 
   useEffect(() => {
     if (merchant) {
+      if (!merchant.settings) {
+        merchant.settings = {};
+      }
       setFormData({
         name: merchant.name,
         merchantCode: merchant.merchantCode,
+        settings: merchant.settings,
       });
     }
   }, [merchant]);
@@ -63,13 +82,6 @@ export default function EditMerchant() {
     updateMerchant.mutate({ id: id as string, ...formData });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
   if (!session) {
     return null;
@@ -98,6 +110,12 @@ export default function EditMerchant() {
           onChange={(e) => setFormData({ ...formData, merchantCode: e.target.value })}
           required
         />
+        <KeyValueInput
+          label="Settings"
+          pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
+          availableKeys={availableSettings}
+          onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
+        />
         <div className="flex justify-end space-x-4">
           <CancelButton  onClick={() => router.push('/merchants')}/>
           <SubmitButton
@@ -107,6 +125,7 @@ export default function EditMerchant() {
           </SubmitButton>
         </div>
       </Form>
+      {error}
     </DashboardLayout>
   );
 } 

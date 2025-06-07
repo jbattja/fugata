@@ -7,15 +7,27 @@ import { Provider } from '@/lib/api/settings';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import Form from '@/components/ui/forms/Form';
 import { FormInput } from '@/components/ui/forms/FormInput';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import { getSettingsConfig, AccountType } from '@fugata/shared';
+
+interface FormData {
+  name: string;
+  providerCode: string;
+  settings: Record<string, string>;
+}
 
 export default function EditProvider() {
   const { data: session } = useSession();
   const router = useRouter();
   const { id } = router.query;
+  const [error, setError] = useState<JSX.Element | null>(null);
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER, null));
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     providerCode: '',
+    settings: {},
   });
 
   const { data: provider, isLoading: isLoadingProvider } = useQuery<Provider>({
@@ -32,9 +44,13 @@ export default function EditProvider() {
 
   useEffect(() => {
     if (provider) {
+      if (!provider.settings) {
+        provider.settings = {};
+      }
       setFormData({
         name: provider.name,
         providerCode: provider.providerCode,
+        settings: provider.settings,
       });
     }
   }, [provider]);
@@ -50,7 +66,10 @@ export default function EditProvider() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update provider');
+        const errorData = await response.json();
+        setError(
+          <ErrorMessage message={errorData.message} errors={errorData.errors} />
+        );
       }
 
       return response.json();
@@ -95,6 +114,13 @@ export default function EditProvider() {
           required
         />
 
+        <KeyValueInput
+            label="Settings"
+            pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
+            onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
+            availableKeys={availableSettings}
+          />
+
           <div className="flex justify-end space-x-4">
             <CancelButton onClick={() => router.push('/providers')}/>
             <SubmitButton
@@ -104,6 +130,7 @@ export default function EditProvider() {
             </SubmitButton>
           </div>
       </Form>
+      {error}
     </DashboardLayout>
   );
 } 

@@ -20,6 +20,7 @@ export interface Provider {
   providerCode: string;
   defaultSettings: Record<string, any>;
   providerCredentials: ProviderCredential[];
+  settings: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 } 
@@ -41,6 +42,7 @@ export interface Merchant {
   merchantCode: string;
   providerCredentials: ProviderCredential[];
   routingRules: RoutingRule[];
+  settings: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,7 +79,7 @@ export const settingsApiClient = {
       const response = await settingsApi.get('settings/merchants');
       return response.data;
     },
-    createMerchant: async (name: string, merchantCode: string): Promise<Merchant> => {
+    createMerchant: async (name: string, merchantCode: string, settings: Record<string, string>): Promise<Merchant> => {
       const response = await settingsApi.post('settings/merchants', { name, merchantCode });
       return response.data;
     },
@@ -95,7 +97,7 @@ export const settingsApiClient = {
       const response = await settingsApi.get('settings/providers');
       return response.data;
     },
-    createProvider: async (name: string, providerCode: string): Promise<Provider> => {
+    createProvider: async (name: string, providerCode: string, settings: Record<string, string>): Promise<Provider> => {
       const response = await settingsApi.post('settings/providers', { name, providerCode });
       return response.data;
     },
