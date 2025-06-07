@@ -88,7 +88,27 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
 
     // Validate type
     const expectedType = metadata.type;
-    const actualType = typeof value;
+    let actualType = typeof value;
+    let convertedValue = value;
+
+    // Convert string values to their expected type if possible
+    if (actualType === 'string') {
+      if (expectedType === 'number') {
+        const num = Number(value);
+        if (!isNaN(num)) {
+          convertedValue = num;
+          actualType = 'number';
+        }
+      } else if (expectedType === 'boolean') {
+        if (value.toLowerCase() === 'true') {
+          convertedValue = true;
+          actualType = 'boolean';
+        } else if (value.toLowerCase() === 'false') {
+          convertedValue = false;
+          actualType = 'boolean';
+        }
+      }
+    }
     
     if (expectedType === 'boolean' && actualType !== 'boolean') {
       errors.push({
@@ -104,6 +124,71 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
           type: `${key} must be a string value`
         }
       });
+    } else if (expectedType === 'number') {
+      if (actualType !== 'number') {
+        errors.push({
+          property: key,
+          constraints: {
+            type: `${key} must be a number`
+          }
+        });
+      } else {
+        // Validate min/max constraints for numbers
+        if (metadata.min !== undefined && convertedValue < metadata.min) {
+          errors.push({
+            property: key,
+            constraints: {
+              min: `${key} must be at least ${metadata.min}`
+            }
+          });
+        }
+        if (metadata.max !== undefined && convertedValue > metadata.max) {
+          errors.push({
+            property: key,
+            constraints: {
+              max: `${key} must be at most ${metadata.max}`
+            }
+          });
+        }
+      }
+    }
+
+    // Validate string length constraints
+    if (expectedType === 'string' && actualType === 'string') {
+      if (metadata.min !== undefined && convertedValue.length < metadata.min) {
+        errors.push({
+          property: key,
+          constraints: {
+            minLength: `${key} must be at least ${metadata.min} characters`
+          }
+        });
+      }
+      if (metadata.max !== undefined && convertedValue.length > metadata.max) {
+        errors.push({
+          property: key,
+          constraints: {
+            maxLength: `${key} must be at most ${metadata.max} characters`
+          }
+        });
+      }
+    }
+
+    // Validate pattern if specified
+    if (expectedType === 'string' && actualType === 'string' && metadata.pattern) {
+      const regex = new RegExp(metadata.pattern);
+      if (!regex.test(convertedValue)) {
+        errors.push({
+          property: key,
+          constraints: {
+            pattern: `${key} must match the pattern ${metadata.pattern}`
+          }
+        });
+      }
+    }
+
+    // Update the value in the settings object with the converted value
+    if (actualType === expectedType) {
+      account.settings[key] = convertedValue;
     }
   });
 
@@ -153,16 +238,3 @@ export function getCombinedSettings(parentAccount: Account, childAccount: Accoun
   }
   return combinedSettings;
 }
-
-// Type guards
-export function isProvider(obj: any): obj is Provider {
-    return obj && 'providerCode' in obj;
-}
-
-  export function isMerchant(obj: any): obj is Merchant {
-      return obj && 'merchantCode' in obj;
-  }
-
-  export function isProviderCredential(obj: any): obj is ProviderCredential {
-      return obj && 'providerCredentialCode' in obj;
-  }
