@@ -1,6 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { PaymentRequest, PaymentStatus } from '@/lib/api/payments';
+import { PaymentRequest, PaymentStatus } from '@fugata/shared';
 import { formatAmount } from '@/lib/utils/currency';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/DataTable';
@@ -29,7 +29,7 @@ export default function PaymentsPage() {
         throw new Error('Failed to fetch payments');
       }
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
     },
   });
 

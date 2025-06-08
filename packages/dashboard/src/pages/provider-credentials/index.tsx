@@ -1,7 +1,7 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { ProviderCredential } from '@/lib/api/settings';
+import { ProviderCredential } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
 
@@ -17,7 +17,8 @@ export default function ProviderCredentials() {
       if (!response.ok) {
         throw new Error('Failed to fetch provider credentials');
       }
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
     },
     enabled: !!session,
   });

@@ -20,7 +20,7 @@ export class PaymentRequestsService {
     skip: number = 0,
     take: number = 10,
     filters: Partial<PaymentRequest> = {}
-  ): Promise<{ data: PaymentRequest[]; total: number }> {
+  ): Promise<{ data: PaymentRequest[];  }> {
     const query = this.paymentRequestRepository.createQueryBuilder('payment_request');
 
     // Apply filters
@@ -34,9 +34,6 @@ export class PaymentRequestsService {
       query.andWhere('payment_request.reference = :reference', { reference: filters.reference });
     }
 
-    // Get total count
-    const total = await query.getCount();
-
     // Apply pagination
     query.skip(skip).take(take);
 
@@ -45,8 +42,7 @@ export class PaymentRequestsService {
 
     const entities = await query.getMany();
     return {
-      data: entities.map(entity => entity.toPaymentRequest()),
-      total
+      data: entities.map(entity => entity.toPaymentRequest())
     };
   }
 

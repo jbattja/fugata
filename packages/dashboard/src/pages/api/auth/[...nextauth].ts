@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { settingsApiClient } from '../../../lib/api/settings';
+import { settingsClient } from '../../../lib/api/clients';
 
 export default NextAuth({
   providers: [
@@ -16,12 +16,12 @@ export default NextAuth({
         }
 
         try {
-          const user = await settingsApiClient.users.findByUsername(credentials.username);
+          const user = await settingsClient.findByUsername(credentials.username);
           if (!user) {
             return null;
           }
 
-          const isValid = await settingsApiClient.users.validatePassword(
+          const isValid = await settingsClient.validatePassword(
             credentials.username,
             credentials.password
           );

@@ -1,9 +1,8 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { Provider } from '@/lib/api/settings';
+import { Provider } from '@fugata/shared';
 import { useRouter } from 'next/router';
-import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 
 export default function Providers() {
@@ -17,7 +16,8 @@ export default function Providers() {
       if (!response.ok) {
         throw new Error('Failed to fetch providers');
       }
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
     },
   });
 

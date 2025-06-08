@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsApiClient } from '@/lib/api/settings';
+import { settingsClient } from '@/lib/api/clients';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     switch (req.method) {
       case 'GET':
-        const merchants = await settingsApiClient.merchants.listMerchants();
+        const merchants = await settingsClient.listMerchants();
         res.status(200).json(merchants);
         break;
 
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!name || !merchantCode) {
           return res.status(400).json({ error: 'Name and merchant code are required' });
         }
-        const newMerchant = await settingsApiClient.merchants.createMerchant(name, merchantCode, settings);
+        const newMerchant = await settingsClient.createMerchant(name, merchantCode, settings);
         res.status(201).json(newMerchant);
         break;
 
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!id) {
           return res.status(400).json({ error: 'Merchant ID is required' });
         }
-        const updatedMerchant = await settingsApiClient.merchants.updateMerchant(id, updates);
+        const updatedMerchant = await settingsClient.updateMerchant(id, updates);
         res.status(200).json(updatedMerchant);
         break;
 

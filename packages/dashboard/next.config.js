@@ -10,12 +10,6 @@ const nextConfig = {
     };
     return config;
   },
-  // Enable watching for file changes
-  experimental: {
-    watchOptions: {
-      poll: 1000,
-    },
-  },
 }
 
 module.exports = nextConfig 

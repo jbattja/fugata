@@ -2,7 +2,6 @@ import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Provider, ProviderCredential } from '@/lib/api/settings';
 import { useState } from 'react';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
@@ -11,7 +10,7 @@ import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { AccountType, getSettingsConfig } from '@fugata/shared';
+import { AccountType, getSettingsConfig, Provider } from '@fugata/shared';
 
 export default function NewProviderCredential() {
   const { data: session } = useSession();

@@ -3,13 +3,12 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Provider } from '@/lib/api/settings';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import Form from '@/components/ui/forms/Form';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
-import { getSettingsConfig, AccountType } from '@fugata/shared';
+import { getSettingsConfig, AccountType, Provider } from '@fugata/shared';
 
 interface FormData {
   name: string;

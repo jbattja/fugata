@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsApiClient } from '@/lib/api/settings';
+import { settingsClient } from '@/lib/api/clients';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   try {
-    const providerCredential = await settingsApiClient.providerCredentials.getProviderCredential(id as string);
+    const providerCredential = await settingsClient.getProviderCredential(id as string);
     res.status(200).json(providerCredential);
   } catch (error) {
     console.error('Error fetching provider credential:', error);

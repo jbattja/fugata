@@ -1,13 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsApiClient } from '@/lib/api/settings';
+import { settingsClient } from '@/lib/api/clients';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     switch (req.method) {
       case 'GET':
         const providerCodeFromQuery = req.query?.providerCode as string | undefined;
-
-        const providerCredentials = await settingsApiClient.providerCredentials.listProviderCredentials({ providerCode: providerCodeFromQuery as string });
+        const providerCredentials = await settingsClient.listProviderCredentials({ providerCode: providerCodeFromQuery as string });
         res.status(200).json(providerCredentials);
         break;
 
@@ -16,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!providerCredentialCode || !providerCode || !settings) {
           return res.status(400).json({ error: 'Provider credential code, provider code and settings are required' });
         }
-        const providerCredential = await settingsApiClient.providerCredentials.createProviderCredential(providerCredentialCode, providerCode, settings  );
+        const providerCredential = await settingsClient.createProviderCredential(providerCredentialCode, providerCode, settings  );
         res.status(201).json(providerCredential);
         break;
 
@@ -26,14 +25,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!id) {
             return res.status(400).json({ error: 'Provider ID is required' });
           }
-          const updatedProviderCredential = await settingsApiClient.providerCredentials.updateProviderCredential(id, updates);
+          const updatedProviderCredential = await settingsClient.updateProviderCredential(id, updates);
           res.status(200).json(updatedProviderCredential);
           break;
   
         default:
           res.setHeader('Allow', ['GET', 'POST', 'PUT']);
           res.status(405).json({ error: `Method ${req.method} not allowed` });
-  
         }
       } catch (error: any) {
         if (error.response.status == 400) {

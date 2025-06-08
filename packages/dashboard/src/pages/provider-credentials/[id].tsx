@@ -2,7 +2,6 @@ import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Provider, ProviderCredential } from '@/lib/api/settings';
 import { useState, useEffect } from 'react';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
@@ -11,7 +10,7 @@ import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { getSettingsConfig, AccountType } from '@fugata/shared';
+import { getSettingsConfig, AccountType, Provider, ProviderCredential } from '@fugata/shared';
 
 interface FormData {
   providerCredentialCode: string;

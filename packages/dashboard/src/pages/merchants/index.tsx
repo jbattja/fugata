@@ -1,9 +1,8 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { Merchant } from '@/lib/api/settings';
+import { Merchant } from '@fugata/shared';
 import { useRouter } from 'next/router';
-import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 
 export default function Merchants() {
@@ -18,7 +17,7 @@ export default function Merchants() {
         throw new Error('Failed to fetch merchants');
       }
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
     },
   });
 

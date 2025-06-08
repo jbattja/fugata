@@ -1,5 +1,5 @@
 import { AccountSettingKey, AccountSettingsConfig, ProviderCredentialSettings } from '../account-settings';
-import { Provider } from '../settings';
+import { Provider } from '../accounts';
 
 // Type for integration-specific settings
 export interface IntegrationSettings {
