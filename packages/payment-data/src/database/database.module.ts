@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentRequestEntity } from '../entities/payment-request.entity';
+import { PaymentSessionEntity } from '../entities/payment-session.entity';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { PaymentRequestEntity } from '../entities/payment-request.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [PaymentRequestEntity],
+      entities: [PaymentRequestEntity, PaymentSessionEntity],
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV === 'development'
     })

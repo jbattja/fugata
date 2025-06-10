@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Currency, Money, PaymentMethod, PaymentRequest, PaymentRequestBuilder, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentStatus } from '@fugata/shared';
+import { Currency, Amount, PaymentMethod, PaymentRequest, PaymentRequestBuilder, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentStatus } from '@fugata/shared';
 import { PaymentRequestTransformer, PaymentResponseTransformer, ProviderTransformer } from '../../payment/routing/transformer';
 import { 
   AdyenPaymentRequest, 
@@ -15,7 +15,6 @@ import {
   AdyenShopper
 } from './types/adyen-payment';
 import { PaymentConnector } from '../../payment/routing/transformer';
-import { AdyenSettings } from '@fugata/shared';
 import { getAdyenPaymentMethod, getPaymentMethod } from './types/adyen-payment-method';
 import { AdyenConnector } from './adyen-connector';
 import { CustomerBuilder } from '@fugata/shared';
@@ -28,7 +27,7 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
   readonly requestTransformer: PaymentRequestTransformer<AdyenPaymentRequest> = {
     toPaymentRequest: (source: AdyenPaymentRequest): PaymentRequest => {
       const paymentRequest = new PaymentRequestBuilder()
-        .withAmount(this.mapAdyenAmountToMoney(source.amount))
+        .withAmount(this.mapAdyenAmountToAmount(source.amount))
         .withMethod(this.mapAdyenMethodToPaymentMethod(source.paymentMethod))
         .withReference(source.reference)
         .withReturnUrl(source.returnUrl)
@@ -53,7 +52,7 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
       const adyenSettings = this.getProviderCredentials().settings;
 
       const adyenRequest =  new AdyenPaymentRequestBuilder()
-        .withAmount(this.mapMoneyToAdyenAmount(source.amount))
+        .withAmount(this.mapAmountToAdyenAmount(source.amount))
         .withMerchantAccount(adyenSettings.merchantAccount)
         .withReference(source.reference)
         .withReturnUrl(source.returnUrl)
@@ -174,13 +173,13 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
   }
 
   // Both uses minor units
-  private mapAdyenAmountToMoney(adyenAmount: AdyenAmount): Money {
-    return new Money(adyenAmount.value, adyenAmount.currency.toUpperCase() as Currency);
+  private mapAdyenAmountToAmount(adyenAmount: AdyenAmount): Amount {
+    return new Amount(adyenAmount.value, adyenAmount.currency.toUpperCase() as Currency);
   }
 
   // Both uses minor units
-  private mapMoneyToAdyenAmount(money: Money): AdyenAmount {
-    return new AdyenAmount(money.amount, money.currency);
+  private mapAmountToAdyenAmount(amount: Amount): AdyenAmount {
+    return new AdyenAmount(amount.value, amount.currency);
   }
 
   private mapAdyenMethodToPaymentMethod(adyenMethod: AdyenPaymentMethod): PaymentMethod {

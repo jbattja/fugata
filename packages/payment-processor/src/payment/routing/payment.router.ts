@@ -1,15 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PaymentRequestContext, ProviderTransformer } from './transformer';
 import { PaymentRequest, ProviderCredential } from '@fugata/shared';
 import { SettingsClient } from '@fugata/shared';
 import { PaymentProducerService } from 'src/kafka/payment-producer.service';
+import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class PaymentRouter {
 
   private providerTransformers: Map<string, ProviderTransformer<any, any>> = new Map();
-
-  constructor(private readonly settingsClient: SettingsClient, private readonly paymentProducer: PaymentProducerService) {}
+  constructor(
+    private readonly settingsClient: SettingsClient,
+    private readonly paymentProducer: PaymentProducerService,
+  ) {}
 
   registerProvider(provider: ProviderTransformer<any, any>) {
     this.providerTransformers.set(provider.providerCode, provider);

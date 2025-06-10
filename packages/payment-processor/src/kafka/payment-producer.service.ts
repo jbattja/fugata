@@ -1,4 +1,4 @@
-import { PaymentRequest } from '@fugata/shared';
+import { PaymentRequest, PaymentSession } from '@fugata/shared';
 import { Inject, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 export class PaymentProducerService {
@@ -22,6 +22,18 @@ export class PaymentProducerService {
         {
           key: paymentRequest.fugataReference,
           value: JSON.stringify(paymentRequest)
+        }
+      ]
+    });
+  }
+  async publishPaymentSession(paymentSession: PaymentSession): Promise<void> {
+    Logger.log(`Publishing payment session to Kafka: ${JSON.stringify(paymentSession)}`);
+    await this.kafkaClient.producer.send({
+      topic: 'payment-sessions',
+      messages: [
+        {
+          key: paymentSession.sessionId,
+          value: JSON.stringify(paymentSession)
         }
       ]
     });

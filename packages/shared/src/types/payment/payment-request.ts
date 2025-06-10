@@ -1,15 +1,11 @@
 import { IsDate, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '././payment-method';
-import { Money } from './money';
+import { Amount } from './amount';
 import { PaymentStatus } from './payment-status';
 import { Customer } from './customer';
 import { FugataReference } from './fugata-reference';
-
-export enum CaptureMethod {
-  AUTOMATIC = 'AUTOMATIC',
-  MANUAL = 'MANUAL'
-}
+import { CaptureMethod } from './payment-common';
 
 export enum PaymentRequestNextActionType {
   REDIRECT_TO_URL = 'redirect_to_url',
@@ -30,9 +26,9 @@ export class PaymentRequest {
   id?: string;
 
   @ValidateNested()
-  @Type(() => Money)
+  @Type(() => Amount)
   @IsOptional()
-  amount?: Money;
+  amount?: Amount;
 
   @IsEnum(PaymentMethod)
   @IsOptional()
@@ -111,7 +107,7 @@ export class PaymentRequestBuilder {
     return this;
   }
 
-  withAmount(amount: Money): PaymentRequestBuilder {
+  withAmount(amount: Amount): PaymentRequestBuilder {
     this.paymentRequest.amount = amount;
     return this;
   }

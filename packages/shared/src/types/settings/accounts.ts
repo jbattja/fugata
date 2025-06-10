@@ -15,26 +15,26 @@ export abstract class Account {
   updatedAt: Date;
 }
 
-export interface ProviderCredential extends Account {
+export class ProviderCredential extends Account {
   providerCredentialCode: string;
   provider: Provider;
   isActive: boolean;
 }
 
-export interface Merchant extends Account {
+export class Merchant extends Account {
   name: string;
   merchantCode: string;
   providersCredentials: ProviderCredential[];
   availablePaymentChannels: RoutingRule[];
 } 
 
-export interface Provider extends Account {
+export class Provider extends Account {
   name: string;
   providerCode: string;
   providerCredentials: ProviderCredential[];
 } 
 
-export interface RoutingRule {
+export class RoutingRule {
   id: string;
   merchant: Merchant;
   providerCredential: ProviderCredential;

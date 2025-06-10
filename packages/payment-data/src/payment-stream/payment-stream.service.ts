@@ -2,7 +2,8 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { PaymentRequestsService } from '../payment-requests/payment-requests.service';
-import { PaymentRequest } from '@fugata/shared';
+import { PaymentSessionsService } from '../payment-sessions/payment-sessions.service';
+import { PaymentRequest, PaymentSession } from '@fugata/shared';
 
 @Injectable()
 export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
@@ -10,25 +11,40 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly paymentRequestsService: PaymentRequestsService,
+    private readonly paymentSessionsService: PaymentSessionsService,
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka
   ) {}
 
   async onModuleInit() {
     try {
-      // Using NestJS's kafkaClient.subscribeToResponseOf('payment-requests') with kafkaClient.connect()
-      // in combination with the @EventPattern('payment-requests') or @MessagePattern('payment-requests') does not work. 
-      // The below does work, even though it feels like a hack. 
-      await this.kafkaClient.connect(); // initiate the consumer
+      await this.kafkaClient.connect();
       const kafka = (this.kafkaClient as any).consumer;
-      await kafka.stop(); // need to stop it again before subscribing
-      await kafka.subscribe({ topic: 'payment-requests', fromBeginning: true });
+      await kafka.stop();
+
+      // Subscribe to multiple topics
+      await kafka.subscribe({
+        topics: ['payment-requests', 'payment-sessions'],
+        fromBeginning: true
+      });
+
       await kafka.run({
-        eachMessage: async ({ message }) => {
+        eachMessage: async ({ topic, message }) => {
           try {
-            const paymentRequest = JSON.parse(message.value.toString());
-            await this.onPaymentRequest(paymentRequest);
+            const payload = JSON.parse(message.value.toString());
+            
+            // Route messages to appropriate handlers based on topic
+            switch (topic) {
+              case 'payment-requests':
+                await this.onPaymentRequest(payload);
+                break;
+              case 'payment-sessions':
+                await this.onPaymentSession(payload);
+                break;
+              default:
+                this.logger.warn(`Received message from unknown topic: ${topic}`);
+            }
           } catch (error) {
-            this.logger.error('Error processing message:', error);
+            this.logger.error(`Error processing message from topic ${topic}:`, error);
           }
         },
       });
@@ -46,12 +62,20 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-
   private async onPaymentRequest(paymentRequest: PaymentRequest): Promise<void> {
     try {
       await this.paymentRequestsService.createPaymentRequest(paymentRequest);
     } catch (error) {
       this.logger.error('Error saving payment request:', error);
+      throw error;
+    }
+  }
+
+  private async onPaymentSession(paymentSession: PaymentSession): Promise<void> {
+    try {
+      await this.paymentSessionsService.createPaymentSession(paymentSession);
+    } catch (error) {
+      this.logger.error('Error saving payment session:', error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { StripePaymentIntent, StripePaymentIntentStatus, StripeCaptureMethod, StripeConfirmationMethod, StripePaymentIntentNextAction, StripePaymentIntentNextActionType } from './types/stripe-payment-intent';
-import { PaymentRequest, Money, CaptureMethod, PaymentRequestBuilder, PaymentStatus, Currency, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentMethod, CustomerBuilder } from '@fugata/shared';
+import { PaymentRequest, Amount, CaptureMethod, PaymentRequestBuilder, PaymentStatus, Currency, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentMethod, CustomerBuilder } from '@fugata/shared';
 import { ProviderTransformer, PaymentRequestTransformer, PaymentResponseTransformer, PaymentConnector, PaymentRequestContext } from '../../payment/routing/transformer';
 import { StripePaymentIntentBuilder } from './types/stripe-payment-intent';
 import { StripeConnector } from './stripe.connector';
@@ -13,7 +13,7 @@ export class StripePaymentIntentService extends ProviderTransformer<StripePaymen
   readonly requestTransformer: PaymentRequestTransformer<StripePaymentIntent> = {
     toPaymentRequest: (source: StripePaymentIntent): PaymentRequest => {
       const paymentRequest = new PaymentRequestBuilder()
-        .withAmount(this.mapStripeAmountToMoney(source.amount, source.currency))
+        .withAmount(this.mapStripeAmountToAmount(source.amount, source.currency))
         .withStatus(this.mapStripeStatusToPaymentStatus(source.status))
         .withCaptureMethod(this.mapStripeCaptureMethodToCaptureMethod(source.capture_method))
         .withDescription(source.description)
@@ -30,7 +30,7 @@ export class StripePaymentIntentService extends ProviderTransformer<StripePaymen
     },
     fromPaymentRequest: (source: PaymentRequest): StripePaymentIntent => {
       const stripeIntent = new StripePaymentIntentBuilder()
-        .withAmount(this.mapMoneyToStripeAmount(source.amount))
+        .withAmount(this.mapAmountToStripeAmount(source.amount))
         .withCurrency(source.amount.currency.toLowerCase())
         .withCaptureMethod(this.mapCaptureMethodToStripeCaptureMethod(source.captureMethod))
         .withDescription(source.description)
@@ -133,13 +133,13 @@ export class StripePaymentIntentService extends ProviderTransformer<StripePaymen
   }
 
   // Both uses minor units
-  private mapStripeAmountToMoney(amount: number, currency: string): Money {
-    return new Money(amount, currency.toUpperCase() as Currency);
+  private mapStripeAmountToAmount(amount: number, currency: string): Amount {
+    return new Amount(amount, currency.toUpperCase() as Currency);
   }
 
     // Both uses minor units
-  private mapMoneyToStripeAmount(money: Money): number {
-    return money.amount;
+  private mapAmountToStripeAmount(amount: Amount): number {
+    return amount.value;
   }
 
   private mapStripeMethodToPaymentMethod(stripeMethod: string): PaymentMethod {

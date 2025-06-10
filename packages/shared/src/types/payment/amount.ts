@@ -296,15 +296,15 @@ export const CURRENCY_MINOR_UNITS: Record<Currency, number> = {
 /**
  * Class representing a monetary amount with its currency
  */
-export class Money {
+export class Amount {
   @IsNumber()
-  amount: number;
+  value: number;
 
   @IsEnum(Currency)
   currency: Currency;
 
   constructor(amount: number, currency: Currency) {
-    this.amount = amount;
+    this.value = amount;
     this.currency = currency;
   }
 
@@ -314,19 +314,19 @@ export class Money {
    */
   toMinorUnits(): number {
     const decimals = CURRENCY_MINOR_UNITS[this.currency];
-    return Math.round(this.amount * Math.pow(10, decimals));
+    return Math.round(this.value * Math.pow(10, decimals));
   }
 
   /**
-   * Creates a Money instance from minor units
+   * Creates a Amount instance from minor units
    * @param minorUnits The amount in minor units
    * @param currency The currency
-   * @returns A new Money instance
+   * @returns A new Amount instance
    */
-  static fromMinorUnits(minorUnits: number, currency: Currency): Money {
+  static fromMinorUnits(minorUnits: number, currency: Currency): Amount {
     const decimals = CURRENCY_MINOR_UNITS[currency];
     const amount = minorUnits / Math.pow(10, decimals);
-    return new Money(amount, currency);
+    return new Amount(amount, currency);
   }
 
   /**
@@ -335,6 +335,6 @@ export class Money {
    */
   toString(): string {
     const decimals = CURRENCY_MINOR_UNITS[this.currency];
-    return `${this.currency} ${this.amount.toFixed(decimals)}`;
+    return `${this.currency} ${this.value.toFixed(decimals)}`;
   }
 } 
