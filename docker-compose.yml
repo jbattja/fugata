@@ -1,11 +1,11 @@
+version: '3.8'
+
 services:
   # Database services
   settings-db:
     image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: settings
+    env_file:
+      - ./packages/settings-service/.env
     ports:
       - "5432:5432"
     volumes:
@@ -18,10 +18,8 @@ services:
 
   payment-data-db:
     image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: payment_data
+    env_file:
+      - ./packages/payment-data/.env
     ports:
       - "5433:5432"
     volumes:
@@ -93,9 +91,8 @@ services:
     environment:
       DB_HOST: settings-db
       DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: settings
+    env_file:
+      - ./packages/settings-service/.env
     ports:
       - "3000:3000"
     volumes:
@@ -112,7 +109,10 @@ services:
       context: .
       dockerfile: packages/payment-processor/Dockerfile
     environment:
+      CHECKOUT_URL: http://localhost:8081
       KAFKA_BROKERS: kafka:29092
+    env_file:
+      - ./packages/payment-processor/.env
     ports:
       - "3002:3002"
     volumes:
@@ -131,10 +131,9 @@ services:
     environment:
       DB_HOST: payment-data-db
       DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: payment_data
       KAFKA_BROKERS: kafka:29092
+    env_file:
+      - ./packages/payment-data/.env
     ports:
       - "3001:3001"
     volumes:
@@ -153,12 +152,12 @@ services:
       context: .
       dockerfile: packages/dashboard/Dockerfile
     environment:
-      NEXTAUTH_URL: http://localhost:8080
-      NEXTAUTH_SECRET: your-secret-key-here # Change this in production
       SETTINGS_SERVICE_URL: http://settings-service:3000
       PAYMENT_DATA_SERVICE_URL: http://payment-data:3001
       NODE_ENV: development
       WATCHPACK_POLLING: "true"
+    env_file:
+      - ./packages/dashboard/.env
     ports:
       - "8080:8080"
     volumes:
@@ -169,11 +168,24 @@ services:
     depends_on:
       - settings-service
       - payment-data
+  checkout:
+    build:
+      context: .
+      dockerfile: packages/checkout/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - NODE_ENV=development
+      - PAYMENT_DATA_SERVICE_URL=http://payment-data:3001
+    env_file:
+      - ./packages/checkout/.env
+    depends_on:
+      - payment-data
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     ports:
-      - "8081:8080"
+      - "8082:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092

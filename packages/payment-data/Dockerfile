@@ -19,6 +19,7 @@ COPY packages/shared/tsconfig.json ./packages/shared/
 # Copy source code for payment data
 COPY packages/payment-data/src ./packages/payment-data/src
 COPY packages/payment-data/tsconfig.json ./packages/payment-data/
+COPY packages/payment-data/.env ./packages/payment-data/
 
 # Build shared module
 WORKDIR /app/packages/shared

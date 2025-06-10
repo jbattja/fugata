@@ -19,6 +19,7 @@ COPY packages/shared/tsconfig.json ./packages/shared/
 # Copy source code for payment processor
 COPY packages/payment-processor/src ./packages/payment-processor/src
 COPY packages/payment-processor/tsconfig.json ./packages/payment-processor/
+COPY packages/payment-processor/.env ./packages/payment-processor/
 
 # Build shared module
 WORKDIR /app/packages/shared

@@ -19,6 +19,7 @@ COPY packages/shared/tsconfig.json ./packages/shared/
 # Copy source code for settings service
 COPY packages/settings-service/src ./packages/settings-service/src
 COPY packages/settings-service/tsconfig.json ./packages/settings-service/
+COPY packages/settings-service/.env ./packages/settings-service/
 
 # Build shared module
 WORKDIR /app/packages/shared

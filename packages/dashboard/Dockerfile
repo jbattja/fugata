@@ -22,6 +22,7 @@ COPY packages/dashboard/tsconfig.json ./packages/dashboard/
 COPY packages/dashboard/tailwind.config.js ./packages/dashboard/
 COPY packages/dashboard/postcss.config.js ./packages/dashboard/
 COPY packages/dashboard/next-env.d.ts ./packages/dashboard/
+COPY packages/dashboard/.env ./packages/dashboard/
 
 # Build shared module
 WORKDIR /app/packages/shared
