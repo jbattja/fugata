@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { PaymentSession } from "src/types/payment/payment-session";
+import { PaymentSession } from "../types/payment/payment-session";
 
 export class PaymentDataClient {
   private readonly httpClient: AxiosInstance;
