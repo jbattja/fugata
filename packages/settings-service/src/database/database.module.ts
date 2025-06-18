@@ -6,6 +6,7 @@ import { Provider } from '../entities/provider.entity';
 import { ProviderCredential } from '../entities/provider-credential.entity';
 import { RoutingRule } from '../entities/routing-rule.entity';
 import { User } from '../entities/user.entity';
+import { ApiCredential } from '../entities/api-credential.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { User } from '../entities/user.entity';
         username: configService.get('POSTGRES_USER', 'postgres'),
         password: configService.get('POSTGRES_PASSWORD', 'postgres'),
         database: configService.get('POSTGRES_DB', 'settings'),
-        entities: [Merchant, Provider, ProviderCredential, RoutingRule, User],
+        entities: [Merchant, Provider, ProviderCredential, RoutingRule, User, ApiCredential],
         synchronize: configService.get('NODE_ENV') !== 'production',
       }),
       inject: [ConfigService],

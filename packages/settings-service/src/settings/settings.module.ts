@@ -9,13 +9,16 @@ import { Provider } from 'src/entities/provider.entity';
 import { User } from '../entities/user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
+import { ApiCredential } from '../entities/api-credential.entity';
+import { ApiCredentialService } from './api-credential.service';
+import { ApiCredentialController } from './api-credential.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Merchant, Provider, ProviderCredential, RoutingRule, User]),
+    TypeOrmModule.forFeature([Merchant, Provider, ProviderCredential, RoutingRule, User, ApiCredential]),
   ],
-  providers: [SettingsService, UserService],
-  controllers: [SettingsController, UserController],
-  exports: [SettingsService, UserService],
+  providers: [SettingsService, UserService, ApiCredentialService],
+  controllers: [SettingsController, UserController, ApiCredentialController],
+  exports: [SettingsService, UserService, ApiCredentialService],
 })
 export class SettingsModule {} 

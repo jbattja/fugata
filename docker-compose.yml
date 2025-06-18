@@ -194,6 +194,43 @@ services:
       - kafka
       - zookeeper
 
+  # Redis for API Gateway
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: packages/api-gateway/Dockerfile
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - PAYMENT_PROCESSOR_URL=http://payment-processor:3002
+      - PAYMENT_DATA_URL=http://payment-data:3001
+      - SETTINGS_SERVICE_URL=http://settings-service:3000
+    env_file:
+      - ./packages/api-gateway/.env
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./packages/api-gateway:/app/packages/api-gateway
+      - /app/packages/api-gateway/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   settings-db-data:
-  payment-data-db-data: 
+  payment-data-db-data:
+  redis-data: 
