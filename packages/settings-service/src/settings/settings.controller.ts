@@ -145,10 +145,10 @@ export class SettingsController {
   
   @Get('get-credentials')
   async getProviderCredentialForMerchant(
-    @Query('merchantCode') merchantCode: string,
+    @Query('merchantId') merchantId: string,
     @Query('conditions') conditions: Record<string, any>,
   ): Promise<ProviderCredential> {
-    return this.settingsService.getProviderCredentialForMerchant(merchantCode, conditions);
+    return this.settingsService.getProviderCredentialForMerchant(merchantId, conditions);
   }
 
 } 
