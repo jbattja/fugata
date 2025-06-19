@@ -1,12 +1,14 @@
-import { Module, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Module, OnModuleInit, OnModuleDestroy, Global } from '@nestjs/common';
 import { StripeModule } from './integrations/stripe/stripe.module';
 import { AdyenModule } from './integrations/adyen/adyen.module';
 import { TransformerErrorFilter } from './filters/transformer-error.filter';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { SessionsModule } from './payment/sessions.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { PaymentProducerService } from './kafka/payment-producer.service';
+import { ServiceAuthGuard } from '@fugata/shared';
 
+@Global()
 @Module({
   imports: [
     KafkaModule,
@@ -19,6 +21,15 @@ import { PaymentProducerService } from './kafka/payment-producer.service';
     {
       provide: APP_FILTER,
       useClass: TransformerErrorFilter,
+    },
+    {
+      provide: 'JWT_SECRET',
+      useValue: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+    },
+    {
+      provide: APP_GUARD,
+      useFactory: (jwtSecret: string) => new ServiceAuthGuard(jwtSecret),
+      inject: ['JWT_SECRET'],
     }
   ],
 })

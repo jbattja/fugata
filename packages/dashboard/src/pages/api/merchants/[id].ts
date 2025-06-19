@@ -1,7 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsClient } from '@/lib/api/clients';
+import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  const authHeaders = await getAuthHeaders(session, 'payment-data');
+
   const { id } = req.query;
 
   if (req.method !== 'GET') {
@@ -10,10 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const merchant = await settingsClient.getMerchant(id as string);
+    const merchant = await settingsClient.getMerchant(authHeaders, id as string);
     res.status(200).json(merchant);
   } catch (error) {
-    console.error('Error fetching merchant:', error);
+    console.error('Error fetching merchant:', (error as any).message);
     res.status(500).json({ error: 'Failed to fetch merchant' });
   }
 } 

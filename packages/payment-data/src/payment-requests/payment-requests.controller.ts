@@ -1,20 +1,24 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Req } from '@nestjs/common';
 import { PaymentRequestsService } from './payment-requests.service';
-import { PaymentRequest } from '@fugata/shared';
+import { getMerchantId, PaymentRequest, RequirePermissions } from '@fugata/shared';
 
 @Controller('payment-requests')
 export class PaymentRequestsController {
   constructor(private readonly paymentRequestsService: PaymentRequestsService) {}
 
   @Get()
+  @RequirePermissions('payments:read')
   async listPaymentRequests(
     @Query('skip') skip?: number,
     @Query('take') take?: number,
     @Query('status') status?: string,
     @Query('paymentMethod') paymentMethod?: string,
-    @Query('reference') reference?: string
+    @Query('reference') reference?: string,
+    @Req() request?: any
   ) {
+    const merchantId = getMerchantId(request);
     const filters: Partial<PaymentRequest> = {};
+    if (merchantId) filters.merchantCode = merchantId;
     if (status) filters.status = status as any;
     if (paymentMethod) filters.paymentMethod = paymentMethod as any;
     if (reference) filters.reference = reference;
@@ -27,6 +31,7 @@ export class PaymentRequestsController {
   }
 
   @Get(':id')
+  @RequirePermissions('payments:read')
   async getPaymentRequest(@Param('id') id: string) {
     return this.paymentRequestsService.getPaymentRequest(id);
   }

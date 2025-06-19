@@ -1,11 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsClient } from '@/lib/api/clients';
+import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  const authHeaders = await getAuthHeaders(session, 'payment-data');
   try {
     switch (req.method) {
       case 'GET':
-        const merchants = await settingsClient.listMerchants();
+        const merchants = await settingsClient.listMerchants(authHeaders);
         res.status(200).json(merchants);
         break;
 
@@ -14,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!name || !merchantCode) {
           return res.status(400).json({ error: 'Name and merchant code are required' });
         }
-        const newMerchant = await settingsClient.createMerchant(name, merchantCode, settings);
+        const newMerchant = await settingsClient.createMerchant(authHeaders, name, merchantCode, settings);
         res.status(201).json(newMerchant);
         break;
 
@@ -23,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!id) {
           return res.status(400).json({ error: 'Merchant ID is required' });
         }
-        const updatedMerchant = await settingsClient.updateMerchant(id, updates);
+        const updatedMerchant = await settingsClient.updateMerchant(authHeaders, id, updates);
         res.status(200).json(updatedMerchant);
         break;
 
@@ -35,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error.response.status == 400) {
       res.status(400).json(error.response.data);
     } else {
-      console.error('Error handling merchant request:', error);
+      console.error('Error handling merchant request:', (error as any).message);
       res.status(500).json({ error: 'Failed to process merchant request' });
     }
   }

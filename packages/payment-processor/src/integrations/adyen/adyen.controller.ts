@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, Param, Headers } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Headers, Req } from '@nestjs/common';
 import { AdyenService } from './adyen.service';
 import { AdyenPaymentRequest, AdyenPaymentResponse } from './types/adyen-payment';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaymentRouter } from '../../payment/routing/payment.router';
+import { getMerchantId } from '../../../../shared/src/auth/service-auth.guard';
 
 @ApiTags('adyen')
 @Controller('adyen')
@@ -16,8 +17,10 @@ export class AdyenController {
   @ApiOperation({ summary: 'Create a new payment' })
   @ApiResponse({ status: 201, description: 'Payment created successfully', type: AdyenPaymentResponse })
   async createPayment(
-    @Headers('X-Merchant-Id') merchantId: string,
-    @Body() paymentRequest: AdyenPaymentRequest): Promise<AdyenPaymentResponse> {
+    @Body() paymentRequest: AdyenPaymentRequest,
+    @Req() req: Request
+  ): Promise<AdyenPaymentResponse> {
+    const merchantId = getMerchantId(req)
     return this.paymentRouter.routePayment<AdyenPaymentRequest, AdyenPaymentResponse>(
       this.adyenService,
       merchantId,

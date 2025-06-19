@@ -64,7 +64,7 @@ export default function PaymentsPage() {
         columns={[
           {
             header: 'Amount',
-            accessor: (payment) => payment.amount ? formatAmount(payment.amount.amount, payment.amount.currency) : '-',
+            accessor: (payment) => payment.amount ? formatAmount(payment.amount.value, payment.amount.currency) : '-',
           },
           {
             header: 'Status',

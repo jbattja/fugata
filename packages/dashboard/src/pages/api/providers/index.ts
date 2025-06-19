@@ -1,11 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsClient } from '@/lib/api/clients';
+import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  const authHeaders = await getAuthHeaders(session, 'payment-data');
+  
   try {
     switch (req.method) {
       case 'GET':
-        const providers = await settingsClient.listProviders();
+        const providers = await settingsClient.listProviders(authHeaders);
         res.status(200).json(providers);
         break;
 
@@ -14,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!name || !providerCode) {
           return res.status(400).json({ error: 'Name and provider code are required' });
         }
-        const provider = await settingsClient.createProvider(name, providerCode, settings);
+        const provider = await settingsClient.createProvider(authHeaders, name, providerCode, settings);
         res.status(201).json(provider);
         break;
 
@@ -23,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!id) {
             return res.status(400).json({ error: 'Provider ID is required' });
           }
-          const updatedProvider = await settingsClient.updateProvider(id, updates);
+          const updatedProvider = await settingsClient.updateProvider(authHeaders, id, updates);
           res.status(200).json(updatedProvider);
           break;
   
@@ -36,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (error.response.status == 400) {
           res.status(400).json(error.response.data);
         } else {
-          console.error('Error handling provider request:', error);
+          console.error('Error handling provider request:', (error as any).message);
           res.status(500).json({ error: 'Failed to process provider request' });
         }
       }

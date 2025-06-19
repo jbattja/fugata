@@ -1,8 +1,8 @@
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { settingsClient } from '../../../lib/api/clients';
+import { getAuthHeadersForServiceAccount, settingsClient } from '../../../lib/api/clients';
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -16,12 +16,12 @@ export default NextAuth({
         }
 
         try {
-          const user = await settingsClient.findByUsername(credentials.username);
+          const user = await settingsClient.findByUsername(await getAuthHeadersForServiceAccount(), credentials.username);
           if (!user) {
             return null;
           }
 
-          const isValid = await settingsClient.validatePassword(
+          const isValid = await settingsClient.validatePassword(await getAuthHeadersForServiceAccount(),
             credentials.username,
             credentials.password
           );
@@ -37,11 +37,11 @@ export default NextAuth({
     })
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {      
+    async jwt({ token, user, account }: any) {      
       if (user) {
         token.id = user.id;
         token.username = user.username;
@@ -51,7 +51,7 @@ export default NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token) {
         session.user = {
           id: token.id as string,
@@ -69,4 +69,6 @@ export default NextAuth({
   },
   secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
   debug: true,
-}); 
+};
+
+export default NextAuth(authOptions); 

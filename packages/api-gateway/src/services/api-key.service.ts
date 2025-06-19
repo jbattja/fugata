@@ -1,6 +1,7 @@
 import axios from 'axios'
 import * as crypto from 'crypto'
 import { ApiKey } from '../types'
+import { JwtService } from './jwt.service'
 
 interface SettingsApiCredential {
   id: string
@@ -18,12 +19,14 @@ interface SettingsApiCredential {
 
 export class ApiKeyService {
   private settingsServiceUrl: string
+  private jwtService: JwtService
   private apiKeysCache: Map<string, ApiKey> = new Map()
   private lastCacheUpdate: number = 0
   private readonly cacheTtl = 5 * 60 * 1000 // 5 minutes
 
-  constructor(settingsServiceUrl: string) {
+  constructor(settingsServiceUrl: string, jwtService: JwtService) {
     this.settingsServiceUrl = settingsServiceUrl
+    this.jwtService = jwtService
   }
 
   private hashApiKey(apiKey: string): string {
@@ -32,7 +35,7 @@ export class ApiKeyService {
 
   private async fetchApiCredentials(): Promise<SettingsApiCredential[]> {
     try {
-      const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`)
+      const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`, { headers: this.jwtService.getAuthHeadersForServiceAccount() })
       return response.data
     } catch (error) {
       console.error('Failed to fetch API credentials from settings service:', error)

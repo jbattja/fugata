@@ -11,9 +11,9 @@ export class PaymentSessionsService {
     private readonly paymentSessionRepository: Repository<PaymentSessionEntity>
   ) {}
 
-  async getPaymentSession(sessionId: string): Promise<PaymentSession | null> {
+  async getPaymentSession(sessionId: string, merchantId: string): Promise<PaymentSession | null> {
     Logger.log(`Getting payment session ${sessionId}`, PaymentSessionsService.name);
-    const entity = await this.paymentSessionRepository.findOne({ where: { sessionId: sessionId } });
+    const entity = await this.paymentSessionRepository.findOne({ where: { sessionId: sessionId, merchantCode: merchantId } });
     Logger.log(`Payment session ${sessionId} found: ${entity ? 'true' : 'false'}`, PaymentSessionsService.name);
     return entity ? entity.toPaymentSession() : null;
   }

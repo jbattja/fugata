@@ -1,11 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { paymentDataClient } from '@/lib/api/clients';
+import { paymentDataClient, getAuthHeaders } from '@/lib/api/clients';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  const authHeaders = await getAuthHeaders(session, 'payment-data');
   try {
     switch (req.method) {
       case 'GET':
-        const payments = await paymentDataClient.listPaymentRequests();
+        const payments = await paymentDataClient.listPaymentRequests(authHeaders);
         res.status(200).json(payments);
         break;
 
@@ -15,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
     }
   } catch (error) {
-    console.error('Error fetching payments:', error);
+    console.error('Error fetching payments:', (error as any).message);
     res.status(500).json({ error: 'Failed to fetch payments' });
   }
 } 

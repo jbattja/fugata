@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { request } from 'undici';
 import { ServiceName } from '../types';
+import { JwtService } from './jwt.service';
+import { AuthenticatedRequest } from '../types';
 
 @Injectable()
 export class ProxyService {
   constructor(
     private paymentProcessorUrl: string,
-    private paymentDataUrl: string
+    private paymentDataUrl: string,
+    private jwtService: JwtService
   ) {}
 
   private getServiceUrl(service: ServiceName): string {
@@ -21,6 +24,27 @@ export class ProxyService {
     }
   }
 
+  private buildTargetPath(targetPath: string, req: FastifyRequest): string {
+    let finalPath = targetPath;
+    
+    // Replace path parameters (e.g., :id) with actual values from the request
+    const pathParams = req.params as Record<string, string>;
+    if (pathParams) {
+      Object.entries(pathParams).forEach(([key, value]) => {
+        finalPath = finalPath.replace(`:${key}`, value);
+      });
+    }
+
+    // Add query parameters if present
+    const queryParams = req.query as Record<string, string>;
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const queryString = new URLSearchParams(queryParams).toString();
+      finalPath += `?${queryString}`;
+    }
+
+    return finalPath;
+  }
+
   async proxyRequest(
     service: ServiceName,
     targetPath: string,
@@ -28,13 +52,34 @@ export class ProxyService {
     reply: FastifyReply
   ): Promise<void> {
     const targetUrl = this.getServiceUrl(service);
-    const url = new URL(targetPath, targetUrl);
+    const finalTargetPath = this.buildTargetPath(targetPath, req);
+    const url = new URL(finalTargetPath, targetUrl);
 
     try {
+      // Generate service token for internal communication
+      const authenticatedRequest = req as AuthenticatedRequest;
+      const apiKey = authenticatedRequest.apiKey;
+      
+      if (!apiKey) {
+        throw new Error('API key not found in authenticated request');
+      }
+
+      const serviceToken = this.jwtService.generateServiceToken(
+        apiKey.clientId, // merchantId
+        apiKey.permissions,
+        service
+      );
+
+      const headers = {
+        ...this.filterHeaders(req.headers),
+        'Authorization': `Bearer ${serviceToken}`,
+        'X-Merchant-ID': apiKey.clientId,
+        'X-Service-Token': 'true'
+      };
 
       const response = await request(url, {
-        method: req.method,
-        headers: this.filterHeaders(req.headers),
+        method: req.method as any,
+        headers,
         body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
       });
 
@@ -58,7 +103,10 @@ export class ProxyService {
           stack: error.stack
         } : error,
         service,
-        url: url.toString()
+        url: url.toString(),
+        originalPath: req.url,
+        targetPath,
+        finalTargetPath
       });
 
       reply.status(502).send({
@@ -70,7 +118,7 @@ export class ProxyService {
   }
 
   private filterHeaders(headers: Record<string, any>): Record<string, any> {
-    const allowedHeaders = ['authorization', 'content-type', 'accept', 'idempotency-key'];
+    const allowedHeaders = ['content-type', 'accept', 'idempotency-key'];
     return Object.fromEntries(
       Object.entries(headers).filter(([key]) => allowedHeaders.includes(key.toLowerCase()))
     );

@@ -190,22 +190,21 @@ export class SettingsService {
   }
 
   async getProviderCredentialForMerchant(
-      merchantCode: string, 
+    merchantId: string, 
       conditions: Record<string, any>
     ): Promise<ProviderCredential> {
-    const merchant = await this.getMerchantByMerchantCode(merchantCode);
+    const merchant = await this.getMerchant(merchantId);
     if (!merchant) {
-      throw new NotFoundException(`Merchant ${merchantCode} not found`);
+      throw new NotFoundException(`Merchant ${merchantId} not found`);
     }
   
     // Get all routing rules for this merchant, ordered by weight (highest first)
     const routingRules = await this.routingRuleRepository.find({
-      where: { merchantId: merchant.id }, // Use the UUID id instead of merchantCode
+      where: { merchantId: merchantId }, // Use the UUID id instead of merchantCode
       order: { weight: 'DESC' },
     });
-
     if (routingRules.length === 0) {
-      throw new NotFoundException(`No routing rules found for merchant ${merchantCode}`);
+      throw new NotFoundException(`No routing rules found for merchant ${merchantId}`);
     }
     const providerCredential = await this.providerCredentialRepository.findOne({
       where: { id: routingRules[0].providerCredentialId },

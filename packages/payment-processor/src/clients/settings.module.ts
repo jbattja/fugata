@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SettingsClient } from '@fugata/shared';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtService } from './jwt.service';
 
 @Module({
   imports: [
@@ -18,7 +19,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     },
+    {
+      provide: JwtService,
+      useFactory: (configService: ConfigService) => {
+        return new JwtService(configService.get('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production'));
+      },
+      inject: [ConfigService],
+    }
   ],
-  exports: [SettingsClient],
+  exports: [SettingsClient, JwtService],
 })
 export class SettingsModule {} 

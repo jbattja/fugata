@@ -1,9 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PaymentRequestContext, ProviderTransformer } from './transformer';
 import { PaymentRequest, ProviderCredential } from '@fugata/shared';
 import { SettingsClient } from '@fugata/shared';
 import { PaymentProducerService } from 'src/kafka/payment-producer.service';
-import { ClientKafka } from '@nestjs/microservices';
+import { JwtService } from 'src/clients/jwt.service';
 
 @Injectable()
 export class PaymentRouter {
@@ -12,6 +12,7 @@ export class PaymentRouter {
   constructor(
     private readonly settingsClient: SettingsClient,
     private readonly paymentProducer: PaymentProducerService,
+    private readonly jwtService: JwtService
   ) {}
 
   registerProvider(provider: ProviderTransformer<any, any>) {
@@ -44,7 +45,7 @@ export class PaymentRouter {
     context.internalRequest = context.sourceProvider.requestTransformer.toPaymentRequest(context.externalRequest);
 
     const conditions = this.extractConditions(context.internalRequest);
-    const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(merchantCode, conditions);
+    const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(this.jwtService.getAuthHeadersForServiceAccount(), merchantCode, conditions);
     if (!providerCredential) {
       throw new Error(`Target provider credential not found`);
     }

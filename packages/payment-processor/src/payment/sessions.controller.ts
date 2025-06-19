@@ -1,5 +1,5 @@
-import { Body, Controller, Post, Logger } from '@nestjs/common';
-import { PaymentSession, SessionStatus } from '@fugata/shared';
+import { Body, Controller, Post, Logger, Req } from '@nestjs/common';
+import { PaymentSession, SessionStatus, RequirePermissions, getMerchantId } from '@fugata/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -15,9 +15,13 @@ export class SessionsController {
   ) {}
 
   @Post()
+  @RequirePermissions('payments:write')
   @ApiOperation({ summary: 'Create a new payment session' })
   @ApiResponse({ status: 201, description: 'Payment session created successfully', type: PaymentSession })
-  async createSession(@Body() sessionData: CreateSessionDto): Promise<PaymentSession> {
+  async createSession(@Body() sessionData: CreateSessionDto, @Req() request: any): Promise<PaymentSession> {
+    const merchantId = getMerchantId(request);
+    this.logger.log(`Creating payment session for merchant: ${merchantId}`);
+    
     const paymentLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8080';
     const sessionId = uuidv4();
     const session = new PaymentSession({
@@ -27,6 +31,7 @@ export class SessionsController {
       updatedAt: new Date(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
       url: `${paymentLinkUrl}/session/${sessionId}`,
+      merchantCode: merchantId, // Include merchant code from authenticated request
     });
     
     // Merge provided data

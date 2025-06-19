@@ -13,91 +13,92 @@ export class SettingsClient {
   }
 
   // Users
-  async findByUsername(username: string): Promise<User | null> {
-    const response = await this.httpClient.get(`/users/${username}`);
+  async findByUsername(headers: Record<string, string>, username: string): Promise<User | null> {
+    const response = await this.httpClient.get(`/users/${username}`, { headers: headers });
     return response.data;
   }
 
-  async validatePassword(username: string, password: string): Promise<boolean> {
+  async validatePassword(headers: Record<string, string>, username: string, password: string): Promise<boolean> {
     const response = await this.httpClient.post('/users/validate-password', {
       username,
       password,
-    });
+    }, { headers: headers });
     return response.data;
   }
 
-  async getProviderCredentialForMerchant(merchantCode: string, conditions: Record<string, any>): Promise<ProviderCredential> {
+  async getProviderCredentialForMerchant(headers: Record<string, string>, merchantId: string, conditions: Record<string, any>): Promise<ProviderCredential> {
     const response = await this.httpClient.get<ProviderCredential>(
-      `/settings/get-credentials?merchantCode=${merchantCode}`
+      `/settings/get-credentials?merchantId=${merchantId}`, { headers: headers }
     );
     return response.data;
   }
 
   // Merchants
-  async listMerchants(): Promise<Merchant[]> {
-    const response = await this.httpClient.get('settings/merchants');
+  async listMerchants(headers: Record<string, string>): Promise<Merchant[]> {
+    const response = await this.httpClient.get('settings/merchants', { headers: headers });
     return response.data;
   }
 
-  async createMerchant(name: string, merchantCode: string, settings: Record<string, string>): Promise<Merchant> {
-    const response = await this.httpClient.post('settings/merchants', { name, merchantCode });
+  async createMerchant(headers: Record<string, string>, name: string, merchantCode: string, settings: Record<string, string>): Promise<Merchant> {
+    const response = await this.httpClient.post('settings/merchants', { name, merchantCode }, { headers: headers });
     return response.data;
   }
 
-  async updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant> {
-    const response = await this.httpClient.put(`settings/merchants/${id}`, updates);
+  async updateMerchant(headers: Record<string, string>, id: string, updates: Partial<Merchant>): Promise<Merchant> {
+    const response = await this.httpClient.put(`settings/merchants/${id}`, updates, { headers: headers });
     return response.data;
   }
 
-  async getMerchant(id: string): Promise<Merchant> {
-    const response = await this.httpClient.get(`settings/merchants/${id}`);
+  async getMerchant(headers: Record<string, string>, id: string): Promise<Merchant> {
+    const response = await this.httpClient.get(`settings/merchants/${id}`, { headers: headers });
     return response.data;
   }
 
   // Providers
-  async listProviders(): Promise<Provider[]> {
-    const response = await this.httpClient.get('settings/providers');
+  async listProviders(headers: Record<string, string>): Promise<Provider[]> {
+    const response = await this.httpClient.get('settings/providers', { headers: headers });
     return response.data;
   }
 
-  async createProvider(name: string, providerCode: string, settings: Record<string, string>): Promise<Provider> {
-    const response = await this.httpClient.post('settings/providers', { name, providerCode });
+  async createProvider(headers: Record<string, string>, name: string, providerCode: string, settings: Record<string, string>): Promise<Provider> {
+    const response = await this.httpClient.post('settings/providers', { name, providerCode }, { headers: headers });
     return response.data;
   }
 
-  async updateProvider(id: string, updates: Partial<Provider>): Promise<Provider> {
-    const response = await this.httpClient.put(`settings/providers/${id}`, updates);
+  async updateProvider(headers: Record<string, string>, id: string, updates: Partial<Provider>): Promise<Provider> {
+    const response = await this.httpClient.put(`settings/providers/${id}`, updates, { headers: headers });
     return response.data;
   }
 
-  async getProvider(id: string): Promise<Provider> {
-    const response = await this.httpClient.get(`settings/providers/${id}`);
+  async getProvider(headers: Record<string, string>, id: string): Promise<Provider> {
+    const response = await this.httpClient.get(`settings/providers/${id}`, { headers: headers });
     return response.data;
   }
 
   // Provider Credentials
-  async listProviderCredentials(filters?: {
+  async listProviderCredentials(headers: Record<string, string>, filters?: {
     providerCode?: string;
     providerId?: string;
-  }): Promise<ProviderCredential[]> {
+  }): Promise<ProviderCredential[]> { 
     const response = await this.httpClient.get('settings/provider-credentials', {
       params: filters,
+      headers: headers
     });
     return response.data;
   }
 
-  async createProviderCredential(providerCredentialCode: string, providerCode: string, settings: Record<string, string>): Promise<ProviderCredential> {  
-    const response = await this.httpClient.post('settings/provider-credentials', { providerCredentialCode, providerCode, settings });
+  async createProviderCredential(headers: Record<string, string>, providerCredentialCode: string, providerCode: string, settings: Record<string, string>): Promise<ProviderCredential> {  
+    const response = await this.httpClient.post('settings/provider-credentials', { providerCredentialCode, providerCode, settings }, { headers: headers });
     return response.data;
   }
 
-  async updateProviderCredential(id: string, updates: Partial<ProviderCredential>): Promise<ProviderCredential> {
-    const response = await this.httpClient.put(`settings/provider-credentials/${id}`, updates);
+  async updateProviderCredential(headers: Record<string, string>, id: string, updates: Partial<ProviderCredential>): Promise<ProviderCredential> {
+    const response = await this.httpClient.put(`settings/provider-credentials/${id}`, updates, { headers: headers });
     return response.data;
   }
 
-  async getProviderCredential(id: string): Promise<ProviderCredential> {
-    const response = await this.httpClient.get(`settings/provider-credentials/${id}`);
+  async getProviderCredential(headers: Record<string, string>, id: string): Promise<ProviderCredential> {
+    const response = await this.httpClient.get(`settings/provider-credentials/${id}`, { headers: headers });
     return response.data;
   }
 

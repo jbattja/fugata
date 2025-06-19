@@ -1,7 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { settingsClient } from '@/lib/api/clients';
+import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  const authHeaders = await getAuthHeaders(session, 'payment-data');
+  
   const { id } = req.query;
 
   if (req.method !== 'GET') {
@@ -10,10 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   try {
-    const providerCredential = await settingsClient.getProviderCredential(id as string);
+    const providerCredential = await settingsClient.getProviderCredential(authHeaders, id as string);
     res.status(200).json(providerCredential);
   } catch (error) {
-    console.error('Error fetching provider credential:', error);
+    console.error('Error fetching provider credential:', (error as any).message);
     res.status(500).json({ error: 'Failed to fetch provider credential' });
   }
 } 

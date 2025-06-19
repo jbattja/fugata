@@ -12,21 +12,41 @@ export const routes: RouteConfig[] = [
   },
   {
     method: 'GET',
+    path: '/sessions',
+    service: 'payment-data',
+    targetPath: '/payment-sessions',
+    requiresIdempotency: false,
+    requiredPermission: 'payments:read'
+  },
+  {
+    method: 'GET',
     path: '/sessions/:id',
-    service: 'payment-processor',
-    targetPath: '/sessions/:id',
+    service: 'payment-data',
+    targetPath: '/payment-sessions/:id',
     requiresIdempotency: false,
     requiredPermission: 'payments:read'
   },
 
-  // Payment Data
+  // Payments
   {
     method: 'GET',
     path: '/payments',
     service: 'payment-data',
-    targetPath: '/payments',
+    targetPath: '/payment-requests',
     requiresIdempotency: false,
     requiredPermission: 'payments:read',
+    rateLimit: {
+      requests: 100,
+      interval: 60
+    }
+  },
+  {
+    method: 'POST',
+    path: '/adyen/payments',
+    service: 'payment-processor',
+    targetPath: '/adyen/payments',
+    requiresIdempotency: true,
+    requiredPermission: 'payments:write',
     rateLimit: {
       requests: 100,
       interval: 60

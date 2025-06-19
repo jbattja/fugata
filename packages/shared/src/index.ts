@@ -17,3 +17,6 @@ export * from './types/payment/fugata-reference';
 export * from './types/payment/payment-common';
 export * from './types/payment/payment-session';
 export * from './types/payment/payment-instrument';
+
+// Export authentication components
+export * from './auth/service-auth.guard';
