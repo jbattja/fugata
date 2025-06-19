@@ -31,8 +31,7 @@ export interface AuthenticatedRequest {
 @Injectable()
 export class ServiceAuthGuard implements CanActivate {
   private readonly secret: string;
-  private readonly issuerApiGateway: string = 'fugata-api-gateway';
-  private readonly issuerDashboard: string = 'fugata-dashboard';
+  private readonly validIssuers: string[] = ['fugata-api-gateway', 'fugata-dashboard', 'fugata-payment-processor'];
   private readonly audience: string = 'fugata-services';
 
   constructor(secret: string) {
@@ -87,7 +86,7 @@ export class ServiceAuthGuard implements CanActivate {
     if (decoded && (decoded as any).iss) {
       issuer = (decoded as any).iss;
     }
-    if (!issuer || (issuer !== this.issuerApiGateway && issuer !== this.issuerDashboard)) {
+    if (!issuer || !this.validIssuers.includes(issuer)) {
       throw new UnauthorizedException('Invalid service token');
     }
     

@@ -31,12 +31,12 @@ export class JwtService {
     return jwt.sign(
       {
         service: 'payment-processor',
-        permissions: ['users:read', 'users:validate'], 
+        permissions: ['merchants:read', 'providers:read'], 
         role: 'service'
       },
       this.secret,
       {
-        issuer: 'fugata-dashboard',
+        issuer: 'fugata-payment-processor',
         audience: 'fugata-services',
         expiresIn: '5m'
       }
