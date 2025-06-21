@@ -4,7 +4,10 @@ import { Type } from '@sinclair/typebox'
 // API Key related types
 export interface ApiKey {
   key: string
-  clientId: string
+  merchant: {
+    id: string
+    accountCode: string
+  }
   permissions: string[]
   rateLimit: {
     requests: number
@@ -25,7 +28,7 @@ export interface IdempotencyKey {
 }
 
 // Route configuration types
-export type ServiceName = 'payment-processor' | 'payment-data'
+export type ServiceName = 'payment-processor' | 'payment-data' | 'settings-service'
 
 export interface RouteConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -45,7 +48,10 @@ export interface RouteConfig {
 // JSON Schema for API Key validation
 export const ApiKeySchema = Type.Object({
   key: Type.String(),
-  clientId: Type.String(),
+  merchant: Type.Object({
+    id: Type.String(),
+    accountCode: Type.String()
+  }),
   permissions: Type.Array(Type.String()),
   rateLimit: Type.Object({
     requests: Type.Number(),

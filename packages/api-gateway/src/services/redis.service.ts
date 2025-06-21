@@ -40,9 +40,9 @@ export class RedisService {
   }
 
   // Rate limiting
-  async checkRateLimit(clientId: string, limit: number, windowSeconds: number): Promise<boolean> {
+  async checkRateLimit(merchantId: string, limit: number, windowSeconds: number): Promise<boolean> {
     await this.ensureConnection()
-    const key = `ratelimit:${clientId}`
+    const key = `ratelimit:${merchantId}`
     const current = await this.redis.incr(key)
     
     if (current === 1) {

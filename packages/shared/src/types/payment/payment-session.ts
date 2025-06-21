@@ -3,6 +3,7 @@ import { Customer } from "./customer";
 import { CaptureMethod, OrderLine, PaymentType } from "./payment-common";
 import { IsDate, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
+import { Merchant } from "../settings/accounts";
 
 export enum SessionStatus {
     ACTIVE = 'Active',
@@ -50,6 +51,10 @@ export class PaymentSession {
 
     @IsEnum(CaptureMethod)
     @IsOptional()
+    captureMethod: CaptureMethod;
+
+    @IsEnum(CaptureMethod)
+    @IsOptional()
     returnUrl: string;
 
     @ValidateNested()
@@ -61,9 +66,10 @@ export class PaymentSession {
     @IsOptional()
     metadata: Record<string, string>;
 
+    @ValidateNested()
+    @Type(() => Merchant)
     @IsOptional()
-    @IsString()
-    merchantCode?: string;
+    merchant?: Partial<Merchant>;
 
     @ValidateNested()
     @Type(() => SessionDetails)

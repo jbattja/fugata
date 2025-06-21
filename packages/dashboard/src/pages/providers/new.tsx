@@ -11,8 +11,8 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType } from '@fugata/shared';
 
 interface FormData {
-  name: string;
-  providerCode: string;
+  accountCode: string;
+  description: string;
   settings: Record<string, string>;
 }
 
@@ -20,8 +20,8 @@ export default function NewProvider() {
   const { data: session } = useSession();
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    providerCode: '',
+    accountCode: '',
+    description: '',
     settings: {},
   });
   const [error, setError] = useState<JSX.Element | null>(null);
@@ -64,16 +64,15 @@ export default function NewProvider() {
     <DashboardLayout>
       <Form title="Add New Provider" handleSubmit={handleSubmit}>
         <FormInput
-          label="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          label="Account Code"
+          value={formData.accountCode}
+          onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
           required
         />
         <FormInput
-          label="Provider Code"
-          value={formData.providerCode}
-          onChange={(e) => setFormData({ ...formData, providerCode: e.target.value })}
-          required
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
         <KeyValueInput
           label="Settings"

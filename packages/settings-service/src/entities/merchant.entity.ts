@@ -1,20 +1,27 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { ProviderCredential } from './provider-credential.entity';
 import { RoutingRule } from './routing-rule.entity';
+import { AccountStatus, ProviderCredential } from '@fugata/shared';
+import { ApiCredential } from './api-credential.entity';
 
 @Entity('merchants')
 export class Merchant {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  name: string;
+  @Column({ unique: true, name: 'account_code' })
+  accountCode: string;
 
-  @Column({ unique: true, name: 'merchant_code' })
-  merchantCode: string;
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'status', type: 'enum', enum: AccountStatus,  nullable: true})
+  status: AccountStatus;
 
   @OneToMany(() => RoutingRule, rule => rule.merchant)
   routingRules: RoutingRule[];
+
+  @OneToMany(() => ApiCredential, apiCredential => apiCredential.merchant)
+  apiCredentials: ApiCredential[];
 
   @Column('jsonb', { nullable: true })
   settings: Record<string, any>;

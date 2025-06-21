@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query, Req } from '@nestjs/common';
 import { PaymentRequestsService } from './payment-requests.service';
-import { getMerchantId, PaymentRequest, RequirePermissions } from '@fugata/shared';
+import { PaymentRequest, RequirePermissions } from '@fugata/shared';
 
 @Controller('payment-requests')
 export class PaymentRequestsController {
@@ -16,9 +16,7 @@ export class PaymentRequestsController {
     @Query('reference') reference?: string,
     @Req() request?: any
   ) {
-    const merchantId = getMerchantId(request);
     const filters: Partial<PaymentRequest> = {};
-    if (merchantId) filters.merchantCode = merchantId;
     if (status) filters.status = status as any;
     if (paymentMethod) filters.paymentMethod = paymentMethod as any;
     if (reference) filters.reference = reference;

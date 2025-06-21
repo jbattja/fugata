@@ -96,7 +96,7 @@ async function buildApp() {
     closeClient: true
   })
 
-  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, jwtService)
+  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, SETTINGS_SERVICE_URL,jwtService)
 
   // Initialize middleware
   const authMiddleware = new AuthMiddleware(redisService, apiKeyService)

@@ -1,11 +1,11 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Merchant } from '../entities/merchant.entity';
 import { ProviderCredential } from '../entities/provider-credential.entity';
 import { RoutingRule } from '../entities/routing-rule.entity';
 import { Provider } from 'src/entities/provider.entity';
-import { Account, AccountType, validateAccountSettings } from '@fugata/shared';
+import { Account, AccountStatus, AccountType, validateAccountSettings } from '@fugata/shared';
 
 @Injectable()
 export class SettingsService {
@@ -21,13 +21,14 @@ export class SettingsService {
   ) {}
 
   // Merchant CRUD operations
-  async createMerchant(name: string, merchantCode: string, settings: Record<string, any>): Promise<Merchant> {
+  async createMerchant(accountCode: string, description?: string, status?: AccountStatus, settings?: Record<string, any>): Promise<Merchant> {
     const merchant = this.merchantRepository.create({
-      name,
-      merchantCode: merchantCode,
+      accountCode: accountCode,
+      description: description,
+      status: status ? status : AccountStatus.ACTIVE,
       settings: settings,
     });
-    await this.validateSettings(merchant, AccountType.MERCHANT, merchant.name);
+    await this.validateSettings(merchant, AccountType.MERCHANT);
     return this.merchantRepository.save(merchant);
   }
 
@@ -42,13 +43,13 @@ export class SettingsService {
     return merchant;
   }
 
-  async getMerchantByMerchantCode(merchantCode: string): Promise<Merchant> {
+  async getMerchantByAccountCode(accountCode: string): Promise<Merchant> {
     const merchant = await this.merchantRepository.findOne({
-      where: { merchantCode: merchantCode },
+      where: { accountCode: accountCode },
       relations: ['routingRules'],
     });
     if (!merchant) {
-      throw new NotFoundException(`Merchant ${merchantCode} not found`);
+      throw new NotFoundException(`Merchant ${accountCode} not found`);
     }
     return merchant;
   }
@@ -62,7 +63,7 @@ export class SettingsService {
   async updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant> {
     const merchant = await this.getMerchant(id);
     Object.assign(merchant, updates);
-    await this.validateSettings(merchant, AccountType.MERCHANT, merchant.name);
+    await this.validateSettings(merchant, AccountType.MERCHANT);
     return this.merchantRepository.save(merchant);
   }
 
@@ -72,13 +73,14 @@ export class SettingsService {
   }
 
     // Provider CRUD operations
-    async createProvider(name: string, providerCode: string, settings: Record<string, any>): Promise<Provider> {
+    async createProvider(accountCode: string, description?: string, status?: AccountStatus, settings?: Record<string, any>): Promise<Provider> {
       const provider = this.providerRepository.create({
-        name,
-        providerCode: providerCode,
+        accountCode: accountCode,
+        description: description,
+        status: status ? status : AccountStatus.ACTIVE,
         settings: settings,
       });
-      await this.validateSettings(provider, AccountType.PROVIDER, name);
+      await this.validateSettings(provider, AccountType.PROVIDER);
       return this.providerRepository.save(provider);
     }
   
@@ -93,9 +95,9 @@ export class SettingsService {
       return provider;
     }
 
-    async getProviderByProviderCode(providerCode: string): Promise<Provider> {
+    async getProviderByAccountCode(accountCode: string): Promise<Provider> {
       const provider = await this.providerRepository.findOne({
-        where: { providerCode: providerCode },
+        where: { accountCode: accountCode },
         relations: ['providerCredentials'],
       });
       return provider;
@@ -109,7 +111,7 @@ export class SettingsService {
     async updateProvider(id: string, updates: Partial<Provider>): Promise<Provider> {
       const provider = await this.getProvider(id);
       Object.assign(provider, updates);
-      await this.validateSettings(provider, AccountType.PROVIDER, provider.name);
+      await this.validateSettings(provider, AccountType.PROVIDER);
       return this.providerRepository.save(provider);
     }
   
@@ -120,23 +122,25 @@ export class SettingsService {
   
   // ProviderCredentials CRUD operations
   async createProviderCredential(
-      providerCredentialCode: string, 
+      accountCode: string, 
       providerCode: string, 
-      settings: Record<string, any>,
-      isActive: boolean): 
+      description?: string,
+      status?: AccountStatus,
+      settings?: Record<string, any>): 
     Promise<ProviderCredential> {
-    const provider = await this.getProviderByProviderCode(providerCode);
+    const provider = await this.getProviderByAccountCode(providerCode);
     if (!provider) {
       throw new NotFoundException(`Provider ${providerCode} not found`);
     }
     const providerCredential = this.providerCredentialRepository.create({
-      providerCredentialCode: providerCredentialCode,
-      providerId: provider.id,
-      settings,
-      isActive,
+      accountCode: accountCode,
+      description: description,
+      status: status ? status : AccountStatus.ACTIVE,
+      settings: settings,
+      provider: provider,
     });
     providerCredential.provider = provider;
-    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL, providerCredentialCode);
+    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL);
     return this.providerCredentialRepository.save(providerCredential);
   }
 
@@ -151,9 +155,9 @@ export class SettingsService {
     return providerCredential;
   }
 
-  async getProviderCredentialByProviderCredentialCode(providerCredentialCode: string): Promise<ProviderCredential> {
+  async getProviderCredentialByAccountCode(accountCode: string): Promise<ProviderCredential> {
     const providerCredential = await this.providerCredentialRepository.findOne({
-      where: { providerCredentialCode: providerCredentialCode },
+      where: { accountCode: accountCode },
       relations: ['provider'],
     });
     return providerCredential;
@@ -167,20 +171,19 @@ export class SettingsService {
       .leftJoinAndSelect('pc.provider', 'provider')
 
     if (filters?.providerCode) {
-      queryBuilder.andWhere('provider.providerCode = :providerCode', { providerCode: filters.providerCode });
+      queryBuilder.andWhere('provider.accountCode = :providerCode', { providerCode: filters.providerCode });
     }
 
     if (filters?.providerId) {
       queryBuilder.andWhere('pc.providerId = :providerId', { providerId: filters.providerId });
     }
-
     return queryBuilder.getMany();
   }
 
   async updateProviderCredential(id: string, updates: Partial<ProviderCredential>): Promise<ProviderCredential> {
     const providerCredential = await this.getProviderCredential(id);
     Object.assign(providerCredential, updates);
-    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL, providerCredential.providerCredentialCode);
+    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL);
     return this.providerCredentialRepository.save(providerCredential);
   }
 
@@ -223,11 +226,11 @@ export class SettingsService {
     conditions: Record<string, any>,
     weight: number = 1.0,
   ): Promise<RoutingRule> {
-    const merchant = await this.getMerchantByMerchantCode(merchantCode);
+    const merchant = await this.getMerchantByAccountCode(merchantCode);
     if (!merchant) {
       throw new NotFoundException(`Merchant ${merchantCode} not found`);
     }
-    const providerCredential = await this.getProviderCredentialByProviderCredentialCode(providerCredentialCode);
+    const providerCredential = await this.getProviderCredentialByAccountCode(providerCredentialCode);
     if (!providerCredential) {
       throw new NotFoundException(`Provider credential ${providerCredentialCode} not found`);
     }
@@ -278,7 +281,7 @@ export class SettingsService {
     }
   }
 
-  async validateSettings(account: Account, accountType: AccountType, accountName: string): Promise<void> {
+  async validateSettings(account: Account, accountType: AccountType): Promise<void> {
     const settingValidationErrors = validateAccountSettings(account, accountType);
     if (settingValidationErrors.length > 0) {
       const formattedErrors = settingValidationErrors.map(error => {
@@ -287,7 +290,7 @@ export class SettingsService {
       }).join('\n');
       
       throw new BadRequestException({
-        message: `Invalid settings for ${AccountType[accountType]} ${accountName}`,
+        message: `Invalid settings for ${AccountType[accountType]} ${account.accountCode}`,
         errors: formattedErrors
       });
     }

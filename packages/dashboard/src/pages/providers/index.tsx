@@ -1,9 +1,10 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { Provider } from '@fugata/shared';
+import { AccountStatus, Provider } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function Providers() {
   const { data: session } = useSession();
@@ -50,14 +51,21 @@ export default function Providers() {
         description="A list of all providers including their name and provider code."
         data={providers || []}
         columns={[
-          { header: 'Name', accessor: 'name' },
-          { header: 'Provider Code', accessor: 'providerCode' },
+          { header: 'Account Code', accessor: 'accountCode' },
+          { header: 'Description', accessor: 'description' },
           {
             header: 'Created At',
             accessor: (provider) => new Date(provider.createdAt).toLocaleDateString(),
           },
+          {
+            header: 'Status',
+            accessor: (provider) => (
+              <StatusBadge status={provider.status || AccountStatus.PENDING} type="account" />
+            ),
+          },
+
         ]}
-        searchKeys={['name', 'providerCode']}
+        searchKeys={['accountCode', 'description']}
         onAdd={() => router.push('/providers/new')}
         addButtonText="Add Provider"
         actionButtons={[
@@ -67,7 +75,7 @@ export default function Providers() {
           },
           {
             name: 'Credentials',
-            action: (provider) => router.push(`/provider-credentials?providerCode=${provider.providerCode}`),
+            action: (provider) => router.push(`/provider-credentials?providerCode=${provider.accountCode}`),
           },
         ]}
       />

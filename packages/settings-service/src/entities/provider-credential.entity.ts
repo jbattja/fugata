@@ -1,23 +1,24 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Provider } from './provider.entity';
+import { AccountStatus } from '@fugata/shared';
 
 @Entity('provider_credentials')
 export class ProviderCredential {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'provider_credential_code', unique: true })
-  providerCredentialCode: string;
+  @Column({ name: 'account_code', unique: true })
+  accountCode: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'status', type: 'enum', enum: AccountStatus,  nullable: true })
+  status: AccountStatus;
 
   @ManyToOne(() => Provider, provider => provider.providerCredentials)
   @JoinColumn({ name: 'provider_id' })
   provider: Provider;
-
-  @Column({ name: 'provider_id' })
-  providerId: string;
-
-  @Column({ name: 'is_active', default: true })
-  isActive: boolean;
 
   @Column('jsonb', { nullable: true })
   settings: Record<string, any>;

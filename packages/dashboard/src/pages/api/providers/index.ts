@@ -15,11 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
 
       case 'POST':
-        const { name, providerCode, settings } = req.body;
-        if (!name || !providerCode) {
-          return res.status(400).json({ error: 'Name and provider code are required' });
+        const { accountCode, description, settings } = req.body;
+        if (!accountCode) {
+          return res.status(400).json({ error: 'Account code is required' });
         }
-        const provider = await settingsClient.createProvider(authHeaders, name, providerCode, settings);
+        const provider = await settingsClient.createProvider(authHeaders, accountCode, description, settings);
         res.status(201).json(provider);
         break;
 

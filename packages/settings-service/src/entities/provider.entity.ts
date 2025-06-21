@@ -1,16 +1,20 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { ProviderCredential } from './provider-credential.entity';
+import { AccountStatus } from '@fugata/shared';
 
 @Entity('providers')
 export class Provider {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  name: string;
+  @Column({ unique: true, name: 'account_code' })
+  accountCode: string;
 
-  @Column({ unique: true, name: 'provider_code' })
-  providerCode: string;
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'status', type: 'enum', enum: AccountStatus,  nullable: true })
+  status: AccountStatus;
 
   @OneToMany(() => ProviderCredential, providerCredential => providerCredential.provider)
   providerCredentials: ProviderCredential[];

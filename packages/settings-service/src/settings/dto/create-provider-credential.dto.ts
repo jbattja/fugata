@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { AccountStatus } from '@fugata/shared';
 
 export class CreateProviderCredentialDto {
   @ApiProperty({
@@ -8,7 +9,23 @@ export class CreateProviderCredentialDto {
   })
   @IsString()
   @IsNotEmpty({ message: 'Provider credential code is required' })
-  providerCredentialCode: string;
+  accountCode: string;
+
+  @ApiProperty({
+    description: 'Description of the provider credential',
+    example: 'Stripe credential for Acme Corp',
+  })
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @ApiProperty({
+    description: 'Status of the provider credential',
+    example: 'Active',
+  })
+  @IsEnum(AccountStatus)
+  @IsOptional()
+  status: AccountStatus;
 
   @ApiProperty({
     description: 'Code of the provider',
@@ -17,15 +34,6 @@ export class CreateProviderCredentialDto {
   @IsString()
   @IsNotEmpty({ message: 'Provider code is required' })
   providerCode: string;
-
-  @ApiProperty({
-    description: 'Whether this credential is active',
-    example: true,
-    required: false,
-  })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
 
   @ApiProperty({
     description: 'Settings for the provider credential',

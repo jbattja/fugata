@@ -36,7 +36,7 @@ export class AuthMiddleware {
 
     // Check rate limit
     const isWithinLimit = await this.redisService.checkRateLimit(
-      apiKeyData.clientId,
+      apiKeyData.merchant.id,
       apiKeyData.rateLimit.requests,
       apiKeyData.rateLimit.interval
     )

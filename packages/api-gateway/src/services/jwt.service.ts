@@ -2,8 +2,10 @@ import * as jwt from 'jsonwebtoken'
 
 export interface ServiceTokenPayload {
   // Core authentication fields
-  merchantId?: string // For service-to-service (single merchant)
-  merchantIds?: string[] // For dashboard users (multiple merchants)
+  merchant: {
+    id: string
+    accountCode: string
+  }
   permissions: string[]
   service?: string // For service-to-service communication
   
@@ -31,12 +33,16 @@ export class JwtService {
 
   generateServiceToken(
     merchantId: string,
+    merchantCode: string,
     permissions: string[],
     service: string,
     expiresIn: string = '5m' // Short-lived tokens for security
   ): string {
     const payload: Omit<ServiceTokenPayload, 'iat' | 'exp'> = {
-      merchantId,
+      merchant: {
+        id: merchantId,
+        accountCode: merchantCode
+      },
       permissions,
       service
     }
@@ -76,8 +82,10 @@ export class JwtService {
   // New method for generating tokens that can be validated by both API Gateway and services
   generateUnifiedToken(
     payload: {
-      merchantId?: string
-      merchantIds?: string[]
+      merchant: {
+        id: string
+        accountCode: string
+      }
       permissions: string[]
       service?: string
       userId?: string

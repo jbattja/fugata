@@ -13,9 +13,9 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { getSettingsConfig, AccountType, Provider, ProviderCredential } from '@fugata/shared';
 
 interface FormData {
-  providerCredentialCode: string;
+  accountCode: string;
+  description: string;
   providerCode: string;
-  isActive: boolean;
   settings: Record<string, string>;
 }
 
@@ -28,9 +28,9 @@ export default function EditProviderCredential() {
   const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode));
 
   const [formData, setFormData] = useState<FormData>({
-    providerCredentialCode: '',
+    accountCode: '',
+    description: '',
     providerCode: '',
-    isActive: true,
     settings: {},
   });
 
@@ -50,9 +50,9 @@ export default function EditProviderCredential() {
   useEffect(() => {
     if (credential) {
       setFormData({
-        providerCredentialCode: credential.providerCredentialCode,
-        providerCode: credential.provider?.providerCode || '',
-        isActive: credential.isActive,
+        accountCode: credential.accountCode,
+        description: credential.description,
+        providerCode: credential.provider?.accountCode || '',
         settings: credential.settings || {},
       });
     }
@@ -114,8 +114,8 @@ export default function EditProviderCredential() {
       <Form title="Edit Provider Credential" handleSubmit={handleSubmit}>
         <FormInput
             label="Credential Code"
-            value={formData.providerCredentialCode}
-            onChange={(e) => setFormData(prev => ({ ...prev, providerCredentialCode: e.target.value }))}
+            value={formData.accountCode}
+            onChange={(e) => setFormData(prev => ({ ...prev, accountCode: e.target.value }))}
             required
           />
 
@@ -124,16 +124,10 @@ export default function EditProviderCredential() {
             value={formData.providerCode}
             onChange={(e) => setFormData(prev => ({ ...prev, providerCode: e.target.value }))}
             options={providers?.map(provider => ({
-              value: provider.providerCode,
-              label: `${provider.name} (${provider.providerCode})`
+              value: provider.accountCode,
+              label: `${provider.accountCode}`
             })) || []}
             required
-          />
-
-          <FormCheckbox
-            label="Active"
-            checked={formData.isActive}
-            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
           />
 
           <KeyValueInput

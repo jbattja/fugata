@@ -51,5 +51,23 @@ export const routes: RouteConfig[] = [
       requests: 100,
       interval: 60
     }
+  },
+
+  // API Credentials
+  {
+    method: 'GET',
+    path: '/api-credentials',
+    service: 'settings-service',
+    targetPath: '/api-credentials',
+    requiresIdempotency: false,
+    requiredPermission: 'settings:read'
+  },
+  {
+    method: 'POST',
+    path: '/api-credentials/api-key',
+    service: 'settings-service',
+    targetPath: '/api-credentials/api-key',
+    requiresIdempotency: false,
+    requiredPermission: 'settings:write'
   }
 ] 

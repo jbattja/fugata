@@ -5,7 +5,6 @@ import { JwtService } from './jwt.service'
 
 interface SettingsApiCredential {
   id: string
-  merchantId: string
   name: string
   created: string
   status: 'ACTIVE' | 'INACTIVE'
@@ -14,6 +13,10 @@ interface SettingsApiCredential {
     apiHash: string
     expiryDate: string | null
   }>
+  merchant: {
+    id: string
+    accountCode: string
+  }
   updatedAt: string
 }
 
@@ -36,6 +39,7 @@ export class ApiKeyService {
   private async fetchApiCredentials(): Promise<SettingsApiCredential[]> {
     try {
       const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`, { headers: this.jwtService.getAuthHeadersForServiceAccount() })
+      console.log('API credentials:', response.data)
       return response.data
     } catch (error) {
       console.error('Failed to fetch API credentials from settings service:', error)
@@ -46,8 +50,11 @@ export class ApiKeyService {
   private transformToApiKey(credential: SettingsApiCredential, apiHash: string): ApiKey {
     return {
       key: apiHash, // We'll use the hash as the key for lookup
-      clientId: credential.merchantId,
-      permissions: ['payments:read', 'payments:write'], // Default permissions for now
+      merchant: credential.merchant ? {
+        id: credential.merchant.id,
+        accountCode: credential.merchant.accountCode
+      } : null,
+      permissions: ['payments:read', 'payments:write', 'settings:read', 'settings:write'], // Default permissions for now
       rateLimit: {
         requests: 100,
         interval: 60 // 60 seconds

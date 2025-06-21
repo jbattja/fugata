@@ -4,6 +4,7 @@ import { PaymentRequest, PaymentStatus } from '@fugata/shared';
 import { formatAmount } from '@/lib/utils/currency';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,9 +70,7 @@ export default function PaymentsPage() {
           {
             header: 'Status',
             accessor: (payment) => (
-              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${statusColors[payment.status || PaymentStatus.PENDING]}`}>
-                {payment.status}
-              </span>
+              <StatusBadge status={payment.status || PaymentStatus.PENDING} type="payment" />
             ),
           },
           { header: 'Payment Method', accessor: 'paymentMethod' },

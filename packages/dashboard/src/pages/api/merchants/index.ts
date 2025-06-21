@@ -14,11 +14,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
 
       case 'POST':
-        const { name, merchantCode, settings } = req.body;
-        if (!name || !merchantCode) {
-          return res.status(400).json({ error: 'Name and merchant code are required' });
+        const { accountCode, description, settings } = req.body;
+        if (!accountCode) {
+          return res.status(400).json({ error: 'Account code is required' });
         }
-        const newMerchant = await settingsClient.createMerchant(authHeaders, name, merchantCode, settings);
+        const newMerchant = await settingsClient.createMerchant(authHeaders, accountCode, description, settings);
         res.status(201).json(newMerchant);
         break;
 

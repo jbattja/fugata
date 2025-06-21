@@ -1,9 +1,10 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { Merchant } from '@fugata/shared';
+import { AccountStatus, Merchant } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function Merchants() {
   const { data: session } = useSession();
@@ -50,14 +51,20 @@ export default function Merchants() {
         description="A list of all merchants including their name and merchant code."
         data={merchants || []}
         columns={[
-          { header: 'Name', accessor: 'name' },
-          { header: 'Merchant Code', accessor: 'merchantCode' },
+          { header: 'Merchant Code', accessor: 'accountCode' },
+          { header: 'Description', accessor: 'description' },
           {
             header: 'Created At',
             accessor: (merchant) => new Date(merchant.createdAt).toLocaleDateString(),
           },
+          {
+            header: 'Status',
+            accessor: (merchant) => (
+              <StatusBadge status={merchant.status || AccountStatus.PENDING} type="account" />
+            ),
+          },
         ]}
-        searchKeys={['name', 'merchantCode']}
+        searchKeys={['description', 'accountCode']}
         onAdd={() => router.push('/merchants/new')}
         addButtonText="Add Merchant"
         actionButtons={[

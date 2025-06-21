@@ -18,9 +18,9 @@ export default function NewProviderCredential() {
   const providerCode = router.query.providerCode as string;
 
   const [formData, setFormData] = useState({
-    providerCredentialCode: '',
+    accountCode: '',
+    description: '',
     providerCode: providerCode || '',
-    isActive: true,
     settings: {} as Record<string, string>,
   });
   const [error, setError] = useState<JSX.Element | null>(null);
@@ -73,8 +73,8 @@ export default function NewProviderCredential() {
       <Form title="New Provider Credential" handleSubmit={handleSubmit}>
           <FormInput
             label="Credential Code"
-            value={formData.providerCredentialCode}
-            onChange={(e) => setFormData(prev => ({ ...prev, providerCredentialCode: e.target.value }))}
+            value={formData.accountCode}
+            onChange={(e) => setFormData(prev => ({ ...prev, accountCode: e.target.value }))}
             required
           />
 
@@ -83,16 +83,10 @@ export default function NewProviderCredential() {
             value={formData.providerCode}
             onChange={(e) => setFormData(prev => ({ ...prev, providerCode: e.target.value }))}
             options={providers?.map(provider => ({
-              value: provider.providerCode,
-              label: `${provider.name} (${provider.providerCode})`
+              value: provider.accountCode,
+              label: `${provider.accountCode}`
             })) || []}
             required
-          />
-
-          <FormCheckbox
-            label="Active"
-            checked={formData.isActive}
-            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
           />
 
           <KeyValueInput

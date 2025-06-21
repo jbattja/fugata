@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApiCredential, ApiCredentialStatus, ApiKey } from '../entities/api-credential.entity';
+import { Merchant } from '../entities/merchant.entity';
 
 type ApiCredentialUpdateData = Partial<Omit<ApiCredential, 'id' | 'created' | 'updatedAt'>>;
 
@@ -10,6 +11,8 @@ export class ApiCredentialService {
   constructor(
     @InjectRepository(ApiCredential)
     private apiCredentialRepository: Repository<ApiCredential>,
+    @InjectRepository(Merchant)
+    private merchantRepository: Repository<Merchant>,
   ) {}
 
   async create(
@@ -19,8 +22,12 @@ export class ApiCredentialService {
     allowedIpRange?: string[],
     status: ApiCredentialStatus = ApiCredentialStatus.ACTIVE
   ): Promise<ApiCredential> {
+    const merchant = await this.merchantRepository.findOne({ where: { id: merchantId } });
+    if (!merchant) {
+      throw new NotFoundException('Merchant not found');
+    }
     const apiCredential = this.apiCredentialRepository.create({
-      merchantId,
+      merchant,
       name,
       apiKeys,
       allowedIpRange,
@@ -41,34 +48,25 @@ export class ApiCredentialService {
       apiHash: apiHash,
       expiryDate: null
     };
-
-    const apiCredential = this.apiCredentialRepository.create({
-      merchantId,
-      name,
-      apiKeys: [newApiKey],
-      allowedIpRange,
-      status: ApiCredentialStatus.ACTIVE,
-    });
-    return this.apiCredentialRepository.save(apiCredential);
+    return this.create(merchantId, name, [newApiKey], allowedIpRange, ApiCredentialStatus.ACTIVE);
   }
 
-
   async findById(id: string): Promise<ApiCredential | null> {
-    return this.apiCredentialRepository.findOne({ where: { id } });
+    return this.apiCredentialRepository.findOne({ where: { id }, relations: ['merchant'] });
   }
 
   async findByMerchantIdAndName(merchantId: string, name: string): Promise<ApiCredential | null> {
-    return this.apiCredentialRepository.findOne({ where: { merchantId, name } });
+    return this.apiCredentialRepository.findOne({ where: { merchant: { id: merchantId }, name }, relations: ['merchant'] });
   }
 
 
   async findByMerchantId(merchantId: string): Promise<ApiCredential[]> {
-    return this.apiCredentialRepository.find({ where: { merchantId } });
+    return this.apiCredentialRepository.find({ where: { merchant: { id: merchantId } }, relations: ['merchant'] });
   }
 
   async update(id: string, data: ApiCredentialUpdateData): Promise<ApiCredential | null> {
     await this.apiCredentialRepository.update(id, data);
-    return this.apiCredentialRepository.findOne({ where: { id } });
+    return this.apiCredentialRepository.findOne({ where: { id }, relations: ['merchant'] });
   }
 
   async delete(id: string): Promise<void> {
@@ -76,7 +74,7 @@ export class ApiCredentialService {
   }
 
   async findAll(): Promise<ApiCredential[]> {
-    return this.apiCredentialRepository.find();
+    return this.apiCredentialRepository.find({ relations: ['merchant'] });
   }
 
   async findByApiHash(apiHash: string): Promise<ApiCredential | null> {
@@ -85,7 +83,8 @@ export class ApiCredentialService {
         apiKeys: {
           apiHash: apiHash
         }
-      }
+      },
+      relations: ['merchant']
     });
   }
 } 

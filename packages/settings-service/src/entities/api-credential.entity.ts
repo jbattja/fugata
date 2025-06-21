@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Merchant } from './merchant.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 export enum ApiCredentialStatus {
   ACTIVE = 'ACTIVE',
@@ -18,8 +19,9 @@ export class ApiCredential {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  merchantId: string;
+  @ManyToOne(() => Merchant, merchant => merchant.apiCredentials)
+  @JoinColumn({ name: 'merchant_id' })
+  merchant: Merchant;
 
   @Column()
   name: string;

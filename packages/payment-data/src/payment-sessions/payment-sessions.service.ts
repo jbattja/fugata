@@ -11,11 +11,11 @@ export class PaymentSessionsService {
     private readonly paymentSessionRepository: Repository<PaymentSessionEntity>
   ) {}
 
-  async getPaymentSession(sessionId: string, merchantId: string): Promise<PaymentSession | null> {
-    Logger.log(`Getting payment session ${sessionId}`, PaymentSessionsService.name);
-    const entity = await this.paymentSessionRepository.findOne({ where: { sessionId: sessionId, merchantCode: merchantId } });
-    Logger.log(`Payment session ${sessionId} found: ${entity ? 'true' : 'false'}`, PaymentSessionsService.name);
-    return entity ? entity.toPaymentSession() : null;
+  async getPaymentSession(sessionId: string, merchantId?: string): Promise<PaymentSession | null> {
+    if (!merchantId) {
+      return this.paymentSessionRepository.findOne({ where: { sessionId: sessionId} });
+    } 
+    return this.paymentSessionRepository.findOne({ where: { sessionId: sessionId, merchant: { id: merchantId } } });
   }
 
   async listPaymentSessions(
@@ -34,6 +34,12 @@ export class PaymentSessionsService {
     }
     if (filters.sessionId) {
       query.andWhere('payment_session.session_id = :sessionId', { sessionId: filters.sessionId });
+    }
+    if (filters.merchant?.id) {
+      query.andWhere('CAST(payment_session.merchant->>\'id\' AS UUID) = :merchantId', { merchantId: filters.merchant.id });
+    }
+    if (filters.merchant?.accountCode) {
+      query.andWhere('payment_session.merchant->>\'accountCode\' = :accountCode', { accountCode: filters.merchant.accountCode });
     }
 
     // Apply pagination

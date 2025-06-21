@@ -3,7 +3,7 @@ import { AdyenService } from './adyen.service';
 import { AdyenPaymentRequest, AdyenPaymentResponse } from './types/adyen-payment';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaymentRouter } from '../../payment/routing/payment.router';
-import { getMerchantId } from '../../../../shared/src/auth/service-auth.guard';
+import { getMerchant } from '../../../../shared/src/auth/service-auth.guard';
 
 @ApiTags('adyen')
 @Controller('adyen')
@@ -20,10 +20,10 @@ export class AdyenController {
     @Body() paymentRequest: AdyenPaymentRequest,
     @Req() req: Request
   ): Promise<AdyenPaymentResponse> {
-    const merchantId = getMerchantId(req)
+    const merchant = getMerchant(req)
     return this.paymentRouter.routePayment<AdyenPaymentRequest, AdyenPaymentResponse>(
       this.adyenService,
-      merchantId,
+      merchant.id,
       paymentRequest
     );
   }

@@ -10,15 +10,18 @@ export class ProxyService {
   constructor(
     private paymentProcessorUrl: string,
     private paymentDataUrl: string,
+    private settingsServiceUrl: string,
     private jwtService: JwtService
   ) {}
 
   private getServiceUrl(service: ServiceName): string {
     switch (service) {
       case 'payment-processor':
-        return this.paymentProcessorUrl
-      case 'payment-data':
-        return this.paymentDataUrl
+          return this.paymentProcessorUrl
+        case 'payment-data':
+          return this.paymentDataUrl
+      case 'settings-service':
+        return this.settingsServiceUrl
       default:
         throw new Error(`Unknown service: ${service}`)
     }
@@ -65,7 +68,8 @@ export class ProxyService {
       }
 
       const serviceToken = this.jwtService.generateServiceToken(
-        apiKey.clientId, // merchantId
+        apiKey.merchant.id,
+        apiKey.merchant.accountCode,
         apiKey.permissions,
         service
       );
@@ -73,7 +77,7 @@ export class ProxyService {
       const headers = {
         ...this.filterHeaders(req.headers),
         'Authorization': `Bearer ${serviceToken}`,
-        'X-Merchant-ID': apiKey.clientId,
+        'X-Merchant-ID': apiKey.merchant.id,
         'X-Service-Token': 'true'
       };
 

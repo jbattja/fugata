@@ -24,9 +24,9 @@ export class PaymentRouter {
     if (!provider) {
       throw new Error(`Target provider for ${providerCredential.id} not found`);
     }
-    const providerTransformer = this.providerTransformers.get(providerCredential.provider.providerCode);
+    const providerTransformer = this.providerTransformers.get(providerCredential.provider.accountCode);
     if (!providerTransformer) {
-      throw new Error(`Provider transformer for ${providerCredential.provider.providerCode} not found`);
+      throw new Error(`Provider transformer for ${providerCredential.provider.accountCode} not found`);
     }
     providerTransformer.setProviderCredentials(providerCredential);
     return providerTransformer;
@@ -64,8 +64,8 @@ export class PaymentRouter {
     context.providerResponse = await context.targetProvider.connector.sendPayment(context.providerRequest, context);
     // Transform target response to our internal format
     context.internalResponse = context.targetProvider.responseTransformer.toPaymentResponse(context.providerResponse, context);
-    context.internalResponse.providerCredentialCode = providerCredential.providerCredentialCode;
-    context.internalResponse.providerCode = providerCredential.provider.providerCode;
+    context.internalResponse.providerCredentialCode = providerCredential.accountCode;
+    context.internalResponse.providerCode = providerCredential.provider.accountCode;
     context.internalResponse.merchantCode = merchantCode;
     // Publish payment request to Kafka
     this.paymentProducer.publishPaymentRequest(this.mergeRequests(context.internalRequest, context.internalResponse));

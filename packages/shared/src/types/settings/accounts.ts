@@ -8,29 +8,33 @@ export enum AccountType {
   PROVIDER = 'provider',
 }
 
+export enum AccountStatus {
+  ACTIVE = 'Active',
+  INACTIVE = 'Inactive',
+  PENDING = 'Pending',
+}
+
 export abstract class Account {
   id: string;
+  accountCode: string;
+  description: string;
+  status: AccountStatus;
   settings: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export class ProviderCredential extends Account {
-  providerCredentialCode: string;
   provider: Provider;
   isActive: boolean;
 }
 
 export class Merchant extends Account {
-  name: string;
-  merchantCode: string;
   providersCredentials: ProviderCredential[];
   availablePaymentChannels: RoutingRule[];
 } 
 
 export class Provider extends Account {
-  name: string;
-  providerCode: string;
   providerCredentials: ProviderCredential[];
 } 
 
@@ -51,10 +55,10 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
   let settingsConfig: AccountSettingsConfig;
   if (accountType === AccountType.PROVIDER_CREDENTIAL) {
     const providerCredential = account as ProviderCredential;
-    if (providerCredential.provider == null || providerCredential.provider.providerCode == null) {
+    if (providerCredential.provider == null || providerCredential.provider.accountCode == null) {
       throw new Error('Provider is null');
     }
-    const providerCode = providerCredential.provider.providerCode;
+    const providerCode = providerCredential.provider.accountCode;
     settingsConfig = getSettingsConfig(accountType, providerCode);
   } else {
     settingsConfig = getSettingsConfig(accountType, null);

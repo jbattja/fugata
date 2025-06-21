@@ -1,14 +1,8 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { AccountStatus } from '@fugata/shared';
 
 export class CreateProviderDto {
-  @ApiProperty({
-    description: 'Name of the provider',
-    example: 'Stripe',
-  })
-  @IsString()
-  @IsNotEmpty({ message: 'Name is required' })
-  name: string;
 
   @ApiProperty({
     description: 'Unique code for the provider',
@@ -16,7 +10,23 @@ export class CreateProviderDto {
   })
   @IsString()
   @IsNotEmpty({ message: 'Provider code is required' })
-  providerCode: string;
+  accountCode: string;
+
+  @ApiProperty({
+    description: 'Description of the provider',
+    example: 'Stripe',
+  })
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @ApiProperty({
+    description: 'Status of the provider',
+    example: 'Active',
+  })
+  @IsEnum(AccountStatus)
+  @IsOptional()
+  status: AccountStatus;
 
   @ApiProperty({
     description: 'Settings for the provider credential',

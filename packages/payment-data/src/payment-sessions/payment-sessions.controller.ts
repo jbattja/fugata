@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Param, Logger, Req, NotFoundException } from '@nestjs/common';
 import { PaymentSessionsService } from './payment-sessions.service';
-import { PaymentSession, RequirePermissions, getMerchantId } from '@fugata/shared';
+import { PaymentSession, RequirePermissions, getMerchant, hasMerchantAccess } from '@fugata/shared';
 
 @Controller('payment-sessions')
 export class PaymentSessionsController {
@@ -16,11 +16,12 @@ export class PaymentSessionsController {
     @Query('sessionId') sessionId?: string,
     @Req() request?: any
   ) {
-    const merchantId = getMerchantId(request);
-    Logger.log(`Listing payment sessions for merchant: ${merchantId}`, PaymentSessionsController.name);
+    const merchant = getMerchant(request);
+    Logger.log(`Listing payment sessions for merchant: ${merchant.id}`, PaymentSessionsController.name);
     
     const filters: Partial<PaymentSession> = {};
-    if (merchantId) filters.merchantCode = merchantId;
+    if (merchant && merchant.id) filters.merchant = { id: merchant.id };
+    if (merchant && merchant.accountCode) filters.merchant = { accountCode: merchant.accountCode };
     if (status) filters.status = status as any;
     if (reference) filters.reference = reference;
     if (sessionId) filters.sessionId = sessionId;
@@ -35,13 +36,20 @@ export class PaymentSessionsController {
   @Get(':id')
   @RequirePermissions('payments:read')
   async getPaymentSession(@Param('id') sessionId: string, @Req() request?: any) {
-    const merchantId = getMerchantId(request);
-    Logger.log(`Getting payment session ${sessionId} for merchant: ${merchantId}`, PaymentSessionsController.name);
-    
-    // Ensure the session belongs to the authenticated merchant
-    const session = await this.paymentSessionsService.getPaymentSession(sessionId, merchantId);
+    const merchant = getMerchant(request);
+    let session: PaymentSession | null = null;
+    if (!merchant || !merchant.id) {
+      session = await this.paymentSessionsService.getPaymentSession(sessionId);
+    } else {
+      session = await this.paymentSessionsService.getPaymentSession(sessionId, merchant.id);
+    }
     if (!session) {
       throw new NotFoundException('Payment session not found');
+    }
+    if (session.merchant && session.merchant.id) {
+      if (!hasMerchantAccess(request, session.merchant.id)) {
+        throw new NotFoundException('Payment session not found');
+      }
     }
     return session;
   }

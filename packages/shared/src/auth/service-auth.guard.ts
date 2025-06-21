@@ -3,8 +3,10 @@ import * as jwt from 'jsonwebtoken';
 
 export interface ServiceTokenPayload {
   // Core authentication fields
-  merchantId?: string; // For service-to-service (single merchant)
-  merchantIds?: string[]; // For dashboard users (multiple merchants)
+  merchant: {
+    id: string;
+    accountCode: string;
+  };
   permissions: string[];
   service?: string; // For service-to-service communication
   
@@ -54,18 +56,10 @@ export class ServiceAuthGuard implements CanActivate {
       request.user = payload;
       
       // Set merchant context - prefer single merchantId for service-to-service
-      if (payload.merchantId) {
-        request.merchantId = payload.merchantId;
-      } else if (payload.merchantIds && payload.merchantIds.length > 0) {
-        // For dashboard users, use the first merchant or extract from header
-        const headerMerchantId = request.headers['x-merchant-id'];
-        if (headerMerchantId && payload.merchantIds.includes(headerMerchantId)) {
-          request.merchantId = headerMerchantId;
-        } else {
-          request.merchantId = payload.merchantIds[0]; // Default to first merchant
-        }
-      }
-      
+      if (payload.merchant && payload.merchant.id) {
+        request.merchantId = payload.merchant.id;
+        request.merchantCode = payload.merchant.accountCode;
+      }      
       request.userId = payload.userId;
       request.role = payload.role;
       
@@ -103,9 +97,9 @@ export class ServiceAuthGuard implements CanActivate {
     }
 
     // Validate merchant ID header matches token (for service-to-service)
-    if (payload.merchantId) {
+    if (payload.merchant && payload.merchant.id) {
       const headerMerchantId = request.headers['x-merchant-id'];
-      if (headerMerchantId && headerMerchantId !== payload.merchantId) {
+      if (headerMerchantId && headerMerchantId !== payload.merchant.id) {
         throw new UnauthorizedException('Merchant ID mismatch');
       }
     }
@@ -197,8 +191,11 @@ export const RequireAdmin = () => {
 };
 
 // Helper function to get merchant ID from request
-export function getMerchantId(request: any): string {
-  return request.merchantId || request.user?.merchantId;
+export function getMerchant(request: any): {
+  id: string;
+  accountCode: string;
+} {
+  return request.merchant || request.user?.merchant;
 }
 
 // Helper function to get user ID from request

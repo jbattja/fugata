@@ -39,8 +39,8 @@ export class SettingsClient {
     return response.data;
   }
 
-  async createMerchant(headers: Record<string, string>, name: string, merchantCode: string, settings: Record<string, string>): Promise<Merchant> {
-    const response = await this.httpClient.post('settings/merchants', { name, merchantCode }, { headers: headers });
+  async createMerchant(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<Merchant> {
+    const response = await this.httpClient.post('settings/merchants', { accountCode, description, settings }, { headers: headers });
     return response.data;
   }
 
@@ -60,8 +60,8 @@ export class SettingsClient {
     return response.data;
   }
 
-  async createProvider(headers: Record<string, string>, name: string, providerCode: string, settings: Record<string, string>): Promise<Provider> {
-    const response = await this.httpClient.post('settings/providers', { name, providerCode }, { headers: headers });
+  async createProvider(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<Provider> {
+    const response = await this.httpClient.post('settings/providers', { accountCode, description, settings }, { headers: headers });
     return response.data;
   }
 
@@ -87,8 +87,8 @@ export class SettingsClient {
     return response.data;
   }
 
-  async createProviderCredential(headers: Record<string, string>, providerCredentialCode: string, providerCode: string, settings: Record<string, string>): Promise<ProviderCredential> {  
-    const response = await this.httpClient.post('settings/provider-credentials', { providerCredentialCode, providerCode, settings }, { headers: headers });
+  async createProviderCredential(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<ProviderCredential> {  
+    const response = await this.httpClient.post('settings/provider-credentials', { accountCode, description, settings }, { headers: headers });
     return response.data;
   }
 

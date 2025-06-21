@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { PaymentSession, SessionStatus, PaymentType } from '@fugata/shared';
+import { PaymentSession, SessionStatus, PaymentType, Merchant, CaptureMethod } from '@fugata/shared';
 
 @Entity('payment_sessions')
 export class PaymentSessionEntity {
@@ -24,6 +24,9 @@ export class PaymentSessionEntity {
   @Column('jsonb', { name: 'payment_type', nullable: true })
   paymentType: any;
 
+  @Column({ name: 'capture_method', nullable: true })
+  captureMethod: CaptureMethod;
+
   @Column({ name: 'return_url', nullable: true })
   returnUrl: string;
 
@@ -33,8 +36,8 @@ export class PaymentSessionEntity {
   @Column('jsonb', { nullable: true })
   metadata: Record<string, string>;
 
-  @Column({ name: 'merchant_code', nullable: true })
-  merchantCode: string;
+  @Column('jsonb', { name: 'merchant', nullable: true })
+  merchant: Merchant;
 
   @Column('jsonb', { name: 'session_details', nullable: true })
   sessionDetails: any;
@@ -66,10 +69,11 @@ export class PaymentSessionEntity {
       customer: this.customer,
       reference: this.reference,
       paymentType: this.paymentType,
+      captureMethod: this.captureMethod,
       returnUrl: this.returnUrl,
       orderLines: this.orderLines,
       metadata: this.metadata,
-      merchantCode: this.merchantCode,
+      merchant: this.merchant,
       sessionDetails: this.sessionDetails,
       status: this.status,
       refusalReason: this.refusalReason,

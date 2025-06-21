@@ -11,8 +11,8 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType } from '@fugata/shared';
 
 interface FormData {
-  name: string;
-  merchantCode: string;
+  accountCode: string;
+  description: string;
   settings: Record<string, string>;
 }
 
@@ -20,15 +20,15 @@ export default function NewMerchant() {
   const { data: session } = useSession();
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    merchantCode: '',
+    accountCode: '',
+    description: '',
     settings: {} as Record<string, string>,
   });
   const [error, setError] = useState<JSX.Element | null>(null);
   const availableSettings = Object.keys(getSettingsConfig(AccountType.MERCHANT, null));
 
   const createMerchant = useMutation({
-    mutationFn: async (data: { name: string; merchantCode: string }) => {
+    mutationFn: async (data: { accountCode: string; description: string; settings: Record<string, string> }) => {
       const response = await fetch('/api/merchants', {
         method: 'POST',
         headers: {
@@ -69,17 +69,16 @@ export default function NewMerchant() {
   return (
     <DashboardLayout>
       <Form title="Add New Merchant" handleSubmit={handleSubmit}>
-        <FormInput
-          label="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+      <FormInput
+          label="Merchant Code"
+          value={formData.accountCode}
+          onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
           required
         />
         <FormInput
-          label="Merchant Code"
-          value={formData.merchantCode}
-          onChange={(e) => setFormData({ ...formData, merchantCode: e.target.value })}
-          required
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
         <KeyValueInput
           label="Settings"

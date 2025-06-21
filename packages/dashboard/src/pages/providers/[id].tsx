@@ -11,8 +11,8 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType, Provider } from '@fugata/shared';
 
 interface FormData {
-  name: string;
-  providerCode: string;
+  accountCode: string;
+  description: string;
   settings: Record<string, string>;
 }
 
@@ -24,8 +24,8 @@ export default function EditProvider() {
   const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER, null));
 
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    providerCode: '',
+    accountCode: '',
+    description: '',
     settings: {},
   });
 
@@ -47,8 +47,8 @@ export default function EditProvider() {
         provider.settings = {};
       }
       setFormData({
-        name: provider.name,
-        providerCode: provider.providerCode,
+        accountCode: provider.accountCode,
+        description: provider.description,
         settings: provider.settings,
       });
     }
@@ -101,16 +101,15 @@ export default function EditProvider() {
     <DashboardLayout>
       <Form title="Edit Provider" handleSubmit={handleSubmit}>
         <FormInput
-          label="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          label="Account Code"
+          value={formData.accountCode}
+          onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
           required
         />
         <FormInput
-          label="Provider Code"
-          value={formData.providerCode}
-          onChange={(e) => setFormData({ ...formData, providerCode: e.target.value })}
-          required
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
 
         <KeyValueInput

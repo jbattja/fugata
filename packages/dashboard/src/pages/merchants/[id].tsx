@@ -11,8 +11,8 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { AccountType, getSettingsConfig, Merchant } from '@fugata/shared';
 
 interface FormData {
-  name: string;
-  merchantCode: string;
+  accountCode: string;
+  description: string;
   settings: Record<string, string>;
 }
 
@@ -21,8 +21,8 @@ export default function EditMerchant() {
   const router = useRouter();
   const { id } = router.query;
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    merchantCode: '',
+    accountCode: '',
+    description: '',
     settings: {},
   });
   const [error, setError] = useState<JSX.Element | null>(null);
@@ -41,7 +41,7 @@ export default function EditMerchant() {
   });
 
   const updateMerchant = useMutation({
-    mutationFn: async (data: { id: string; name: string; merchantCode: string }) => {
+    mutationFn: async (data: { id: string; accountCode: string; description: string; settings: Record<string, string> }) => {
       const response = await fetch('/api/merchants', {
         method: 'PUT',
         headers: {
@@ -68,8 +68,8 @@ export default function EditMerchant() {
         merchant.settings = {};
       }
       setFormData({
-        name: merchant.name,
-        merchantCode: merchant.merchantCode,
+        description: merchant.description,
+        accountCode: merchant.accountCode,
         settings: merchant.settings,
       });
     }
@@ -97,17 +97,16 @@ export default function EditMerchant() {
   return (
     <DashboardLayout>
       <Form title="Edit Merchant" handleSubmit={handleSubmit}>
-        <FormInput
-          label="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+      <FormInput
+          label="Merchant Code"
+          value={formData.accountCode}
+          onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
           required
         />
         <FormInput
-          label="Merchant Code"
-          value={formData.merchantCode}
-          onChange={(e) => setFormData({ ...formData, merchantCode: e.target.value })}
-          required
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
         <KeyValueInput
           label="Settings"

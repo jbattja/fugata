@@ -1,9 +1,10 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { ProviderCredential } from '@fugata/shared';
+import { AccountStatus, ProviderCredential } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function ProviderCredentials() {
   const { data: session } = useSession();
@@ -52,24 +53,21 @@ export default function ProviderCredentials() {
         description="A list of all provider credentials including their provider details."
         data={credentials || []}
         columns={[
-          { header: 'Credential Code', accessor: 'providerCredentialCode' },
-          { header: 'Provider', accessor: (cred) => cred.provider?.providerCode },
-          {
-            header: 'Status',
-            accessor: (cred) => (
-              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
-                cred.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {cred.isActive ? 'Active' : 'Inactive'}
-              </span>
-            ),
-          },
+          { header: 'Account Code', accessor: 'accountCode' },
+          { header: 'Description', accessor: 'description' },
+          { header: 'Provider', accessor: (cred) => cred.provider?.accountCode },
           {
             header: 'Created At',
             accessor: (cred) => new Date(cred.createdAt).toLocaleDateString(),
           },
+          {
+            header: 'Status',
+            accessor: (cred) => (
+              <StatusBadge status={cred.status || AccountStatus.PENDING} type="account" />
+            ),
+          },
         ]}
-        searchKeys={['providerCredentialCode', 'provider.providerCode']}
+        searchKeys={['accountCode', 'description', 'provider.accountCode']}
         onAdd={() => router.push('/provider-credentials/new' + (providerCode ? `?providerCode=${providerCode}` : ''))}
         addButtonText="Add Credential"
         actionButtons={[

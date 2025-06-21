@@ -1,22 +1,31 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { AccountStatus } from '@fugata/shared';
 
 export class CreateMerchantDto {
-  @ApiProperty({
-    description: 'Name of the merchant',
-    example: 'Acme Corp',
-  })
-  @IsString()
-  @IsNotEmpty({ message: 'Name is required' })
-  name: string;
-
   @ApiProperty({
     description: 'Unique code for the merchant',
     example: 'acme-corp',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Merchant code is required' })
-  merchantCode: string;
+  @IsNotEmpty({ message: 'Account code is required' })
+  accountCode: string;
+
+  @ApiProperty({
+    description: 'Description of the merchant',
+    example: 'Acme Corp',
+  })
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @ApiProperty({
+    description: 'Status of the merchant',
+    example: 'Active',
+  })
+  @IsEnum(AccountStatus)
+  @IsOptional()
+  status: AccountStatus;
 
   @ApiProperty({
     description: 'Settings for the provider credential',
