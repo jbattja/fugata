@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Logger, Req } from '@nestjs/common';
-import { PaymentSession, SessionStatus, RequirePermissions, getMerchant } from '@fugata/shared';
+import { PaymentSession, SessionStatus, RequirePermissions, getMerchant, SessionMode } from '@fugata/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -24,12 +24,15 @@ export class SessionsController {
     
     const paymentLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8080';
     const sessionId = uuidv4();
-    const session = new PaymentSession({
+    const expiresAt = sessionData.mode === SessionMode.HOSTED ? new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now for hosted sessions
+    : new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now for component sessions
+
+    const session = new PaymentSession({  
       sessionId: sessionId,
       status: SessionStatus.ACTIVE,
       createdAt: new Date(),
       updatedAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      expiresAt: expiresAt,
       url: `${paymentLinkUrl}/session/${sessionId}`,
       merchant: {
         id: merchant.id,

@@ -2,13 +2,13 @@ import { IsDate, IsEnum, IsOptional, IsString, ValidateNested } from 'class-vali
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '././payment-method';
 import { Amount } from './amount';
-import { PaymentStatus } from './payment-status';
+import { PaymentRequestStatus } from './payment-status';
 import { Customer } from './customer';
 import { FugataReference } from './fugata-reference';
 import { CaptureMethod } from './payment-common';
 
 export enum PaymentRequestNextActionType {
-  REDIRECT_TO_URL = 'redirect_to_url',
+  REDIRECT_TO_URL = 'REDIRECT_TO_URL',
 }
 
 export class PaymentRequestNextAction {
@@ -71,9 +71,9 @@ export class PaymentRequest {
   @IsOptional()
   providerReference?: string;
 
-  @IsEnum(PaymentStatus)
+  @IsEnum(PaymentRequestStatus)
   @IsOptional()
-  status?: PaymentStatus;
+  status?: PaymentRequestStatus;
 
   @IsString()
   @IsOptional()
@@ -162,7 +162,7 @@ export class PaymentRequestBuilder {
     return this;
   }
 
-  withStatus(status?: PaymentStatus): PaymentRequestBuilder {
+  withStatus(status?: PaymentRequestStatus): PaymentRequestBuilder {
     this.paymentRequest.status = status;
     return this;
   }

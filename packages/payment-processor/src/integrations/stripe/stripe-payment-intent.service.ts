@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { StripePaymentIntent, StripePaymentIntentStatus, StripeCaptureMethod, StripeConfirmationMethod, StripePaymentIntentNextAction, StripePaymentIntentNextActionType } from './types/stripe-payment-intent';
-import { PaymentRequest, Amount, CaptureMethod, PaymentRequestBuilder, PaymentStatus, Currency, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentMethod, CustomerBuilder } from '@fugata/shared';
+import { PaymentRequest, Amount, CaptureMethod, PaymentRequestBuilder, PaymentRequestStatus, Currency, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentMethod, CustomerBuilder } from '@fugata/shared';
 import { ProviderTransformer, PaymentRequestTransformer, PaymentResponseTransformer, PaymentConnector, PaymentRequestContext } from '../../payment/routing/transformer';
 import { StripePaymentIntentBuilder } from './types/stripe-payment-intent';
 import { StripeConnector } from './stripe.connector';
@@ -82,42 +82,42 @@ export class StripePaymentIntentService extends ProviderTransformer<StripePaymen
     return paymentIntent;
   }
 
-  private mapStripeStatusToPaymentStatus(status: StripePaymentIntentStatus): PaymentStatus {
+  private mapStripeStatusToPaymentStatus(status: StripePaymentIntentStatus): PaymentRequestStatus {
     switch (status) {
       case StripePaymentIntentStatus.REQUIRES_PAYMENT_METHOD:
-        return PaymentStatus.AWAITING_PAYMENT_METHOD;
+        return PaymentRequestStatus.AWAITING_PAYMENT_METHOD;
       case StripePaymentIntentStatus.REQUIRES_CONFIRMATION:
-        return PaymentStatus.AWAITING_CONFIRMATION;
+        return PaymentRequestStatus.AWAITING_CONFIRMATION;
       case StripePaymentIntentStatus.REQUIRES_ACTION:
-        return PaymentStatus.REQUIRES_ACTION;
+        return PaymentRequestStatus.REQUIRES_ACTION;
       case StripePaymentIntentStatus.PROCESSING:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
       case StripePaymentIntentStatus.REQUIRES_CAPTURE:
-        return PaymentStatus.AWAITING_CAPTURE;
+        return PaymentRequestStatus.AWAITING_CAPTURE;
       case StripePaymentIntentStatus.CANCELED:
-        return PaymentStatus.CANCELED;
+        return PaymentRequestStatus.CANCELED;
       case StripePaymentIntentStatus.SUCCEEDED:
-        return PaymentStatus.SUCCEEDED;
+        return PaymentRequestStatus.SUCCEEDED;
       default:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
     }
   }
 
-  private mapPaymentStatusToStripeStatus(status: PaymentStatus): StripePaymentIntentStatus {
+  private mapPaymentStatusToStripeStatus(status: PaymentRequestStatus): StripePaymentIntentStatus {
     switch (status) {
-      case PaymentStatus.AWAITING_PAYMENT_METHOD:
+      case PaymentRequestStatus.AWAITING_PAYMENT_METHOD:
         return StripePaymentIntentStatus.REQUIRES_PAYMENT_METHOD;
-      case PaymentStatus.AWAITING_CONFIRMATION:
+      case PaymentRequestStatus.AWAITING_CONFIRMATION:
         return StripePaymentIntentStatus.REQUIRES_CONFIRMATION;
-      case PaymentStatus.REQUIRES_ACTION:
+      case PaymentRequestStatus.REQUIRES_ACTION:
         return StripePaymentIntentStatus.REQUIRES_ACTION;
-      case PaymentStatus.PENDING:
+      case PaymentRequestStatus.PENDING:
         return StripePaymentIntentStatus.PROCESSING;
-      case PaymentStatus.AWAITING_CAPTURE:
+      case PaymentRequestStatus.AWAITING_CAPTURE:
         return StripePaymentIntentStatus.REQUIRES_CAPTURE;
-      case PaymentStatus.CANCELED:
+      case PaymentRequestStatus.CANCELED:
         return StripePaymentIntentStatus.CANCELED;
-      case PaymentStatus.SUCCEEDED:
+      case PaymentRequestStatus.SUCCEEDED:
         return StripePaymentIntentStatus.SUCCEEDED;
       default:
         return StripePaymentIntentStatus.PROCESSING;

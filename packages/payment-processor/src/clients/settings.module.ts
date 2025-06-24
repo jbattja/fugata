@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { SettingsClient } from '@fugata/shared';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtService } from './jwt.service';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({

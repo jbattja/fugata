@@ -1,3 +1,4 @@
+import { IsEnum } from "class-validator";
 
 export enum CaptureMethod {
   AUTOMATIC = 'AUTOMATIC',
@@ -20,8 +21,10 @@ export enum PaymentFlow {
 }
 
 export class PaymentType {
-  recurringUsage: RecurringUsage;
-  paymentFlow: PaymentFlow;
+  @IsEnum(RecurringUsage)
+  recurringUsage: RecurringUsage = RecurringUsage.NONE;
+  @IsEnum(PaymentFlow)
+  paymentFlow: PaymentFlow = PaymentFlow.PAY;
 } 
 
 export enum OrderLineType {
@@ -39,5 +42,16 @@ export class OrderLine {
   totalAmount: number;
   totalTaxAmount: number;
   type: OrderLineType;
+}
+
+export class AuthorizationData {
+  avsResult: string;
+  authCode: string;
+  responseMessage: string;
+  merchantAdviceCode: string;
+  retrievalReferenceNumber: string;
+  networkResponseCode: string;
+  acquirerReference: string;
+  cvvResult: string;
 }
 

@@ -1,37 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, ValidateNested, IsArray, IsObject, IsDate } from 'class-validator';
+import { IsString, IsEnum, IsOptional, ValidateNested, IsArray, IsObject, IsDate, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Amount, Customer, OrderLine, PaymentMethod, PaymentType, CaptureMethod } from '@fugata/shared';
+import { Amount, Customer, OrderLine, PaymentMethod, PaymentType, CaptureMethod, SessionMode } from '@fugata/shared';
 
 export class CreateSessionDto {
   @ApiProperty({ description: 'The amount to be paid' })
   @ValidateNested()
   @Type(() => Amount)
+  @IsNotEmpty({ message: 'Amount is required' })
   amount: Amount;
 
+  @ApiProperty({ description: 'Reference number for the payment' })
+  @IsString()
+  @IsNotEmpty({ message: 'Reference is required' })
+  reference: string;
+  
   @ApiProperty({ description: 'Customer information' })
   @ValidateNested()
   @Type(() => Customer)
   @IsOptional()
   customer: Customer;
 
-  @ApiProperty({ description: 'Reference number for the payment' })
-  @IsString()
-  reference: string;
-
-  @ApiProperty({ description: 'Type of payment' })
+  @ApiProperty({ description: 'Type of payment'})
   @ValidateNested()
   @Type(() => PaymentType)
-  @IsOptional()
-  paymentType: PaymentType;
+  paymentType: PaymentType = new PaymentType();
 
   @ApiProperty({ description: 'Capture method for the payment', enum: CaptureMethod })
   @IsEnum(CaptureMethod)
-  @IsOptional()
-  captureMethod: CaptureMethod;
+  captureMethod: CaptureMethod = CaptureMethod.AUTOMATIC;
+
+  @ApiProperty({ description: 'Mode of the session', enum: SessionMode })
+  @IsEnum(SessionMode)
+  mode: SessionMode = SessionMode.HOSTED;
 
   @ApiProperty({ description: 'URL to return to after payment completion' })
   @IsString()
+  @IsOptional()
   returnUrl: string;
 
   @ApiProperty({ description: 'Order line items', type: [OrderLine] })

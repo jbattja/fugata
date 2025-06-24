@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Currency, Amount, PaymentMethod, PaymentRequest, PaymentRequestBuilder, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentStatus } from '@fugata/shared';
+import { Currency, Amount, PaymentMethod, PaymentRequest, PaymentRequestBuilder, PaymentRequestNextAction, PaymentRequestNextActionType, PaymentRequestStatus } from '@fugata/shared';
 import { PaymentRequestTransformer, PaymentResponseTransformer, ProviderTransformer } from '../../payment/routing/transformer';
 import { 
   AdyenPaymentRequest, 
@@ -116,56 +116,56 @@ export class AdyenService extends ProviderTransformer<AdyenPaymentRequest, Adyen
     return payment;
   }
 
-  private mapAdyenResultCodeToStatus(resultCode: AdyenPaymentResultCode): PaymentStatus {
+  private mapAdyenResultCodeToStatus(resultCode: AdyenPaymentResultCode): PaymentRequestStatus {
     switch (resultCode) {
       case AdyenPaymentResultCode.AUTHENTICATION_FINISHED:
-        return PaymentStatus.REQUIRES_ACTION;
+        return PaymentRequestStatus.REQUIRES_ACTION;
       case AdyenPaymentResultCode.AUTHENTICATION_NOT_REQUIRED:
-        return PaymentStatus.SUCCEEDED;
+        return PaymentRequestStatus.SUCCEEDED;
       case AdyenPaymentResultCode.AUTHORISED:
-        return PaymentStatus.SUCCEEDED;
+        return PaymentRequestStatus.SUCCEEDED;
         case AdyenPaymentResultCode.CANCELLED:
-          return PaymentStatus.CANCELED;
+          return PaymentRequestStatus.CANCELED;
       case AdyenPaymentResultCode.CHALLENGE_SHOPPER:
-        return PaymentStatus.REQUIRES_ACTION;
+        return PaymentRequestStatus.REQUIRES_ACTION;
       case AdyenPaymentResultCode.ERROR:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
       case AdyenPaymentResultCode.IDENTIFY_SHOPPER:
-        return PaymentStatus.AWAITING_CONFIRMATION;
+        return PaymentRequestStatus.AWAITING_CONFIRMATION;
       case AdyenPaymentResultCode.PARTIALLY_AUTHORISED:
-        return PaymentStatus.AWAITING_CAPTURE;
+        return PaymentRequestStatus.AWAITING_CAPTURE;
       case AdyenPaymentResultCode.PENDING:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
       case AdyenPaymentResultCode.PRESENT_TO_SHOPPER:
-        return PaymentStatus.REQUIRES_ACTION; 
+        return PaymentRequestStatus.REQUIRES_ACTION; 
       case AdyenPaymentResultCode.RECEIVED:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
       case AdyenPaymentResultCode.REDIRECT_SHOPPER:
-        return PaymentStatus.REQUIRES_ACTION;
+        return PaymentRequestStatus.REQUIRES_ACTION;
       case AdyenPaymentResultCode.REFUSED:
-        return PaymentStatus.FAILED;
+        return PaymentRequestStatus.FAILED;
       default:
-        return PaymentStatus.PENDING;
+        return PaymentRequestStatus.PENDING;
     }
   }
 
-  private mapPaymentStatusToAdyenResultCode(status: PaymentStatus): AdyenPaymentResultCode {
+  private mapPaymentStatusToAdyenResultCode(status: PaymentRequestStatus): AdyenPaymentResultCode {
     switch (status) {
-      case PaymentStatus.SUCCEEDED:
+      case PaymentRequestStatus.SUCCEEDED:
         return AdyenPaymentResultCode.AUTHORISED;
-      case PaymentStatus.FAILED:
+      case PaymentRequestStatus.FAILED:
         return AdyenPaymentResultCode.REFUSED;
-      case PaymentStatus.PENDING:
+      case PaymentRequestStatus.PENDING:
         return AdyenPaymentResultCode.PENDING;
-      case PaymentStatus.CANCELED:
+      case PaymentRequestStatus.CANCELED:
         return AdyenPaymentResultCode.CANCELLED;
-      case PaymentStatus.AWAITING_CONFIRMATION:
+      case PaymentRequestStatus.AWAITING_CONFIRMATION:
         return AdyenPaymentResultCode.IDENTIFY_SHOPPER;
-      case PaymentStatus.AWAITING_CAPTURE:
+      case PaymentRequestStatus.AWAITING_CAPTURE:
         return AdyenPaymentResultCode.AUTHORISED;
-      case PaymentStatus.REQUIRES_ACTION:
+      case PaymentRequestStatus.REQUIRES_ACTION:
         return AdyenPaymentResultCode.PRESENT_TO_SHOPPER;
-      case PaymentStatus.AWAITING_PAYMENT_METHOD:
+      case PaymentRequestStatus.AWAITING_PAYMENT_METHOD:
         return AdyenPaymentResultCode.PRESENT_TO_SHOPPER;
       default:
         return AdyenPaymentResultCode.PENDING;

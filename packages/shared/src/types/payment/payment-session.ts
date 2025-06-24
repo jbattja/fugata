@@ -1,20 +1,26 @@
 import { Amount } from "./amount";
 import { Customer } from "./customer";
 import { CaptureMethod, OrderLine, PaymentType } from "./payment-common";
-import { IsDate, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsDate, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 import { Merchant } from "../settings/accounts";
+import { PaymentMethod } from "./payment-method";
 
 export enum SessionStatus {
-    ACTIVE = 'Active',
-    PENDING = 'Pending',
-    EXPIRED = 'Expired',
-    CANCELLED = 'Cancelled',
-    FAILED = 'Failed',
-    COMPLETED = 'Completed'
+    ACTIVE = 'ACTIVE',
+    PENDING = 'PENDING',
+    EXPIRED = 'EXPIRED',
+    CANCELLED = 'CANCELLED',
+    FAILED = 'FAILED',
+    COMPLETED = 'COMPLETED'
 }
 
-export class SessionDetails {
+export enum SessionMode {
+    COMPONENT = 'COMPONENT',
+    HOSTED = 'HOSTED'
+}
+
+export class HostedPageCustomization {
     merchantDisplayName: string;
     merchantLogo: string;
     primaryColor: string;
@@ -53,7 +59,11 @@ export class PaymentSession {
     @IsOptional()
     captureMethod: CaptureMethod;
 
-    @IsEnum(CaptureMethod)
+    @IsEnum(SessionMode)
+    @IsOptional()
+    mode: SessionMode;
+
+    @IsString()
     @IsOptional()
     returnUrl: string;
 
@@ -71,10 +81,15 @@ export class PaymentSession {
     @IsOptional()
     merchant?: Partial<Merchant>;
 
-    @ValidateNested()
-    @Type(() => SessionDetails)
+    @IsArray()
+    @IsEnum(PaymentMethod)
     @IsOptional()
-    sessionDetails: SessionDetails;
+    allowedPaymentMethods: PaymentMethod[];
+
+    @ValidateNested()
+    @Type(() => HostedPageCustomization)
+    @IsOptional()
+    hostedPageCustomization: HostedPageCustomization;
 
     @IsEnum(SessionStatus)
     @IsOptional()

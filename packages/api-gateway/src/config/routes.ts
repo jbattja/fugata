@@ -29,6 +29,14 @@ export const routes: RouteConfig[] = [
 
   // Payments
   {
+    method: 'POST',
+    path: '/payments',
+    service: 'payment-processor',
+    targetPath: '/payments',
+    requiresIdempotency: true,
+    requiredPermission: 'payments:write',
+  },
+  {
     method: 'GET',
     path: '/payments',
     service: 'payment-data',

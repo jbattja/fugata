@@ -2,11 +2,14 @@ import { Module, OnModuleInit, OnModuleDestroy, Global } from '@nestjs/common';
 import { StripeModule } from './integrations/stripe/stripe.module';
 import { AdyenModule } from './integrations/adyen/adyen.module';
 import { TransformerErrorFilter } from './filters/transformer-error.filter';
+import { ValidationErrorFilter } from './filters/validation-error.filter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { SessionsModule } from './payment/sessions.module';
+import { PaymentsModule } from './payment/payment.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { PaymentProducerService } from './kafka/payment-producer.service';
 import { ServiceAuthGuard } from '@fugata/shared';
+import { WorkflowOrchestrationModule } from './core/workflow-orchestration.module';
+import { SettingsModule } from './clients/settings.module';
 
 @Global()
 @Module({
@@ -14,13 +17,19 @@ import { ServiceAuthGuard } from '@fugata/shared';
     KafkaModule,
     StripeModule,
     AdyenModule,
-    SessionsModule
+    PaymentsModule,
+    WorkflowOrchestrationModule,
+    SettingsModule
   ],
   controllers: [],
   providers: [
     {
       provide: APP_FILTER,
       useClass: TransformerErrorFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ValidationErrorFilter,
     },
     {
       provide: 'JWT_SECRET',

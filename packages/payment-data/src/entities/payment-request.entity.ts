@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { PaymentRequest, PaymentMethod, PaymentStatus, CaptureMethod } from '@fugata/shared'
+import { PaymentRequest, PaymentMethod, PaymentRequestStatus, CaptureMethod } from '@fugata/shared'
 
 @Entity('payment_requests')
 export class PaymentRequestEntity {
@@ -54,10 +54,10 @@ export class PaymentRequestEntity {
 
   @Column({
     type: 'enum',
-    enum: PaymentStatus,
+    enum: PaymentRequestStatus,
     nullable: true
   })
-  status: PaymentStatus;
+  status: PaymentRequestStatus;
 
   @Column({ name: 'failure_reason', nullable: true })
   failureReason: string;
