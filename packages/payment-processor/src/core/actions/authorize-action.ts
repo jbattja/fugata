@@ -1,7 +1,6 @@
-import { Action, ActionType, AuthenticationData, AuthenticationFlow, AuthorizationData, PaymentStatus, RedirectMethod } from "@fugata/shared";
+import { AuthorizationData, PaymentStatus } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
-import { v4 as uuidv4 } from 'uuid';
 
 export class AuthorizeAction extends BaseAction {
     async execute(context: PaymentContext): Promise<PaymentContext> {

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { request } from 'undici';
 import { ServiceName } from '../types';
-import { JwtService } from './jwt.service';
 import { AuthenticatedRequest } from '../types';
+import { jwtService } from '../lib/jwt.service';
 
 @Injectable()
 export class ProxyService {
@@ -11,7 +11,6 @@ export class ProxyService {
     private paymentProcessorUrl: string,
     private paymentDataUrl: string,
     private settingsServiceUrl: string,
-    private jwtService: JwtService
   ) {}
 
   private getServiceUrl(service: ServiceName): string {
@@ -67,7 +66,7 @@ export class ProxyService {
         throw new Error('API key not found in authenticated request');
       }
 
-      const serviceToken = this.jwtService.generateServiceToken(
+      const serviceToken = jwtService.generateApiUserServiceToken(
         apiKey.merchant.id,
         apiKey.merchant.accountCode,
         apiKey.permissions,

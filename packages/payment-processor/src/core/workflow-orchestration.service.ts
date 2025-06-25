@@ -46,7 +46,7 @@ export class WorkflowOrchestrationService {
         request,
       };
       
-      let merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
       if (merchantId) {
         // Extract authorization headers from the request
         const authHeaders = this.extractAuthHeaders(request);
@@ -62,7 +62,7 @@ export class WorkflowOrchestrationService {
         context: result
       };
     } catch (error) {
-      console.error('Workflow execution failed:', error);
+      Logger.error('Workflow execution failed:', error, WorkflowOrchestrationService.name);
       return {
         success: false,
         context: { payment, request },

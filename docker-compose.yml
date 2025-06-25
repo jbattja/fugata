@@ -179,6 +179,12 @@ services:
       - PAYMENT_DATA_SERVICE_URL=http://payment-data:3001
     env_file:
       - ./packages/checkout/.env
+    volumes:
+      - ./packages/checkout:/app/packages/checkout
+      - ./packages/shared:/app/packages/shared
+      - /app/packages/checkout/node_modules
+      - /app/packages/checkout/.next
+    command: npm run dev
     depends_on:
       - payment-data
 

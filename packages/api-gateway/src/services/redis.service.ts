@@ -1,5 +1,6 @@
 import { Redis } from 'ioredis'
 import { IdempotencyKey } from '../types'
+import { Logger } from '@nestjs/common';
 
 export class RedisService {
   private redis: Redis
@@ -14,7 +15,7 @@ export class RedisService {
     })
 
     this.redis.on('error', (err) => {
-      console.error('Redis error:', err)
+      Logger.error('Redis error:', err, RedisService.name);
     })
   }
 

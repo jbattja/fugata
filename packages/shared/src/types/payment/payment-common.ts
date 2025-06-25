@@ -1,4 +1,4 @@
-import { IsEnum } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
 export enum CaptureMethod {
   AUTOMATIC = 'AUTOMATIC',
@@ -35,23 +35,66 @@ export enum OrderLineType {
 }
 
 export class OrderLine {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  taxRate: number;
-  totalAmount: number;
-  totalTaxAmount: number;
-  type: OrderLineType;
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsNumber()
+  @IsOptional()
+  quantity?: number;
+
+  @IsNumber()
+  @IsOptional()
+  unitPrice?: number;
+
+  @IsNumber()
+  @IsOptional()
+  taxRate?: number;
+
+  @IsNumber()
+  @IsOptional()
+  totalAmount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  totalTaxAmount?: number;
+
+  @IsEnum(OrderLineType)
+  @IsOptional()
+  type?: OrderLineType;
 }
 
 export class AuthorizationData {
-  avsResult: string;
-  authCode: string;
-  responseMessage: string;
-  merchantAdviceCode: string;
-  retrievalReferenceNumber: string;
-  networkResponseCode: string;
-  acquirerReference: string;
-  cvvResult: string;
+  @IsString()
+  @IsOptional()
+  avsResult?: string;
+
+  @IsString()
+  @IsOptional()
+  authCode?: string;
+
+  @IsString()
+  @IsOptional()
+  responseMessage?: string;
+
+  @IsString()
+  @IsOptional()
+  merchantAdviceCode?: string;
+
+  @IsString()
+  @IsOptional()
+  retrievalReferenceNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  networkResponseCode?: string;
+
+  @IsString()
+  @IsOptional()
+  acquirerReference?: string;
+
+  @IsString()
+  @IsOptional()
+  cvvResult?: string;
 }
 

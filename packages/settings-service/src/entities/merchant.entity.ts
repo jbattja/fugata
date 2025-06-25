@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { RoutingRule } from './routing-rule.entity';
-import { AccountStatus, ProviderCredential } from '@fugata/shared';
+import { AccountStatus } from '@fugata/shared';
 import { ApiCredential } from './api-credential.entity';
 
 @Entity('merchants')

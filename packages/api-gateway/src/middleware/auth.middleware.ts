@@ -50,7 +50,7 @@ export class AuthMiddleware {
     }
 
     // Attach API key info to request for later use
-    ;(request as AuthenticatedRequest).apiKey = apiKeyData
+    (request as AuthenticatedRequest).apiKey = apiKeyData
   }
 
   checkPermission = (requiredPermission: string) => {

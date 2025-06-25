@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { FormSelect } from '@/components/ui/forms/FormSelect';
-import { FormCheckbox } from '@/components/ui/forms/FormCheckbox';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -51,7 +50,7 @@ export default function EditProviderCredential() {
     if (credential) {
       setFormData({
         accountCode: credential.accountCode,
-        description: credential.description,
+        description: credential.description ?? '',
         providerCode: credential.provider?.accountCode || '',
         settings: credential.settings || {},
       });

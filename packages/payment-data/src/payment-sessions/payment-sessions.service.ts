@@ -12,10 +12,19 @@ export class PaymentSessionsService {
   ) {}
 
   async getPaymentSession(sessionId: string, merchantId?: string): Promise<PaymentSession | null> {
+    Logger.log(`Getting payment session: ${sessionId} for merchant: ${merchantId}`, PaymentSessionsService.name);
+    
     if (!merchantId) {
-      return this.paymentSessionRepository.findOne({ where: { sessionId: sessionId} });
+      const session = await this.paymentSessionRepository.findOne({ where: { sessionId: sessionId} });
+      return session;
     } 
-    return this.paymentSessionRepository.findOne({ where: { sessionId: sessionId, merchant: { id: merchantId } } });
+    
+    // Use query builder for JSONB field filtering
+    return await this.paymentSessionRepository
+      .createQueryBuilder('payment_session')
+      .where('payment_session.session_id = :sessionId', { sessionId })
+      .andWhere('CAST(payment_session.merchant->>\'id\' AS UUID) = :merchantId', { merchantId })
+      .getOne();
   }
 
   async listPaymentSessions(

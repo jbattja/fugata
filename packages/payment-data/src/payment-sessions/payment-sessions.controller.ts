@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Param, Logger, Req, NotFoundException } from '@nestjs/common';
 import { PaymentSessionsService } from './payment-sessions.service';
-import { PaymentSession, RequirePermissions, getMerchant, hasMerchantAccess } from '@fugata/shared';
+import { PaymentSession, RequirePermissions, getMerchant } from '@fugata/shared';
 
 @Controller('payment-sessions')
 export class PaymentSessionsController {
@@ -36,6 +36,7 @@ export class PaymentSessionsController {
   @Get(':id')
   @RequirePermissions('payments:read')
   async getPaymentSession(@Param('id') sessionId: string, @Req() request?: any) {
+    Logger.log(`Getting payment session: ${sessionId}`, PaymentSessionsController.name);
     const merchant = getMerchant(request);
     let session: PaymentSession | null = null;
     if (!merchant || !merchant.id) {
@@ -45,11 +46,6 @@ export class PaymentSessionsController {
     }
     if (!session) {
       throw new NotFoundException('Payment session not found');
-    }
-    if (session.merchant && session.merchant.id) {
-      if (!hasMerchantAccess(request, session.merchant.id)) {
-        throw new NotFoundException('Payment session not found');
-      }
     }
     return session;
   }

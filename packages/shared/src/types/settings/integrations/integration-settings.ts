@@ -1,5 +1,5 @@
+import { Logger } from '@nestjs/common';
 import { AccountSettingKey, AccountSettingsConfig, ProviderCredentialSettings } from '../account-settings';
-import { Provider } from '../accounts';
 
 // Type for integration-specific settings
 export interface IntegrationSettings {
@@ -19,7 +19,7 @@ export function getSettingsConfigForProviderCredential(providerCode: string): Ac
     const matchingSettings = integrationSettings.find(integration => integration.providerCode.toLowerCase() === providerCode.toLowerCase());
     if (!matchingSettings) {
         // nothing to validate against, so no errors
-        console.log(`No matching integration settings found for provider code: ${providerCode}`);
+        Logger.warn(`No matching integration settings found for provider code: ${providerCode}`, getSettingsConfigForProviderCredential.name);
     } else {
         settingsConfig = { ...settingsConfig, ...matchingSettings.requiredSettings };
     }

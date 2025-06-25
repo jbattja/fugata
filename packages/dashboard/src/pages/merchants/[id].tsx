@@ -68,7 +68,7 @@ export default function EditMerchant() {
         merchant.settings = {};
       }
       setFormData({
-        description: merchant.description,
+        description: merchant.description ?? '',
         accountCode: merchant.accountCode,
         settings: merchant.settings,
       });

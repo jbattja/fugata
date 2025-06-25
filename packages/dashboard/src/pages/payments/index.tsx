@@ -1,23 +1,12 @@
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { PaymentRequest, PaymentStatus } from '@fugata/shared';
+import { PaymentRequest, PaymentRequestStatus } from '@fugata/shared';
 import { formatAmount } from '@/lib/utils/currency';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export const dynamic = 'force-dynamic';
-
-const statusColors: Record<PaymentStatus, string> = {
-  [PaymentStatus.REQUIRES_ACTION]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.AWAITING_PAYMENT_METHOD]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.AWAITING_CAPTURE]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.AWAITING_CONFIRMATION]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.CANCELED]: 'bg-red-100 text-red-800',
-  [PaymentStatus.SUCCEEDED]: 'bg-green-100 text-green-800',
-  [PaymentStatus.FAILED]: 'bg-red-100 text-red-800',
-};
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
@@ -70,7 +59,7 @@ export default function PaymentsPage() {
           {
             header: 'Status',
             accessor: (payment) => (
-              <StatusBadge status={payment.status || PaymentStatus.PENDING} type="payment" />
+              <StatusBadge status={payment.status || PaymentRequestStatus.PENDING} type="payment-request" />
             ),
           },
           { header: 'Payment Method', accessor: 'paymentMethod' },

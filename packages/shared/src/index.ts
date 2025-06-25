@@ -23,3 +23,5 @@ export * from './types/payment/authentication';
 
 // Export authentication components
 export * from './auth/service-auth.guard';
+export * from './auth/jwt.service';
+export * from './auth/types';

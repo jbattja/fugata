@@ -55,7 +55,7 @@ export default function Providers() {
           { header: 'Description', accessor: 'description' },
           {
             header: 'Created At',
-            accessor: (provider) => new Date(provider.createdAt).toLocaleDateString(),
+            accessor: (provider) => provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A',
           },
           {
             header: 'Status',

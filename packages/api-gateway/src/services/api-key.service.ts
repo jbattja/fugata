@@ -1,7 +1,8 @@
 import axios from 'axios'
 import * as crypto from 'crypto'
 import { ApiKey } from '../types'
-import { JwtService } from './jwt.service'
+import { Logger } from '@nestjs/common';
+import { jwtService } from '../lib/jwt.service'
 
 interface SettingsApiCredential {
   id: string
@@ -22,14 +23,12 @@ interface SettingsApiCredential {
 
 export class ApiKeyService {
   private settingsServiceUrl: string
-  private jwtService: JwtService
   private apiKeysCache: Map<string, ApiKey> = new Map()
   private lastCacheUpdate: number = 0
   private readonly cacheTtl = 5 * 60 * 1000 // 5 minutes
 
-  constructor(settingsServiceUrl: string, jwtService: JwtService) {
+  constructor(settingsServiceUrl: string) {
     this.settingsServiceUrl = settingsServiceUrl
-    this.jwtService = jwtService
   }
 
   private hashApiKey(apiKey: string): string {
@@ -38,11 +37,10 @@ export class ApiKeyService {
 
   private async fetchApiCredentials(): Promise<SettingsApiCredential[]> {
     try {
-      const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`, { headers: this.jwtService.getAuthHeadersForServiceAccount() })
-      console.log('API credentials:', response.data)
+      const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`, { headers: jwtService.getAuthHeadersForServiceAccount() })
       return response.data
     } catch (error) {
-      console.error('Failed to fetch API credentials from settings service:', error)
+      Logger.error('Failed to fetch API credentials from settings service:', error, ApiKeyService.name);
       throw new Error('Failed to fetch API credentials')
     }
   }
@@ -89,9 +87,9 @@ export class ApiKeyService {
       }
 
       this.lastCacheUpdate = now
-      console.log(`Updated API key cache with ${this.apiKeysCache.size} active keys`)
+      Logger.log(`Updated API key cache with ${this.apiKeysCache.size} active keys`, ApiKeyService.name);
     } catch (error) {
-      console.error('Failed to update API key cache:', error)
+      Logger.error('Failed to update API key cache:', error, ApiKeyService.name);
       // Don't throw here, we'll continue with existing cache
     }
   }

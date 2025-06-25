@@ -14,97 +14,97 @@ export abstract class PaymentInstrumentDetails {}
 
 export class CardNetworkDetails {
     @IsEnum(CardNetwork)
-    network: CardNetwork;
+    network!: CardNetwork;
 
     @IsString()
     @IsOptional()
-    networkToken: string;
+    networkToken?: string;
 
     @IsString()
     @IsOptional()
-    networkTransactionReference: string;
+    networkTransactionReference?: string;
 }
 
 export class CardDetails extends PaymentInstrumentDetails {
     @ValidateNested()
     @Type(() => CardNetworkDetails)
     @IsOptional()
-    cardNetworkDetails: CardNetworkDetails;
+    cardNetworkDetails?: CardNetworkDetails;
 
     @IsString()
     @IsOptional()
-    maskedNumber: string;
+    maskedNumber?: string;
 
     @IsString()
     @IsOptional()
-    bin: string;
+    bin?: string;
 
     @IsString()
     @IsOptional()
-    last4: string;
+    last4?: string;
 
     @IsNumber()
     @IsOptional()
-    expiryMonth: number;
+    expiryMonth?: number;
 
     @IsNumber()
     @IsOptional()
-    expiryYear: number;
+    expiryYear?: number;
 
     @IsString()
     @IsOptional()
-    cardHolderName: string;
+    cardHolderName?: string;
 
     @IsString()
     @IsOptional()
-    issuerName: string;
+    issuerName?: string;
 
     @IsString()
     @IsOptional()
-    country: string;
+    country?: string;
 
     @IsString()
     @IsOptional()
-    cvc: string;
+    cvc?: string;
 }
 
 export class PaymentInstrument {
     @IsString()
     @IsOptional()
-    paymentInstrumentId: string;
+    paymentInstrumentId?: string;
 
     @IsEnum(PaymentInstrumentStatus)
     @IsOptional()
-    status: PaymentInstrumentStatus;
+    status?: PaymentInstrumentStatus;
 
     @IsEnum(RecurringUsage)
     @IsOptional()
-    recurringUsage: RecurringUsage;
+    recurringUsage?: RecurringUsage;
 
     @IsString()
     @IsOptional()
-    customerId: string;
+    customerId?: string;
 
     @IsEnum(PaymentMethod)
     @IsNotEmpty({ message: 'Payment method is required' })
-    paymentMethod: PaymentMethod;
+    paymentMethod!: PaymentMethod;
 
     @ValidateNested()
     @Type(() => PaymentInstrumentDetails)
     @IsOptional()
-    instrumentDetails: PaymentInstrumentDetails;
+    instrumentDetails?: PaymentInstrumentDetails;
 
     @IsObject() 
     @IsOptional()
-    tokens: Record<string, string>;
+    tokens?: Record<string, string>;
 
     @IsDate()
     @IsOptional()
-    createdAt: Date;
+    createdAt?: Date;
 
     @IsDate()
     @IsOptional()
-    updatedAt: Date;
+    updatedAt?: Date;
 }
 
 export function validatePaymentInstrument(paymentInstrument: PaymentInstrument, payment: Payment) {
@@ -116,6 +116,6 @@ export function validatePaymentInstrument(paymentInstrument: PaymentInstrument, 
         return;
     }
     if (!paymentInstrument.recurringUsage) {
-        paymentInstrument.recurringUsage = payment.paymentType.recurringUsage;
+        paymentInstrument.recurringUsage = payment.paymentType?.recurringUsage ?? RecurringUsage.NONE;
     }
 }

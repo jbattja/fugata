@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
+import { Logger } from '@nestjs/common';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -18,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const provider = await settingsClient.getProvider(authHeaders, id as string);
     res.status(200).json(provider);
   } catch (error) {
-    console.error('Error fetching provider:', (error as any).message);
+    Logger.error('Error fetching provider:', (error as any).message, handler.name);
     res.status(500).json({ error: 'Failed to fetch provider' });
   }
 } 

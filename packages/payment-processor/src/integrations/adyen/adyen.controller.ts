@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Headers, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Req } from '@nestjs/common';
 import { AdyenService } from './adyen.service';
 import { AdyenPaymentRequest, AdyenPaymentResponse } from './types/adyen-payment';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

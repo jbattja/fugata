@@ -1,7 +1,6 @@
 import { PaymentStatus } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
-import { v4 as uuidv4 } from 'uuid';
 
 export class VoidAction extends BaseAction {
     async execute(context: PaymentContext): Promise<PaymentContext> {
@@ -9,7 +8,7 @@ export class VoidAction extends BaseAction {
         this.log(`Executing Void action attempt number ${context.voidAttempts}`);
         // TODO: Call capture service
 
-        Math.random() > 0.1 ? this.mockVoidSuccess(context) : this.mockVoidFailed(context);
+        Math.random() > 0.1 ? this.mockVoidSuccess(context) : this.mockVoidFailed();
         this.log('Void action completed');
         return context;
     }
@@ -18,6 +17,6 @@ export class VoidAction extends BaseAction {
         context.payment.status = PaymentStatus.VOIDED;
     }
 
-    private mockVoidFailed(context: PaymentContext) { 
+    private mockVoidFailed() { 
     }
 } 

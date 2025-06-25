@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { getAuthHeadersForServiceAccount, settingsClient } from '../../../lib/api/clients';
+import { settingsClient } from '../../../lib/api/clients';
+import { jwtService } from '../../../lib/auth/jwt.service';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,12 +17,12 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await settingsClient.findByUsername(await getAuthHeadersForServiceAccount(), credentials.username);
+          const user = await settingsClient.findByUsername(await jwtService.getAuthHeadersForServiceAccount(), credentials.username);
           if (!user) {
             return null;
           }
 
-          const isValid = await settingsClient.validatePassword(await getAuthHeadersForServiceAccount(),
+          const isValid = await settingsClient.validatePassword(await jwtService.getAuthHeadersForServiceAccount(),
             credentials.username,
             credentials.password
           );
@@ -41,7 +42,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }: any) {      
+    async jwt({ token, user }: any) {      
       if (user) {
         token.id = user.id;
         token.username = user.username;

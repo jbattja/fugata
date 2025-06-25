@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { PaymentRequestsService } from './payment-requests.service';
 import { PaymentRequest, RequirePermissions } from '@fugata/shared';
 

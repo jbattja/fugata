@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsObject, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { AccountStatus } from '@fugata/shared';
 

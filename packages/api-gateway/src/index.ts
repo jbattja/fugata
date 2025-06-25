@@ -6,11 +6,11 @@ import fastifyRedis from '@fastify/redis'
 import { RedisService } from './services/redis.service'
 import { ApiKeyService } from './services/api-key.service'
 import { ProxyService } from './services/proxy.service'
-import { JwtService } from './services/jwt.service'
 import { AuthMiddleware } from './middleware/auth.middleware'
 import { IdempotencyMiddleware } from './middleware/idempotency.middleware'
 import { RouteConfig } from './types'
 import { routes } from './config/routes'
+import { Logger } from '@nestjs/common';
 
 // Environment variables
 const PORT = process.env.PORT || 4000
@@ -18,7 +18,6 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 const SETTINGS_SERVICE_URL = process.env.SETTINGS_SERVICE_URL || 'http://localhost:3000'
 const PAYMENT_PROCESSOR_URL = process.env.PAYMENT_PROCESSOR_URL || 'http://localhost:3002'
 const PAYMENT_DATA_URL = process.env.PAYMENT_DATA_URL || 'http://localhost:3001'
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
 
 function registerRoute(
   app: ReturnType<typeof fastify>,
@@ -79,14 +78,13 @@ async function buildApp() {
 
   // Initialize services
   const redisService = new RedisService(REDIS_URL)
-  const jwtService = new JwtService(JWT_SECRET)
-  const apiKeyService = new ApiKeyService(SETTINGS_SERVICE_URL, jwtService)
+  const apiKeyService = new ApiKeyService(SETTINGS_SERVICE_URL)
   
   // Ensure Redis is connected before proceeding
   try {
     await redisService.ensureConnection()
   } catch (error) {
-    console.error('Failed to connect to Redis:', error)
+    Logger.error('Failed to connect to Redis:', error, buildApp.name);
     throw error
   }
 
@@ -96,7 +94,7 @@ async function buildApp() {
     closeClient: true
   })
 
-  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, SETTINGS_SERVICE_URL,jwtService)
+  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, SETTINGS_SERVICE_URL)
 
   // Initialize middleware
   const authMiddleware = new AuthMiddleware(redisService, apiKeyService)
@@ -135,7 +133,7 @@ async function start() {
     const app = await buildApp()
     await app.listen({ port: PORT as number, host: '0.0.0.0' })
   } catch (err) {
-    console.error('Error starting server:', err)
+    Logger.error('Error starting server:', err, start.name);
     process.exit(1)
   }
 }

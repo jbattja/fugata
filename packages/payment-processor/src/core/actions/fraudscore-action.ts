@@ -6,7 +6,7 @@ export class FraudScoreAction extends BaseAction {
     async execute(context: PaymentContext): Promise<PaymentContext> {
         this.log('Executing Fraudscore action');
         // TODO: Call fraud score service
-        let score = Math.floor(Math.random() * 100);
+        const score = Math.floor(Math.random() * 100);
         context.fraud = {
             score: score,
             advice: score < 50 ? FraudAdvice.APPROVE :

@@ -1,6 +1,7 @@
-import { ValidationError } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested, ValidationError } from 'class-validator';
 import { MerchantSettings, ProviderSettings, AccountSettingsConfig } from './account-settings';
 import { getSettingsConfigForProviderCredential } from './integrations/integration-settings';
+import { Type } from 'class-transformer';
 
 export enum AccountType {
   PROVIDER_CREDENTIAL = 'providerCredential',
@@ -15,38 +16,99 @@ export enum AccountStatus {
 }
 
 export abstract class Account {
-  id: string;
-  accountCode: string;
-  description: string;
-  status: AccountStatus;
-  settings: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+  @IsString()
+  @IsOptional()
+  id?: string;
 
-export class ProviderCredential extends Account {
-  provider: Provider;
-  isActive: boolean;
+  @IsString()
+  @IsNotEmpty()
+  accountCode!: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsEnum(AccountStatus)
+  @IsNotEmpty()
+  status!: AccountStatus;
+
+  @IsObject()
+  @IsOptional()
+  settings?: Record<string, any>;
+
+  @IsDate()
+  @IsOptional()
+  createdAt?: Date;
+
+  @IsDate()
+  @IsOptional()
+  updatedAt?: Date;
+
+  static addSetting(account: Account, key: string, value: any) {
+    if (account.settings == null) {
+      account.settings = {};
+    }
+    account.settings[key] = value;
+  }
 }
 
 export class Merchant extends Account {
-  providersCredentials: ProviderCredential[];
-  availablePaymentChannels: RoutingRule[];
+  @ValidateNested()
+  @Type(() => ProviderCredential)
+  @IsOptional()
+  providersCredentials?: ProviderCredential[];
+
+  @ValidateNested()
+  @Type(() => RoutingRule)
+  @IsOptional()
+  availablePaymentChannels?: RoutingRule[];
 } 
 
 export class Provider extends Account {
-  providerCredentials: ProviderCredential[];
+  @ValidateNested()
+  @Type(() => ProviderCredential)
+  @IsOptional()
+  providerCredentials?: ProviderCredential[];
 } 
 
+export class ProviderCredential extends Account {
+  @ValidateNested()
+  @Type(() => Provider)
+  @IsNotEmpty()
+  provider!: Provider;
+}
+
+
 export class RoutingRule {
-  id: string;
-  merchant: Merchant;
-  providerCredential: ProviderCredential;
-  conditions: Record<string, any>;
-  weight: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  @IsString()
+  @IsOptional()
+  id?: string;
+
+  @ValidateNested()
+  @Type(() => Merchant)
+  @IsNotEmpty()
+  merchant!: Merchant;
+
+  @ValidateNested()
+  @Type(() => ProviderCredential)
+  @IsNotEmpty()
+  providerCredential!: ProviderCredential;
+
+  @IsObject()
+  @IsOptional()
+  conditions?: Record<string, any>;
+
+  @IsNumber()
+  @IsOptional()
+  weight?: number;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isActive!: boolean;
+
+  @IsDate()
+  @IsOptional()
+  updatedAt?: Date;
 }
 
 export function validateAccountSettings(account: Account, accountType: AccountType): ValidationError[] {
@@ -192,7 +254,7 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
 
     // Update the value in the settings object with the converted value
     if (actualType === expectedType) {
-      account.settings[key] = convertedValue;
+      Account.addSetting(account, key, convertedValue);
     }
   });
 
@@ -219,7 +281,7 @@ export function getSettingsConfig(accountType: AccountType, parentAccountCode: s
 
 export function getSettings(account: Account, accountType: AccountType): Record<string, any> {
   let settings = account.settings;
-  if (account.settings == null) {
+  if (settings == null) {
     settings = {};
   }
   if (accountType === AccountType.PROVIDER_CREDENTIAL) {

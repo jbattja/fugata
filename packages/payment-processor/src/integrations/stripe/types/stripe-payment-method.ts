@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsObject, IsBoolean, IsNumber, IsDate } from "class-validator";
+import { IsOptional, IsString, IsObject, IsBoolean, IsDate } from "class-validator";
 import { PaymentMethod } from "@fugata/shared";
 
 export class StripePaymentMethod {

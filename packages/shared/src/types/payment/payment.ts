@@ -47,127 +47,127 @@ export class Action {
 
     @IsString()
     @IsNotEmpty()
-    actionType: ActionType;
+    actionType!: ActionType;
 
     @IsString()
     @IsOptional()
-    redirectUrl: string;
+    redirectUrl?: string;
 
     @IsEnum(RedirectMethod)
     @IsOptional()
-    redirectMethod: RedirectMethod;
+    redirectMethod?: RedirectMethod;
 
     @IsString()
     @IsOptional()
-    qrCode: string;
+    qrCode?: string;
 
     @IsString()
     @IsOptional()
-    paymentCode: string;
+    paymentCode?: string;
 }
 
 export class Payment {
 
     @IsString()
     @IsOptional()
-    paymentId: string;
+    paymentId?: string;
 
     @ValidateNested()
     @Type(() => Merchant)
     @IsOptional()
-    merchant: Partial<Merchant>;
+    merchant?: Partial<Merchant>;
 
     @ValidateNested()
     @Type(() => ProviderCredential)
     @IsOptional()
-    providerCredential: Partial<ProviderCredential>;
+    providerCredential?: Partial<ProviderCredential>;
 
     @ValidateNested()
     @Type(() => Customer)
     @IsOptional()
-    customer: Customer;
+    customer?: Customer;
 
     @ValidateNested()
     @Type(() => Amount)
     @IsOptional()
-    amount: Amount;
+    amount?: Amount;
 
     @IsString()
     @IsOptional()
-    reference: string;
+    reference?: string;
 
     @IsString()
     @IsOptional()
-    description: string;
+    description?: string;
 
     @ValidateNested()
     @Type(() => PaymentInstrument)
     @IsOptional()
-    paymentInstrument: PaymentInstrument;
+    paymentInstrument?: PaymentInstrument;
 
     @ValidateNested()
     @Type(() => PaymentType)
     @IsOptional()
-    paymentType: PaymentType;
+    paymentType?: PaymentType;
 
     @IsEnum(CaptureMethod)
     @IsOptional()
-    captureMethod: CaptureMethod;
+    captureMethod?: CaptureMethod;
 
     @IsString()
     @IsOptional()
-    returnUrl: string;
+    returnUrl?: string;
 
     @IsString()
     @IsOptional()
-    deviceFingerprint: string;
+    deviceFingerprint?: string;
 
     @IsString()
     @IsOptional()
-    authenticationData: AuthenticationData;
+    authenticationData?: AuthenticationData;
 
     @ValidateNested()
     @Type(() => AuthorizationData)
     @IsOptional()
-    authorizationData: AuthorizationData;
+    authorizationData?: AuthorizationData;
 
     @ValidateNested()
     @Type(() => OrderLine)
     @IsOptional()
-    orderLines: OrderLine[];
+    orderLines?: OrderLine[];
 
     @IsEnum(PaymentStatus)
     @IsOptional()
-    status: PaymentStatus;
+    status?: PaymentStatus;
 
     @ValidateNested()
     @Type(() => Action)
     @IsOptional()
-    actions: Action[];
+    actions?: Action[];
 
     @IsEnum(PaymentSettlementStatus)
     @IsOptional()
-    settlementStatus: PaymentSettlementStatus;
+    settlementStatus?: PaymentSettlementStatus;
 
     @IsEnum(PaymentChargebackStatus)
     @IsOptional()
-    chargebackStatus: PaymentChargebackStatus;
+    chargebackStatus?: PaymentChargebackStatus;
 
     @IsString()
     @IsOptional()
-    refusalReason: string;
+    refusalReason?: string;
 
     @IsObject()
     @IsOptional()
-    metadata: Record<string, string>;
+    metadata?: Record<string, string>;
 
     @IsDate()
     @IsOptional()
-    createdAt: Date;
+    createdAt?: Date;
 
     @IsDate()
     @IsOptional()
-    updatedAt: Date;
+    updatedAt?: Date;
 
     constructor(partial: Partial<Payment>) {
         Object.assign(this, partial);

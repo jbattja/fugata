@@ -1,27 +1,6 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-
-export interface ServiceTokenPayload {
-  // Core authentication fields
-  merchant: {
-    id: string;
-    accountCode: string;
-  };
-  permissions: string[];
-  service?: string; // For service-to-service communication
-  
-  // User context (for dashboard authentication)
-  userId?: string;
-  username?: string;
-  email?: string;
-  role?: 'admin' | 'user';
-  
-  // JWT standard fields
-  iat: number;
-  exp: number;
-  iss?: string; // issuer
-  aud?: string; // audience
-}
+import { ServiceTokenPayload } from './types';
 
 export interface AuthenticatedRequest {
   user: ServiceTokenPayload;
@@ -33,7 +12,7 @@ export interface AuthenticatedRequest {
 @Injectable()
 export class ServiceAuthGuard implements CanActivate {
   private readonly secret: string;
-  private readonly validIssuers: string[] = ['fugata-api-gateway', 'fugata-dashboard', 'fugata-payment-processor'];
+  private readonly validIssuers: string[] = ['fugata-api-gateway', 'fugata-dashboard', 'fugata-payment-processor', 'fugata-master-issuer'];
   private readonly audience: string = 'fugata-services';
 
   constructor(secret: string) {
@@ -142,7 +121,7 @@ export const RequirePermissions = (...permissions: string[]) => {
           throw new UnauthorizedException(`Missing required permissions: ${permissions.join(', ')}`);
         }
       } else {
-        console.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`);
+        Logger.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`, ServiceAuthGuard.name);
       }
       
       return originalMethod.apply(this, args);

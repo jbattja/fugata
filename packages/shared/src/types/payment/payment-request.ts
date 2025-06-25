@@ -1,4 +1,4 @@
-import { IsDate, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '././payment-method';
 import { Amount } from './amount';
@@ -13,10 +13,11 @@ export enum PaymentRequestNextActionType {
 
 export class PaymentRequestNextAction {
   @IsEnum(PaymentRequestNextActionType)
-  type: PaymentRequestNextActionType;
+  @IsNotEmpty()
+  type!: PaymentRequestNextActionType;
 
   @IsString()
-  url: string;
+  url?: string;
 }
 
 export class PaymentRequest {

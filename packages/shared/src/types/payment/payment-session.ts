@@ -1,7 +1,7 @@
 import { Amount } from "./amount";
 import { Customer } from "./customer";
 import { CaptureMethod, OrderLine, PaymentType } from "./payment-common";
-import { IsArray, IsDate, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 import { Merchant } from "../settings/accounts";
 import { PaymentMethod } from "./payment-method";
@@ -21,60 +21,73 @@ export enum SessionMode {
 }
 
 export class HostedPageCustomization {
-    merchantDisplayName: string;
-    merchantLogo: string;
-    primaryColor: string;
-    displayableFields: string[];
+    @IsString()
+    @IsOptional()
+    merchantDisplayName?: string;
+
+    @IsString()
+    @IsOptional()
+    merchantLogo?: string;
+
+    @IsString()
+    @IsOptional()
+    primaryColor?: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    displayableFields?: string[];
 }
 
 export class PaymentSession {
 
     @IsString()
     @IsOptional()
-    sessionId: string;
+    sessionId?: string;
 
     @IsString()
     @IsOptional()
-    url: string;
+    url?: string;
 
     @ValidateNested()
     @Type(() => Amount)
     @IsOptional()
-    amount: Amount;
+    amount?: Amount;
 
     @ValidateNested()
     @Type(() => Customer)
     @IsOptional()
-    customer: Customer;
+    customer?: Customer;
 
     @IsString()
-    reference: string;
+    @IsNotEmpty()
+    reference!: string;
 
     @ValidateNested()
     @Type(() => PaymentType)
     @IsOptional()
-    paymentType: PaymentType;
+    paymentType?: PaymentType;
 
     @IsEnum(CaptureMethod)
-    @IsOptional()
-    captureMethod: CaptureMethod;
+    @IsNotEmpty()
+    captureMethod!: CaptureMethod;
 
     @IsEnum(SessionMode)
-    @IsOptional()
-    mode: SessionMode;
+    @IsNotEmpty()
+    mode!: SessionMode;
 
     @IsString()
     @IsOptional()
-    returnUrl: string;
+    returnUrl?: string;
 
     @ValidateNested()
     @Type(() => OrderLine)
     @IsOptional()
-    orderLines: OrderLine[];
+    orderLines?: OrderLine[];
 
     @IsObject()
     @IsOptional()
-    metadata: Record<string, string>;
+    metadata?: Record<string, string>;
 
     @ValidateNested()
     @Type(() => Merchant)
@@ -84,32 +97,32 @@ export class PaymentSession {
     @IsArray()
     @IsEnum(PaymentMethod)
     @IsOptional()
-    allowedPaymentMethods: PaymentMethod[];
+    allowedPaymentMethods?: PaymentMethod[];
 
     @ValidateNested()
     @Type(() => HostedPageCustomization)
     @IsOptional()
-    hostedPageCustomization: HostedPageCustomization;
+    hostedPageCustomization?: HostedPageCustomization;
 
     @IsEnum(SessionStatus)
     @IsOptional()
-    status: SessionStatus;
+    status?: SessionStatus;
 
     @IsString()
     @IsOptional()
-    refusalReason: string;
+    refusalReason?: string;
 
     @IsDate()
     @IsOptional()
-    createdAt: Date;
+    createdAt?: Date;
 
     @IsDate()
     @IsOptional()
-    updatedAt: Date;
+    updatedAt?: Date;
 
     @IsDate()
-    @IsOptional()
-    expiresAt: Date;
+    @IsNotEmpty()
+    expiresAt!: Date;
     
   constructor(partial: Partial<PaymentSession>) {
     Object.assign(this, partial);

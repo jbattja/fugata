@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { Merchant } from '../entities/merchant.entity';
 import { Provider } from '../entities/provider.entity';

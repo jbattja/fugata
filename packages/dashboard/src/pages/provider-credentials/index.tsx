@@ -58,7 +58,7 @@ export default function ProviderCredentials() {
           { header: 'Provider', accessor: (cred) => cred.provider?.accountCode },
           {
             header: 'Created At',
-            accessor: (cred) => new Date(cred.createdAt).toLocaleDateString(),
+            accessor: (cred) => cred.createdAt ? new Date(cred.createdAt).toLocaleDateString() : 'N/A',
           },
           {
             header: 'Status',

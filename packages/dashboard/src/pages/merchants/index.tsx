@@ -55,7 +55,7 @@ export default function Merchants() {
           { header: 'Description', accessor: 'description' },
           {
             header: 'Created At',
-            accessor: (merchant) => new Date(merchant.createdAt).toLocaleDateString(),
+            accessor: (merchant) => merchant.createdAt ? new Date(merchant.createdAt).toLocaleDateString() : 'N/A',
           },
           {
             header: 'Status',

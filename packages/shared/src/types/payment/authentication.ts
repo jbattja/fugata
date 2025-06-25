@@ -22,40 +22,40 @@ export enum ExemptionReason {
 export class AuthenticationData {
     @IsString()
     @IsOptional()
-    paymentInstrumentId: string;
+    paymentInstrumentId?: string;
     
     @IsEnum(ThreeDSecureMode)
     @IsOptional()
-    threeDSecureMode: ThreeDSecureMode;
+    threeDSecureMode?: ThreeDSecureMode;
 
     @IsEnum(AuthenticationFlow)
     @IsOptional()
-    authenticationFlow: AuthenticationFlow;
+    authenticationFlow?: AuthenticationFlow;
 
     @IsEnum(ExemptionReason)
     @IsOptional()
-    exemptionReason: ExemptionReason;
+    exemptionReason?: ExemptionReason;
 
     @IsString()
     @IsOptional()
-    eci: string;
+    eci?: string;
 
     @IsString()
     @IsOptional()
     @IsBoolean()
-    liabilityShifted: string;
+    liabilityShifted?: string;
 
     @IsString()
     @IsOptional()
-    version: string;
+    version?: string;
 
     @IsString()
     @IsOptional()
-    transactionId: string;
+    transactionId?: string;
 
     @IsString()
     @IsOptional()
-    cavv: string;
+    cavv?: string;
 }
 
 

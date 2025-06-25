@@ -48,7 +48,7 @@ export default function EditProvider() {
       }
       setFormData({
         accountCode: provider.accountCode,
-        description: provider.description,
+        description: provider.description ?? '',
         settings: provider.settings,
       });
     }
