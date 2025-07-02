@@ -2,6 +2,8 @@ import { Provider, ProviderCredential } from '../types/settings/accounts';
 import axios, { AxiosInstance } from 'axios';
 import { Merchant } from '../types/settings/accounts';
 import { User } from '../types/settings/users';
+import { PaymentMethod } from '../types/payment/payment-method';
+import { Logger } from '@nestjs/common';
 
 export class SettingsClient {
   private readonly httpClient: AxiosInstance;
@@ -26,11 +28,19 @@ export class SettingsClient {
     return response.data;
   }
 
-  async getProviderCredentialForMerchant(headers: Record<string, string>, merchantId: string, conditions: Record<string, any>): Promise<ProviderCredential> {
-    const response = await this.httpClient.get<ProviderCredential>(
-      `/settings/get-credentials?merchantId=${merchantId}`, { headers: headers }
-    );
-    return response.data;
+  async getProviderCredentialForMerchant(headers: Record<string, string>, merchantId: string, paymentMethod?: PaymentMethod): Promise<ProviderCredential | null> {
+    const url = `/settings/get-credentials?merchantId=${merchantId}` + (paymentMethod ? `&paymentMethod=${paymentMethod}` : '');
+    try {
+      const response = await this.httpClient.get<ProviderCredential>(url, { headers: headers });
+      if (response && response.status === 200) {
+        return response.data;
+      }
+      Logger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, SettingsClient.name);
+      return null;
+    } catch (error) {
+      Logger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, SettingsClient.name);
+      return null;
+    }
   }
 
   // Merchants
@@ -79,7 +89,7 @@ export class SettingsClient {
   async listProviderCredentials(headers: Record<string, string>, filters?: {
     providerCode?: string;
     providerId?: string;
-  }): Promise<ProviderCredential[]> { 
+  }): Promise<ProviderCredential[]> {
     const response = await this.httpClient.get('settings/provider-credentials', {
       params: filters,
       headers: headers
@@ -87,7 +97,7 @@ export class SettingsClient {
     return response.data;
   }
 
-  async createProviderCredential(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<ProviderCredential> {  
+  async createProviderCredential(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<ProviderCredential> {
     const response = await this.httpClient.post('settings/provider-credentials', { accountCode, description, settings }, { headers: headers });
     return response.data;
   }

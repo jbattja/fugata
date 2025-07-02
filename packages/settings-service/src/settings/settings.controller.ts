@@ -9,6 +9,7 @@ import { CreateMerchantDto } from './dto/create-merchant.dto';
 import { CreateProviderCredentialDto } from './dto/create-provider-credential.dto';
 import { CreateRoutingRuleDto } from './dto/create-routing-rule.dto';
 import { GetProviderCredentialsDto } from './dto/get-provider-credentials.dto';
+import { PaymentMethod } from '@fugata/shared';
 
 @Controller('settings')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -114,9 +115,9 @@ export class SettingsController {
     @Body() createRoutingRuleDto: CreateRoutingRuleDto,
   ): Promise<RoutingRule> {
     return this.settingsService.createRoutingRule(
-      createRoutingRuleDto.merchantCode,
+      createRoutingRuleDto.paymentConfigurationId,
       createRoutingRuleDto.providerCredentialCode,
-      createRoutingRuleDto.conditions,
+      createRoutingRuleDto.paymentMethod,
       createRoutingRuleDto.weight,
     );
   }
@@ -147,9 +148,10 @@ export class SettingsController {
   @Get('get-credentials')
   async getProviderCredentialForMerchant(
     @Query('merchantId') merchantId: string,
-    @Query('conditions') conditions: Record<string, any>,
+    @Query('paymentMethod') paymentMethod: PaymentMethod,
   ): Promise<ProviderCredential> {
-    return this.settingsService.getProviderCredentialForMerchant(merchantId, conditions);
+    const providerCredential = await this.settingsService.getProviderCredentialForMerchant(merchantId, paymentMethod);
+    return providerCredential;
   }
 
 } 

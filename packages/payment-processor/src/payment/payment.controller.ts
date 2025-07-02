@@ -13,7 +13,7 @@ export class PaymentsController {
 
   constructor(
     private readonly workflowOrchestrationService: WorkflowOrchestrationService,
-  ) {}
+  ) { }
 
   @Post()
   @RequirePermissions('payments:write')
@@ -23,7 +23,7 @@ export class PaymentsController {
     const merchant = getMerchant(request);
     this.logger.log(`Creating payment for merchant: ${merchant.id}`);
 
-    
+
     const paymentId = uuidv4();
     const payment = new Payment({
       paymentId: paymentId,
@@ -34,11 +34,11 @@ export class PaymentsController {
         id: merchant.id,
         accountCode: merchant.accountCode
       },
-    });    
+    });
     // Merge provided data
     Object.assign(payment, paymentData);
     try {
-    validatePaymentInstrument(paymentData.paymentInstrument, payment);
+      validatePaymentInstrument(paymentData.paymentInstrument, payment);
     } catch (error) {
       throw new ValidationException(error.message);
     }

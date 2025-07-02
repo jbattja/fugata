@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PaymentRequestContext, ProviderTransformer } from './transformer';
 import { PaymentRequest, ProviderCredential } from '@fugata/shared';
 import { SettingsClient } from '@fugata/shared';
 import { PaymentProducerService } from 'src/kafka/payment-producer.service';
 import { jwtService } from 'src/clients/jwt.service';
+import { ValidationException } from 'src/exceptions/validation.exception';
 
 @Injectable()
 export class PaymentRouter {
@@ -43,11 +44,12 @@ export class PaymentRouter {
     // Transform source request to our internal format
     context.internalRequest = context.sourceProvider.requestTransformer.toPaymentRequest(context.externalRequest);
 
-    const conditions = this.extractConditions(context.internalRequest);
-    const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(jwtService.getAuthHeadersForServiceAccount(), merchantCode, conditions);
+    Logger.log(`Getting provider credential for merchant ${merchantCode} with payment method ${context.internalRequest.paymentMethod}`, PaymentRouter.name);
+    const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(jwtService.getAuthHeadersForServiceAccount(), merchantCode, context.internalRequest.paymentMethod);
     if (!providerCredential) {
-      throw new Error(`Target provider credential not found`);
+      throw new ValidationException(`No provider found for merchant ${merchantCode} with payment method ${context.internalRequest.paymentMethod}`);
     }
+    Logger.log(`Provider credential: ${JSON.stringify(providerCredential)}`, PaymentRouter.name);
     context.targetProvider = this.getProviderTransfomer(providerCredential);
 
     const sameProvider = context.targetProvider.providerCode === context.sourceProvider.providerCode;
@@ -103,17 +105,6 @@ export class PaymentRouter {
       metadata: response.metadata || request.metadata
     };
     return merged;
-  }
-
-  private extractConditions(request: PaymentRequest): Record<string, any> {
-    // Extract relevant conditions from the request
-    // This should be customized based on your actual request structure
-    return {
-      payment_method: request.paymentMethod,
-      country: request.metadata?.customerCountry,
-      currency: request.amount?.currency,
-      // Add more conditions as needed
-    };
   }
 
   private selectProviderByWeight(

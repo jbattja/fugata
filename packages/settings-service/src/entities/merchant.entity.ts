@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { RoutingRule } from './routing-rule.entity';
 import { AccountStatus } from '@fugata/shared';
 import { ApiCredential } from './api-credential.entity';
+import { PaymentConfiguration } from './payment-configuration.entity';
 
 @Entity('merchants')
 export class Merchant {
@@ -17,11 +17,11 @@ export class Merchant {
   @Column({ name: 'status', type: 'enum', enum: AccountStatus,  nullable: true})
   status: AccountStatus;
 
-  @OneToMany(() => RoutingRule, rule => rule.merchant)
-  routingRules: RoutingRule[];
-
   @OneToMany(() => ApiCredential, apiCredential => apiCredential.merchant)
   apiCredentials: ApiCredential[];
+
+  @OneToMany(() => PaymentConfiguration, config => config.merchant)
+  paymentConfigurations: PaymentConfiguration[];
 
   @Column('jsonb', { nullable: true })
   settings: Record<string, any>;

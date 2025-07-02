@@ -1,7 +1,8 @@
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested, ValidationError } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested, ValidationError } from 'class-validator';
 import { MerchantSettings, ProviderSettings, AccountSettingsConfig } from './account-settings';
 import { getSettingsConfigForProviderCredential } from './integrations/integration-settings';
 import { Type } from 'class-transformer';
+import { PaymentConfiguration } from './payment-configuration';
 
 export enum AccountType {
   PROVIDER_CREDENTIAL = 'providerCredential',
@@ -58,10 +59,10 @@ export class Merchant extends Account {
   @IsOptional()
   providersCredentials?: ProviderCredential[];
 
-  @ValidateNested()
-  @Type(() => RoutingRule)
-  @IsOptional()
-  availablePaymentChannels?: RoutingRule[];
+  @ValidateNested({ each: true })
+  @Type(() => PaymentConfiguration)
+  @IsNotEmpty()
+  paymentConfigurations!: PaymentConfiguration[];
 } 
 
 export class Provider extends Account {
@@ -76,39 +77,6 @@ export class ProviderCredential extends Account {
   @Type(() => Provider)
   @IsNotEmpty()
   provider!: Provider;
-}
-
-
-export class RoutingRule {
-  @IsString()
-  @IsOptional()
-  id?: string;
-
-  @ValidateNested()
-  @Type(() => Merchant)
-  @IsNotEmpty()
-  merchant!: Merchant;
-
-  @ValidateNested()
-  @Type(() => ProviderCredential)
-  @IsNotEmpty()
-  providerCredential!: ProviderCredential;
-
-  @IsObject()
-  @IsOptional()
-  conditions?: Record<string, any>;
-
-  @IsNumber()
-  @IsOptional()
-  weight?: number;
-
-  @IsBoolean()
-  @IsNotEmpty()
-  isActive!: boolean;
-
-  @IsDate()
-  @IsOptional()
-  updatedAt?: Date;
 }
 
 export function validateAccountSettings(account: Account, accountType: AccountType): ValidationError[] {

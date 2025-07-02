@@ -1,14 +1,15 @@
-import { IsString, IsNotEmpty, IsObject, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaymentMethod } from '@fugata/shared';
 
 export class CreateRoutingRuleDto {
   @ApiProperty({
-    description: 'Code of the merchant',
-    example: 'acme-corp',
+    description: 'ID of the payment configuration',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Merchant code is required' })
-  merchantCode: string;
+  @IsNotEmpty({ message: 'Payment configuration ID is required' })
+  paymentConfigurationId: string;
 
   @ApiProperty({
     description: 'Code for the provider credential',
@@ -19,13 +20,13 @@ export class CreateRoutingRuleDto {
   providerCredentialCode: string;
 
   @ApiProperty({
-    description: 'Conditions for the routing rule',
-    example: {},
+    description: 'Payment method for the routing rule',
+    example: 'CARD',
     required: false,
   })
-  @IsObject()
+  @IsEnum(PaymentMethod)
   @IsOptional()
-  conditions: Record<string, any>;
+  paymentMethod: PaymentMethod;
 
   @ApiProperty({
     description: 'Weight for the routing rule',

@@ -5,13 +5,16 @@ import { Merchant } from '../entities/merchant.entity';
 import { ProviderCredential } from '../entities/provider-credential.entity';
 import { RoutingRule } from '../entities/routing-rule.entity';
 import { Provider } from 'src/entities/provider.entity';
-import { Account, AccountStatus, AccountType, validateAccountSettings } from '@fugata/shared';
+import { PaymentConfiguration } from 'src/entities/payment-configuration.entity';
+import { Account, AccountStatus, AccountType, PaymentMethod, validateAccountSettings } from '@fugata/shared';
 
 @Injectable()
 export class SettingsService {
   constructor(
     @InjectRepository(Merchant)
     private readonly merchantRepository: Repository<Merchant>,
+    @InjectRepository(PaymentConfiguration)
+    private readonly paymentConfigurationRepository: Repository<PaymentConfiguration>,
     @InjectRepository(Provider)
     private readonly providerRepository: Repository<Provider>,
     @InjectRepository(ProviderCredential)
@@ -29,13 +32,20 @@ export class SettingsService {
       settings: settings,
     });
     await this.validateSettings(merchant, AccountType.MERCHANT);
+    const paymentConfiguration = this.paymentConfigurationRepository.create({
+      merchant: merchant,
+      name: 'Default',
+      isDefault: true,
+    });
+    merchant.paymentConfigurations = [paymentConfiguration];
+    await this.paymentConfigurationRepository.save(paymentConfiguration);
     return this.merchantRepository.save(merchant);
   }
 
   async getMerchant(id: string): Promise<Merchant> {
     const merchant = await this.merchantRepository.findOne({
       where: { id: id },
-      relations: ['routingRules'],
+      relations: ['paymentConfigurations'],
     });
     if (!merchant) {
       throw new NotFoundException(`Merchant ${id} not found`);
@@ -46,7 +56,7 @@ export class SettingsService {
   async getMerchantByAccountCode(accountCode: string): Promise<Merchant> {
     const merchant = await this.merchantRepository.findOne({
       where: { accountCode: accountCode },
-      relations: ['routingRules'],
+      relations: ['paymentConfigurations'],
     });
     if (!merchant) {
       throw new NotFoundException(`Merchant ${accountCode} not found`);
@@ -194,16 +204,19 @@ export class SettingsService {
 
   async getProviderCredentialForMerchant(
     merchantId: string, 
-      conditions: Record<string, any>
+    paymentMethod?: PaymentMethod
     ): Promise<ProviderCredential> {
     const merchant = await this.getMerchant(merchantId);
     if (!merchant) {
       throw new NotFoundException(`Merchant ${merchantId} not found`);
     }
-  
-    // Get all routing rules for this merchant, ordered by weight (highest first)
+    const paymentConfiguration = merchant.paymentConfigurations.find(pc => pc.isDefault);
+    if (!paymentConfiguration) {
+      throw new NotFoundException(`No payment configuration found for merchant ${merchantId}`);
+    }
+    // Get all routing rules for this merchant's default payment configuration, ordered by weight (highest first)
     const routingRules = await this.routingRuleRepository.find({
-      where: { merchantId: merchantId }, // Use the UUID id instead of merchantCode
+      where: { paymentConfigurationId: paymentConfiguration.id, paymentMethod: paymentMethod }, 
       order: { weight: 'DESC' },
     });
     if (routingRules.length === 0) {
@@ -216,19 +229,20 @@ export class SettingsService {
     if (!providerCredential) {
       throw new NotFoundException(`Provider credential ${routingRules[0].providerCredentialId} not found`);
     }
-    // TODO implement conditions evaluation
     return providerCredential;
   }
 
   async createRoutingRule(
-    merchantCode: string,
+    paymentConfigurationId: string,
     providerCredentialCode: string,
-    conditions: Record<string, any>,
+    paymentMethod: PaymentMethod,
     weight: number = 1.0,
   ): Promise<RoutingRule> {
-    const merchant = await this.getMerchantByAccountCode(merchantCode);
-    if (!merchant) {
-      throw new NotFoundException(`Merchant ${merchantCode} not found`);
+    const paymentConfiguration = await this.paymentConfigurationRepository.findOne({
+      where: { id: paymentConfigurationId },  
+    });
+    if (!paymentConfiguration) {
+      throw new NotFoundException(`Payment configuration ${paymentConfigurationId} not found`);
     }
     const providerCredential = await this.getProviderCredentialByAccountCode(providerCredentialCode);
     if (!providerCredential) {
@@ -236,9 +250,9 @@ export class SettingsService {
     }
 
     const routingRule = this.routingRuleRepository.create({
-      merchantId: merchant.id,
+      paymentConfigurationId: paymentConfiguration.id,
       providerCredentialId: providerCredential.id,
-      conditions,
+      paymentMethod,
       weight,
       isActive: true,
     });
@@ -249,7 +263,7 @@ export class SettingsService {
   async getRoutingRule(routingRuleId: string): Promise<RoutingRule> {
     const routingRule = await this.routingRuleRepository.findOne({
       where: { id: routingRuleId },
-      relations: ['merchant', 'providerCredential'],
+      relations: ['paymentConfiguration', 'providerCredential'],
      });
     if (!routingRule) {
       throw new NotFoundException(`Routing rule ${routingRuleId} not found`);
