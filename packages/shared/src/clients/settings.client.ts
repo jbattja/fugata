@@ -1,9 +1,10 @@
 import { Provider, ProviderCredential } from '../types/settings/accounts';
 import axios, { AxiosInstance } from 'axios';
 import { Merchant } from '../types/settings/accounts';
-import { User } from '../types/settings/users';
+import { User, UserRole, UserStatus } from '../types/settings/users';
 import { PaymentMethod } from '../types/payment/payment-method';
 import { Logger } from '@nestjs/common';
+import { PaymentConfiguration } from '../types/settings/payment-configuration';
 
 export class SettingsClient {
   private readonly httpClient: AxiosInstance;
@@ -17,6 +18,40 @@ export class SettingsClient {
   // Users
   async findByUsername(headers: Record<string, string>, username: string): Promise<User | null> {
     const response = await this.httpClient.get(`/users/${username}`, { headers: headers });
+    return response.data;
+  }
+
+  async findUsersByMerchantId(headers: Record<string, string>, merchantId: string): Promise<User[]> {
+    const response = await this.httpClient.get(`/users?merchantId=${merchantId}`, { headers: headers });
+    return response.data;
+  }
+
+  async createUser(headers: Record<string, string>, username: string, email: string, password: string, role: UserRole, merchantIds: string[]): Promise<User> {
+    const response = await this.httpClient.post('/users', { username, email, password, role, merchantIds }, { headers: headers });
+    return response.data;
+  }
+
+  async deactivateUser(headers: Record<string, string>, user: Partial<User>): Promise<User> {
+    if (!user.id) {
+      throw new Error('User ID is required to deactivate a user');
+    }
+    const updates: Partial<User> = {
+      status: UserStatus.INACTIVE,
+      ...user
+    };
+    const response = await this.httpClient.put(`/users/${user.id}`, updates, { headers: headers });
+    return response.data;
+  }
+
+  async activateUser(headers: Record<string, string>, user: Partial<User>): Promise<User> {
+    if (!user.id) {
+      throw new Error('User ID is required to activate a user');
+    }
+    const updates: Partial<User> = {
+      status: UserStatus.ACTIVE,
+      ...user
+    };
+    const response = await this.httpClient.put(`/users/${user.id}`, updates, { headers: headers });
     return response.data;
   }
 
@@ -109,6 +144,11 @@ export class SettingsClient {
 
   async getProviderCredential(headers: Record<string, string>, id: string): Promise<ProviderCredential> {
     const response = await this.httpClient.get(`settings/provider-credentials/${id}`, { headers: headers });
+    return response.data;
+  }
+
+  async getPaymentConfigurationsByMerchantId(headers: Record<string, string>, merchantId: string): Promise<PaymentConfiguration[]> {
+    const response = await this.httpClient.get(`settings/payment-configurations/${merchantId}`, { headers: headers });
     return response.data;
   }
 

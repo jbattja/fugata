@@ -309,4 +309,47 @@ export class SettingsService {
       });
     }
   }
-} 
+
+  async getPaymentConfigurationsByMerchantId(merchantId: string): Promise<PaymentConfiguration[]> {
+    return this.paymentConfigurationRepository.find({
+      where: { merchantId: merchantId },
+    });
+  }
+
+  async createPaymentConfiguration(merchantId: string, name: string, isDefault: boolean): Promise<PaymentConfiguration> {
+    const merchant = await this.getMerchant(merchantId);
+    if (!merchant) {
+      throw new NotFoundException(`Merchant ${merchantId} not found`);
+    }
+    const paymentConfiguration = this.paymentConfigurationRepository.create({
+      merchant: merchant,
+      name: name,
+      isDefault: isDefault,
+    });
+    return this.paymentConfigurationRepository.save(paymentConfiguration);
+  }
+
+  async getPaymentConfiguration(id: string): Promise<PaymentConfiguration> {
+    const paymentConfiguration = await this.paymentConfigurationRepository.findOne({
+      where: { id: id },
+      relations: ['merchant'],
+    });
+    if (!paymentConfiguration) {
+      throw new NotFoundException(`Payment configuration ${id} not found`);
+    }
+    return paymentConfiguration;
+  }
+
+  async updatePaymentConfiguration(id: string, updates: Partial<PaymentConfiguration>): Promise<PaymentConfiguration> {
+    const paymentConfiguration = await this.getPaymentConfiguration(id);
+    Object.assign(paymentConfiguration, updates);
+    return this.paymentConfigurationRepository.save(paymentConfiguration);
+  }
+
+  async deletePaymentConfiguration(id: string): Promise<void> {
+    const result = await this.paymentConfigurationRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Payment configuration ${id} not found`);
+    }
+  }
+}

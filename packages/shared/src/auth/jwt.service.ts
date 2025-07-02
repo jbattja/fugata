@@ -1,13 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import { ServiceTokenPayload } from './types';
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  merchantIds: string[];
-  role: 'admin' | 'user';
-}
+import { User } from '../types/settings/users';
 
 export class JwtService {
   private readonly secret: string;

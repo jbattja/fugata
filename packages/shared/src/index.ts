@@ -10,6 +10,7 @@ export * from './types/settings/accounts';
 export * from './types/settings/account-settings';
 export * from './types/settings/integrations/integration-settings';
 export * from './types/settings/payment-configuration'; 
+export * from './types/settings/users';
 export * from './types/payment/payment-request';
 export * from './types/payment/amount';
 export * from './types/payment/payment-method';

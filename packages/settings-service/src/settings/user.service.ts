@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { UserRole, UserStatus } from '@fugata/shared';
 
 type UserUpdateData = Partial<Omit<User, 'passwordHash'>> & {
   password?: string;
@@ -15,7 +16,7 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(username: string, email: string, password: string, role: 'admin' | 'user' = 'user', merchantIds: string[] = []): Promise<User> {
+  async create(username: string, email: string, password: string, role: UserRole, merchantIds: string[] = []): Promise<User> {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = this.userRepository.create({
       username,
@@ -23,6 +24,7 @@ export class UserService {
       passwordHash,
       role,
       merchantIds,
+      status: UserStatus.ACTIVE,
     });
     return this.userRepository.save(user);
   }
@@ -52,7 +54,12 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(filters?: {
+    merchantId?: string;
+  }): Promise<User[]> {
+    if (filters?.merchantId) {
+      return this.userRepository.find({ where: { merchantIds: In([filters.merchantId]) } });
+    }
     return this.userRepository.find();
   }
 } 

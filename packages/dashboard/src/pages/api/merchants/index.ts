@@ -6,7 +6,7 @@ import { Logger } from '@nestjs/common';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
-  const authHeaders = await getAuthHeaders(session, 'payment-data');
+  const authHeaders = await getAuthHeaders(session);
   try {
     switch (req.method) {
       case 'GET': {

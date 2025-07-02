@@ -2,6 +2,7 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { settingsClient } from '../../../lib/api/clients';
 import { jwtService } from '../../../lib/auth/jwt.service';
+import { User as SharedUser } from '@fugata/shared';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,8 +18,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await settingsClient.findByUsername(await jwtService.getAuthHeadersForServiceAccount(), credentials.username);
-          if (!user) {
+          const sharedUser = await settingsClient.findByUsername(await jwtService.getAuthHeadersForServiceAccount(), credentials.username);
+          if (!sharedUser) {
             return null;
           }
 
@@ -30,7 +31,15 @@ export const authOptions: NextAuthOptions = {
           if (!isValid) {
             return null;
           }
-          return user;
+
+          // Map shared User to NextAuth User type
+          return {
+            id: sharedUser.id || '', // Ensure id is always a string for NextAuth
+            username: sharedUser.username,
+            email: sharedUser.email,
+            merchantIds: sharedUser.merchantIds || [],
+            role: sharedUser.role,
+          };
         } catch (error) {
           return null;
         }
@@ -59,7 +68,7 @@ export const authOptions: NextAuthOptions = {
           username: token.username as string,
           email: token.email as string,
           merchantIds: token.merchantIds as string[],
-          role: token.role as 'admin' | 'user',
+          role: token.role as string,
         };
       }
       return session;

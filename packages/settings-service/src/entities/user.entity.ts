@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { UserRole, UserStatus } from '@fugata/shared';
 
 @Entity('users')
 export class User {
@@ -19,10 +20,17 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['admin', 'user'],
-    default: 'user'
+    enum: UserRole,
+    default: UserRole.USER
   })
-  role: 'admin' | 'user';
+  role: UserRole;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.ACTIVE 
+  })
+  status: UserStatus;
 
   @CreateDateColumn()
   createdAt: Date;

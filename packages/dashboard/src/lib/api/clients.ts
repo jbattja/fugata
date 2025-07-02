@@ -5,7 +5,7 @@ import { jwtService } from '../auth/jwt.service';
 const settingsClient = new SettingsClient(process.env.SETTINGS_SERVICE_URL || 'http://localhost:3000');
 const paymentDataClient = new PaymentDataClient(process.env.PAYMENT_DATA_SERVICE_URL || 'http://localhost:3001');
 
-export async function getAuthHeaders(session: any, service: string, merchantId?: string): Promise<Record<string, string>> {
+export async function getAuthHeaders(session: any, merchantId?: string): Promise<Record<string, string>> {
     if (!session?.user) {
         throw new Error('User not authenticated');
       }
@@ -18,7 +18,7 @@ export async function getAuthHeaders(session: any, service: string, merchantId?:
           merchantIds: session.user.merchantIds,
           role: session.user.role
         },
-        service,
+        'dashboard', // TODO: probably get rid of this parameter in the JWT 
         merchantId
       );
   

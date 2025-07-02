@@ -10,6 +10,8 @@ import { CreateProviderCredentialDto } from './dto/create-provider-credential.dt
 import { CreateRoutingRuleDto } from './dto/create-routing-rule.dto';
 import { GetProviderCredentialsDto } from './dto/get-provider-credentials.dto';
 import { PaymentMethod } from '@fugata/shared';
+import { CreatePaymentConfigurationDto } from './dto/create-payment-configuration.dto';
+import { PaymentConfiguration } from '../entities/payment-configuration.entity';
 
 @Controller('settings')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -152,6 +154,35 @@ export class SettingsController {
   ): Promise<ProviderCredential> {
     const providerCredential = await this.settingsService.getProviderCredentialForMerchant(merchantId, paymentMethod);
     return providerCredential;
+  }
+
+  // Payment Configuration CRUD endpoints
+  @Get('payment-configurations/:merchantId')
+  async getPaymentConfigurationsByMerchantId(@Param('merchantId') merchantId: string): Promise<PaymentConfiguration[]> {
+    return this.settingsService.getPaymentConfigurationsByMerchantId(merchantId);
+  }
+
+  @Post('payment-configurations')
+  async createPaymentConfiguration(@Body() createPaymentConfigurationDto: CreatePaymentConfigurationDto): Promise<PaymentConfiguration> {
+    return this.settingsService.createPaymentConfiguration(createPaymentConfigurationDto.merchantId, createPaymentConfigurationDto.name, createPaymentConfigurationDto.isDefault);
+  }
+
+  @Put('payment-configurations/:id')
+  async updatePaymentConfiguration(
+    @Param('id') id: string,
+    @Body() updates: Partial<PaymentConfiguration>,
+  ): Promise<PaymentConfiguration> {
+    return this.settingsService.updatePaymentConfiguration(id, updates);
+  }
+
+  @Delete('payment-configurations/:id')
+  async deletePaymentConfiguration(@Param('id') id: string): Promise<void> {
+    return this.settingsService.deletePaymentConfiguration(id);
+  }
+
+  @Get('payment-configurations/:id')
+  async getPaymentConfiguration(@Param('id') id: string): Promise<PaymentConfiguration> {
+    return this.settingsService.getPaymentConfiguration(id);
   }
 
 } 

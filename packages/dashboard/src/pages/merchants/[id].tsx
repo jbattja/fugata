@@ -2,13 +2,13 @@ import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { CancelButton, SubmitButton } from '@/components/ui/Button';
-import { FormInput } from '@/components/ui/forms/FormInput';
-import Form from '@/components/ui/forms/Form';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabItem } from '@/components/ui/Tabs';
+import { MerchantGeneralSettings } from '@/components/merchants/MerchantGeneralSettings';
+import { MerchantUsers } from '@/components/merchants/MerchantUsers';
+import { MerchantPaymentConfigurations } from '@/components/merchants/MerchantPaymentConfigurations';
 import { AccountType, getSettingsConfig, Merchant } from '@fugata/shared';
+import { CogIcon, UserIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 
 interface FormData {
   accountCode: string;
@@ -25,7 +25,7 @@ export default function EditMerchant() {
     description: '',
     settings: {},
   });
-  const [error, setError] = useState<JSX.Element | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
   const availableSettings = Object.keys(getSettingsConfig(AccountType.MERCHANT, null));
 
   const { data: merchant, isLoading } = useQuery<Merchant>({
@@ -38,28 +38,6 @@ export default function EditMerchant() {
       return response.json();
     },
     enabled: !!id,
-  });
-
-  const updateMerchant = useMutation({
-    mutationFn: async (data: { id: string; accountCode: string; description: string; settings: Record<string, string> }) => {
-      const response = await fetch('/api/merchants', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(
-          <ErrorMessage message={errorData.message} errors={errorData.errors} />
-        );
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      router.push('/merchants');
-    },
   });
 
   useEffect(() => {
@@ -75,13 +53,6 @@ export default function EditMerchant() {
     }
   }, [merchant]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    updateMerchant.mutate({ id: id as string, ...formData });
-  };
-
-
   if (!session) {
     return null;
   }
@@ -89,41 +60,63 @@ export default function EditMerchant() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div>Loading merchant...</div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Loading merchant...</div>
+        </div>
       </DashboardLayout>
     );
   }
 
+  const tabItems: TabItem[] = [
+    {
+      id: 'general',
+      label: 'General Settings',
+      icon: <CogIcon className="h-4 w-4" />,
+      content: (
+        <MerchantGeneralSettings
+          merchantId={id as string}
+          initialData={formData}
+          availableSettings={availableSettings}
+        />
+      ),
+    },
+    {
+      id: 'users',
+      label: 'Users',
+      icon: <UserIcon className="h-4 w-4" />,
+      content: <MerchantUsers merchantId={id as string} />,
+    },
+    {
+      id: 'payment-configurations',
+      label: 'Payment Configurations',
+      icon: <CreditCardIcon className="h-4 w-4" />,
+      content: <MerchantPaymentConfigurations merchantId={id as string} />,
+    },
+  ];
+
   return (
     <DashboardLayout>
-      <Form title="Edit Merchant" handleSubmit={handleSubmit}>
-      <FormInput
-          label="Merchant Code"
-          value={formData.accountCode}
-          onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
-          required
-        />
-        <FormInput
-          label="Description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-        <KeyValueInput
-          label="Settings"
-          pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
-          availableKeys={availableSettings}
-          onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
-        />
-        <div className="flex justify-end space-x-4">
-          <CancelButton  onClick={() => router.push('/merchants')}/>
-          <SubmitButton
-            isLoading={updateMerchant.isPending}
-          >
-            {updateMerchant.isPending ? 'Saving...' : 'Save Changes'}
-          </SubmitButton>
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Edit Merchant: {merchant?.accountCode}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage merchant settings, users, and payment configurations
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow">
+            <Tabs
+              items={tabItems}
+              defaultIndex={activeTab}
+              variant="underline"
+              className="p-6"
+            />
+          </div>
         </div>
-      </Form>
-      {error}
+      </div>
     </DashboardLayout>
   );
 } 
