@@ -1,6 +1,5 @@
 import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Merchant, ProviderCredential } from './accounts';
 import { PaymentMethod } from '../payment/payment-method';
 
 export class PaymentConfiguration {
@@ -9,9 +8,9 @@ export class PaymentConfiguration {
   id?: string;
 
   @ValidateNested()
-  @Type(() => Merchant)
+  @Type(() => require('./accounts').Merchant)
   @IsNotEmpty()
-  merchant!: Merchant;
+  merchant!: any;
 
   @IsString()
   @IsNotEmpty()
@@ -41,9 +40,9 @@ export class RoutingRule {
     id?: string;
   
     @ValidateNested()
-    @Type(() => ProviderCredential)
+    @Type(() => require('./accounts').ProviderCredential)
     @IsNotEmpty()
-    providerCredential!: ProviderCredential;
+    providerCredential!: any;
   
     @ValidateNested()
     @Type(() => PaymentConfiguration)

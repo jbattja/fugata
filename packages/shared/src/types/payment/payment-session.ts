@@ -3,7 +3,6 @@ import { Customer } from "./customer";
 import { CaptureMethod, OrderLine, PaymentType } from "./payment-common";
 import { IsArray, IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
-import { Merchant } from "../settings/accounts";
 import { PaymentMethod } from "./payment-method";
 
 export enum SessionStatus {
@@ -90,9 +89,9 @@ export class PaymentSession {
     metadata?: Record<string, string>;
 
     @ValidateNested()
-    @Type(() => Merchant)
+    @Type(() => require('../settings/accounts').Merchant)
     @IsOptional()
-    merchant?: Partial<Merchant>;
+    merchant?: any;
 
     @IsArray()
     @IsEnum(PaymentMethod)

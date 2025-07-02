@@ -2,7 +2,6 @@ import { IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNes
 import { MerchantSettings, ProviderSettings, AccountSettingsConfig } from './account-settings';
 import { getSettingsConfigForProviderCredential } from './integrations/integration-settings';
 import { Type } from 'class-transformer';
-import { PaymentConfiguration } from './payment-configuration';
 
 export enum AccountType {
   PROVIDER_CREDENTIAL = 'providerCredential',
@@ -60,9 +59,9 @@ export class Merchant extends Account {
   providersCredentials?: ProviderCredential[];
 
   @ValidateNested({ each: true })
-  @Type(() => PaymentConfiguration)
+  @Type(() => require('./payment-configuration').PaymentConfiguration)
   @IsNotEmpty()
-  paymentConfigurations!: PaymentConfiguration[];
+  paymentConfigurations!: any[];
 } 
 
 export class Provider extends Account {
