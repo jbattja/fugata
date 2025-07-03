@@ -9,6 +9,7 @@ import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType } from '@fugata/shared';
+import { callApi } from '@/lib/api/api-caller';
 
 interface FormData {
   accountCode: string;
@@ -29,7 +30,7 @@ export default function NewProvider() {
 
   const createProviderMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/providers', {
+      const response = await callApi('/api/providers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { AccountType, getSettingsConfig, Provider } from '@fugata/shared';
+import { callApi } from '@/lib/api/api-caller';
 
 export default function NewProviderCredential() {
   const { data: session } = useSession();
@@ -29,7 +30,7 @@ export default function NewProviderCredential() {
   const { data: providers } = useQuery<Provider[]>({
     queryKey: ['providers'],
     queryFn: async () => {
-      const response = await fetch('/api/providers');
+      const response = await callApi('/api/providers');
       if (!response.ok) {
         throw new Error('Failed to fetch providers');
       }
@@ -40,7 +41,7 @@ export default function NewProviderCredential() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/provider-credentials', {
+      const response = await callApi('/api/provider-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

@@ -5,6 +5,7 @@ import { AccountStatus, Provider } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { callApi } from '@/lib/api/api-caller';
 
 export default function Providers() {
   const { data: session } = useSession();
@@ -13,7 +14,7 @@ export default function Providers() {
   const { data: providers, isLoading, error } = useQuery<Provider[]>({
     queryKey: ['providers'],
     queryFn: async () => {
-      const response = await fetch('/api/providers');
+      const response = await callApi('/api/providers');
       if (!response.ok) {
         throw new Error('Failed to fetch providers');
       }

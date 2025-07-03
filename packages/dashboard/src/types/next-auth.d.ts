@@ -1,5 +1,4 @@
 import { UserRole } from '@fugata/shared';
-import NextAuth from 'next-auth';
 
 declare module 'next-auth' {
   interface User {

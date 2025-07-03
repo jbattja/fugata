@@ -2,7 +2,6 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { settingsClient } from '../../../lib/api/clients';
 import { jwtService } from '../../../lib/auth/jwt.service';
-import { User as SharedUser } from '@fugata/shared';
 
 export const authOptions: NextAuthOptions = {
   providers: [

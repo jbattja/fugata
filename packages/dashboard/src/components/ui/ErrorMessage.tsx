@@ -16,6 +16,7 @@ export function ErrorMessage({ message, errors }: ErrorMessageProps) {
                 <h3 className="text-sm font-medium text-red-800">
                   {message}
                 </h3>
+                {errors && errors.length > 0 && (
                 <div className="mt-2 text-sm text-red-700">
                   <ul className="list-disc pl-5 space-y-1">
                     {errors.split('\n').map((error: string, index: number) => (
@@ -23,6 +24,7 @@ export function ErrorMessage({ message, errors }: ErrorMessageProps) {
                     ))}
                   </ul>
                 </div>
+                )}
               </div>
             </div>
           </div>

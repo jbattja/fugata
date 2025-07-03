@@ -9,6 +9,7 @@ import { FormInput } from '@/components/ui/forms/FormInput';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType, Provider } from '@fugata/shared';
+import { callApi } from '@/lib/api/api-caller';
 
 interface FormData {
   accountCode: string;
@@ -32,7 +33,7 @@ export default function EditProvider() {
   const { data: provider, isLoading: isLoadingProvider } = useQuery<Provider>({
     queryKey: ['provider', id],
     queryFn: async () => {
-      const response = await fetch(`/api/providers/${id}`);
+      const response = await callApi(`/api/providers/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch provider');
       }
@@ -56,7 +57,7 @@ export default function EditProvider() {
 
   const updateProviderMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/providers', {
+      const response = await callApi('/api/providers', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

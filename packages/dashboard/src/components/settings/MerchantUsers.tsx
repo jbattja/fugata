@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { UserRole, UserStatus } from '@fugata/shared';
+import { useMerchantContext } from '@/contexts/MerchantContext';
+import { callApi } from '@/lib/api/api-caller';
 
 interface User {
   id: string;
@@ -20,6 +22,7 @@ interface MerchantUsersProps {
 
 export function MerchantUsers({ merchantId }: MerchantUsersProps) {
   const queryClient = useQueryClient();
+  const { activeMerchant } = useMerchantContext();
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
@@ -32,7 +35,7 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['merchant-users', merchantId],
     queryFn: async () => {
-      const response = await fetch(`/api/merchants/${merchantId}/users`);
+      const response = await callApi(`/api/settings/users`, {}, activeMerchant);
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -47,16 +50,19 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
     setError(null);
     
     try {
-      const response = await fetch(`/api/merchants/${merchantId}/users`, {
+      const response = await callApi(`/api/settings/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(newUser),
-      });
+      }, activeMerchant);
+
+      console.log("response", response);
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.log("errorData", errorData);
         setError(
           <ErrorMessage message={errorData.message} errors={errorData.errors} />
         );
@@ -80,13 +86,13 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
   };
 
   const handleRemoveUser = async (userId: string) => {
-    const response = await fetch(`/api/merchants/${merchantId}/users`, {
+    const response = await callApi(`/api/settings/users`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ id: userId }),
-    });
+    }, activeMerchant);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -105,14 +111,6 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
 
   if (isLoading) {
     return <div className="text-center py-4">Loading users...</div>;
-  }
-
-  if (error) {
-    return (
-      <div>
-        <ErrorMessage message="Failed to load users" errors="An error occurred while loading users." />
-      </div>
-    );
   }
 
   return (
@@ -196,12 +194,14 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
                 }`}>
                   {user.status}
                 </span>
+                {user.status === UserStatus.ACTIVE && (
                 <button
                   onClick={() => handleRemoveUser(user.id)}
                   className="text-red-600 hover:text-red-900"
                 >
                   <TrashIcon className="h-4 w-4" />
                 </button>
+                )}
               </div>
             </li>
           ))}

@@ -5,16 +5,18 @@ import { formatAmount } from '@/lib/utils/currency';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { callApi } from '@/lib/api/api-caller';
+import { useMerchantContext } from '@/contexts/MerchantContext';
 
 export const dynamic = 'force-dynamic';
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
-
+  const { activeMerchant } = useMerchantContext();
   const { data: payments, isLoading, error } = useQuery<PaymentRequest[]>({
     queryKey: ['payments'],
     queryFn: async () => {
-      const response = await fetch('/api/payments');
+      const response = await callApi('/api/payments', {}, activeMerchant);
       if (!response.ok) {
         throw new Error('Failed to fetch payments');
       }

@@ -5,8 +5,10 @@ import { FormInput } from '@/components/ui/forms/FormInput';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { useMerchantContext } from '@/contexts/MerchantContext';
+import { callApi } from '@/lib/api/api-caller';
 
-interface MerchantGeneralSettingsProps {
+interface BusinessSettingsProps {
   merchantId: string;
   initialData: {
     accountCode: string;
@@ -16,20 +18,21 @@ interface MerchantGeneralSettingsProps {
   availableSettings: string[];
 }
 
-export function MerchantGeneralSettings({ merchantId, initialData, availableSettings }: MerchantGeneralSettingsProps) {
+export function BusinessSettings({ merchantId, initialData, availableSettings }: BusinessSettingsProps) {
   const router = useRouter();
+  const { activeMerchant } = useMerchantContext();
   const [formData, setFormData] = useState(initialData);
   const [error, setError] = useState<JSX.Element | null>(null);
 
   const updateMerchant = useMutation({
     mutationFn: async (data: { id: string; accountCode: string; description: string; settings: Record<string, string> }) => {
-      const response = await fetch('/api/merchants', {
+      const response = await callApi('/api/settings/business-settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-      });
+      }, activeMerchant);
       if (!response.ok) {
         const errorData = await response.json();
         setError(
@@ -41,7 +44,12 @@ export function MerchantGeneralSettings({ merchantId, initialData, availableSett
     },
     onSuccess: () => {
       setError(null);
-      router.push('/merchants');
+      // Stay on the same page if in merchant context, otherwise go to merchants list
+      if (activeMerchant) {
+        router.push('/settings/business-settings');
+      } else {
+        router.push('/merchants');
+      }
     },
   });
 

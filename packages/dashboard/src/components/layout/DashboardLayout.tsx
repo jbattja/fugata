@@ -7,23 +7,39 @@ import {
   CogIcon,
   UserIcon,
   BuildingStorefrontIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useMerchantContext } from '@/contexts/MerchantContext';
+import { MerchantContextIndicator } from './MerchantContextIndicator';
 
-const navigation = [
+const adminNavigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
   { name: 'Merchants', href: '/merchants', icon: BuildingStorefrontIcon },
   { name: 'Providers', href: '/providers', icon: CogIcon },
-  { name: 'Profile', href: '/profile', icon: UserIcon },
+];
+
+const merchantNavigation = [
+  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Payments', href: '/payments', icon: CreditCardIcon },
+  { name: 'Business Settings', href: '/settings/business-settings', icon: CogIcon },
+  { name: 'Users', href: '/settings/users', icon: UsersIcon },
+  { name: 'Payment Configuration', href: '/settings/payment-configuration', icon: CreditCardIcon },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const { isInMerchantContext } = useMerchantContext();
+  
+  // Only show Providers for admin users
+  const navigation = (isInMerchantContext ? merchantNavigation : adminNavigation).filter(
+    (item) => item.name !== 'Providers' || session?.user?.role === 'admin'
+  );
 
   if (!session) {
     return null;
@@ -60,6 +76,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="flex h-16 shrink-0 items-center">
                     <span className="text-xl font-bold text-primary-600">Fugata</span>
                   </div>
+                  
+                  {/* Merchant Context Indicator */}
+                  <MerchantContextIndicator />
+                  
                   <nav className="flex flex-1 flex-col">
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
@@ -103,6 +123,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex h-16 shrink-0 items-center">
             <span className="text-xl font-bold text-primary-600">Fugata</span>
           </div>
+          
+          {/* Merchant Context Indicator */}
+          <MerchantContextIndicator />
+          
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
@@ -152,10 +176,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               {/* Profile dropdown */}
               <Menu as="div" className="relative">
-                <Menu.Button className="-m-1.5 flex items-center p-1.5">
+                <Menu.Button className="-m-1.5 flex items-center p-1.5 rounded-md hover:bg-gray-50 transition-colors">
                   <span className="sr-only">Open user menu</span>
                   <span className="hidden lg:flex lg:items-center">
-                    <span className="ml-4 text-sm font-semibold leading-6 text-gray-900" aria-hidden="true">
+                    <UserIcon className="h-5 w-5 text-gray-400 mr-2" />
+                    <span className="text-sm font-semibold leading-6 text-gray-900" aria-hidden="true">
                       {session.user.username}
                     </span>
                   </span>
@@ -169,29 +194,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                  <Menu.Items className="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
                     <Menu.Item>
                       {({ active }) => (
                         <Link
                           href="/profile"
                           className={`
-                            block px-3 py-1 text-sm leading-6
+                            flex items-center px-4 py-2 text-sm leading-6
                             ${active ? 'bg-gray-50' : ''}
                           `}
                         >
+                          <UserIcon className="h-4 w-4 text-gray-400 mr-3" />
                           Your profile
                         </Link>
                       )}
                     </Menu.Item>
+                    <div className="border-t border-gray-100 my-1"></div>
                     <Menu.Item>
                       {({ active }) => (
                         <Link
                           href="/api/auth/signout"
                           className={`
-                            block px-3 py-1 text-sm leading-6
-                            ${active ? 'bg-gray-50' : ''}
+                            flex items-center px-4 py-2 text-sm leading-6 font-bold text-red-600 hover:text-red-700
+                            ${active ? 'bg-red-50' : ''}
                           `}
                         >
+                          <span className="mr-3">🚪</span>
                           Sign out
                         </Link>
                       )}

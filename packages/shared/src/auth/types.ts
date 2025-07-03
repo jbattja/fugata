@@ -11,6 +11,7 @@ export interface ServiceTokenPayload {
     userId?: string;
     username?: string;
     email?: string;
+    merchantIds?: string[];
     role?: 'admin' | 'user' | 'service';
     
     // JWT standard fields

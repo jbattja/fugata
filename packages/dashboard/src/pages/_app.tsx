@@ -4,6 +4,7 @@ import { SessionProvider, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MerchantProvider } from '@/contexts/MerchantContext';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -42,9 +43,11 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
   return (
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
-        <AuthGuard>
-          <Component {...pageProps} />
-        </AuthGuard>
+        <MerchantProvider>
+          <AuthGuard>
+            <Component {...pageProps} />
+          </AuthGuard>
+        </MerchantProvider>
       </QueryClientProvider>
     </SessionProvider>
   );

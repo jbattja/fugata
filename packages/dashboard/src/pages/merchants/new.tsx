@@ -9,6 +9,7 @@ import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import { getSettingsConfig, AccountType } from '@fugata/shared';
+import { callApi } from '@/lib/api/api-caller';
 
 interface FormData {
   accountCode: string;
@@ -29,7 +30,7 @@ export default function NewMerchant() {
 
   const createMerchant = useMutation({
     mutationFn: async (data: { accountCode: string; description: string; settings: Record<string, string> }) => {
-      const response = await fetch('/api/merchants', {
+      const response = await callApi('/api/merchants', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

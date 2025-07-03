@@ -5,6 +5,7 @@ import { AccountStatus, ProviderCredential } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { callApi } from '@/lib/api/api-caller';
 
 export default function ProviderCredentials() {
   const { data: session } = useSession();
@@ -14,7 +15,7 @@ export default function ProviderCredentials() {
   const { data: credentials, isLoading, error } = useQuery<ProviderCredential[]>({
     queryKey: ['provider-credentials', providerCode],
     queryFn: async () => {
-      const response = await fetch('/api/provider-credentials' + (providerCode ? `?providerCode=${providerCode}` : ''));
+      const response = await callApi('/api/provider-credentials' + (providerCode ? `?providerCode=${providerCode}` : ''));
       if (!response.ok) {
         throw new Error('Failed to fetch provider credentials');
       }

@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole, UserStatus } from '@fugata/shared';
+import { BadRequestException } from '@nestjs/common';
 
 type UserUpdateData = Partial<Omit<User, 'passwordHash'>> & {
   password?: string;
@@ -14,19 +15,33 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(username: string, email: string, password: string, role: UserRole, merchantIds: string[] = []): Promise<User> {
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = this.userRepository.create({
-      username,
-      email,
-      passwordHash,
-      role,
-      merchantIds,
-      status: UserStatus.ACTIVE,
-    });
-    return this.userRepository.save(user);
+    const user = await this.findByUsername(username);
+    if (user) {
+      if (user.email === email) {
+        merchantIds = [...user.merchantIds, ...merchantIds];
+        return this.update(user.id, { merchantIds });
+      } else {
+        throw new BadRequestException('User already exists with different email');
+      }
+    }
+    try {
+      const user = this.userRepository.create({
+        username,
+        email,
+        passwordHash,
+        role,
+        merchantIds,
+        status: UserStatus.ACTIVE,
+      });
+      return this.userRepository.save(user);
+    } catch (error) {
+      Logger.error('Error creating user:', error, UserService.name);
+      throw error;
+    }
   }
 
   async findByUsername(username: string): Promise<User | null> {
@@ -58,7 +73,11 @@ export class UserService {
     merchantId?: string;
   }): Promise<User[]> {
     if (filters?.merchantId) {
-      return this.userRepository.find({ where: { merchantIds: In([filters.merchantId]) } });
+      return this.userRepository.find({ 
+        where: { 
+          merchantIds: Like(`%${filters.merchantId}%`) 
+        } 
+      });
     }
     return this.userRepository.find();
   }

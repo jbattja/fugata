@@ -43,7 +43,8 @@ export class JwtService {
   generateDashboardUserServiceToken(
     user: User,
     targetService: string,
-    targetMerchantId?: string,
+    merchantId?: string,
+    merchantCode?: string,
     expiresIn: string = '5m'
   ): string {
     const permissions = this.getPermissionsForRole(user.role);
@@ -55,9 +56,11 @@ export class JwtService {
       role: user.role,
       permissions,
       service: targetService,
-      merchant: targetMerchantId ? {
-        id: targetMerchantId
-    } : undefined
+      merchantIds: user.merchantIds,
+      merchant: merchantId && merchantCode ? {
+        id: merchantId,
+        accountCode: merchantCode
+      } : undefined
     };
 
     return (jwt as any).sign(payload, this.secret, {

@@ -1,11 +1,13 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useMerchantContext } from '@/contexts/MerchantContext';
 import {
   ArrowUpIcon,
   ArrowDownIcon,
   CurrencyDollarIcon,
   CreditCardIcon,
   ClockIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +58,7 @@ const providers = [
 ];
 export default function Home() {
     const { data: session } = useSession();
+    const { activeMerchant, isInMerchantContext } = useMerchantContext();
 
     if (!session) {
       return null;
@@ -66,6 +69,11 @@ export default function Home() {
         <div>
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
             Dashboard
+            {isInMerchantContext && activeMerchant && (
+              <span className="ml-3 text-lg font-normal text-gray-500">
+                - {activeMerchant.accountCode}
+              </span>
+            )}
           </h2>
           <p className="mt-2 text-sm text-gray-700">
             <span className="text-red-500">The below data is still a mockup and will be replaced with real data in the future.</span>

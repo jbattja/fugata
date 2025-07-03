@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe, Req, UnauthorizedException } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { Merchant } from '../entities/merchant.entity';
 import { Provider } from '../entities/provider.entity';
@@ -12,6 +12,7 @@ import { GetProviderCredentialsDto } from './dto/get-provider-credentials.dto';
 import { PaymentMethod } from '@fugata/shared';
 import { CreatePaymentConfigurationDto } from './dto/create-payment-configuration.dto';
 import { PaymentConfiguration } from '../entities/payment-configuration.entity';
+import { getMerchantIds, isAdmin } from '@fugata/shared';
 
 @Controller('settings')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -25,8 +26,15 @@ export class SettingsController {
   }
 
   @Get('merchants')
-  async getAllMerchants(): Promise<Merchant[]> {
-    return this.settingsService.getAllMerchants();
+  async getAllMerchants(@Req() req: Request): Promise<Merchant[]> {
+    if (isAdmin(req)) {
+      return this.settingsService.getAllMerchants();
+    }
+    const merchantIds = getMerchantIds(req);
+    if (merchantIds.length === 0) {
+      throw new UnauthorizedException('No merchant IDs found');
+    }
+    return this.settingsService.getAllMerchants({ merchantIds });
   }
 
   @Get('merchants/:id')

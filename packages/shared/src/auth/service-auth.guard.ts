@@ -177,6 +177,16 @@ export function getMerchant(request: any): {
   return request.merchant || request.user?.merchant;
 }
 
+export function getMerchantIds(request: any): string[] {
+    if (request.user.merchantIds) {
+      return request.user.merchantIds;
+    }
+    if (request.merchant) {
+      return [request.merchant.id];
+    }
+    return [];
+}
+
 // Helper function to get user ID from request
 export function getUserId(request: any): string {
   return request.userId || request.user?.userId;
@@ -185,6 +195,10 @@ export function getUserId(request: any): string {
 // Helper function to get user role from request
 export function getUserRole(request: any): string {
   return request.role || request.user?.role;
+}
+
+export function isAdmin(request: any): boolean {
+  return request.user?.role === 'admin';
 }
 
 // Helper function to check if user has access to a specific merchant

@@ -19,7 +19,8 @@ export class PaymentRequestsService {
   async listPaymentRequests(
     skip: number = 0,
     take: number = 10,
-    filters: Partial<PaymentRequest> = {}
+    filters: Partial<PaymentRequest> = {},
+    merchantIds: string[] = []
   ): Promise<{ data: PaymentRequest[];  }> {
     const query = this.paymentRequestRepository.createQueryBuilder('payment_request');
 
@@ -32,6 +33,9 @@ export class PaymentRequestsService {
     }
     if (filters.reference) {
       query.andWhere('payment_request.reference = :reference', { reference: filters.reference });
+    }
+    if (merchantIds.length > 0) {
+      query.andWhere('payment_request.merchantCode IN (:...merchantIds)', { merchantIds });
     }
 
     // Apply pagination

@@ -64,10 +64,16 @@ export class SettingsService {
     return merchant;
   }
 
+  async getAllMerchants(filters?: {
+    merchantIds?: string[];
+  }): Promise<Merchant[]> {
+    const queryBuilder = this.merchantRepository.createQueryBuilder('m')
+      .leftJoinAndSelect('m.paymentConfigurations', 'pc');
 
-  async getAllMerchants(): Promise<Merchant[]> {
-    return this.merchantRepository.find({
-    });
+    if (filters?.merchantIds) {
+      queryBuilder.andWhere('m.id IN (:...merchantIds)', { merchantIds: filters.merchantIds });
+    }
+    return queryBuilder.getMany();
   }
 
   async updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant> {

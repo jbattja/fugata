@@ -10,6 +10,7 @@ import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
 import Form from '@/components/ui/forms/Form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { getSettingsConfig, AccountType, Provider, ProviderCredential } from '@fugata/shared';
+import { callApi } from '@/lib/api/api-caller';
 
 interface FormData {
   accountCode: string;
@@ -36,7 +37,7 @@ export default function EditProviderCredential() {
   const { data: credential, isLoading: isLoadingCredential } = useQuery<ProviderCredential>({
     queryKey: ['provider-credential', id],
     queryFn: async () => {
-      const response = await fetch(`/api/provider-credentials/${id}`);
+      const response = await callApi(`/api/provider-credentials/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch provider credential');
       }
@@ -60,7 +61,7 @@ export default function EditProviderCredential() {
   const { data: providers } = useQuery<Provider[]>({
     queryKey: ['providers'],
     queryFn: async () => {
-      const response = await fetch('/api/providers');
+      const response = await callApi('/api/providers');
       if (!response.ok) {
         throw new Error('Failed to fetch providers');
       }
@@ -71,7 +72,7 @@ export default function EditProviderCredential() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch(`/api/provider-credentials/`, {
+      const response = await callApi(`/api/provider-credentials/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({...data, id}),

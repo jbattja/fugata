@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CreditCardIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { useMerchantContext } from '@/contexts/MerchantContext';
+import { callApi } from '@/lib/api/api-caller';
 
 interface PaymentConfiguration {
   id: string;
@@ -12,17 +13,18 @@ interface PaymentConfiguration {
   updatedAt: Date;
 }
 
-interface MerchantPaymentConfigurationsProps {
+interface PaymentConfigurationsProps {
   merchantId: string;
 }
 
-export function MerchantPaymentConfigurations({ merchantId }: MerchantPaymentConfigurationsProps) {
+export function PaymentConfigurations({ merchantId }: PaymentConfigurationsProps) {
+  const { activeMerchant } = useMerchantContext();
   const [showAddConfig, setShowAddConfig] = useState(false);
 
   const { data: configurations, isLoading, error } = useQuery<PaymentConfiguration[]>({
     queryKey: ['merchant-payment-configurations', merchantId],
     queryFn: async () => {
-      const response = await fetch(`/api/merchants/${merchantId}/payment-configurations`);
+      const response = await callApi(`/api/settings/payment-configuration`, {}, activeMerchant);
       if (!response.ok) {
         throw new Error('Failed to fetch payment configurations');
       }
@@ -54,10 +56,6 @@ export function MerchantPaymentConfigurations({ merchantId }: MerchantPaymentCon
 
   if (isLoading) {
     return <div className="text-center py-4">Loading payment configurations...</div>;
-  }
-
-  if (error) {
-    return <ErrorMessage message="Failed to load payment configurations" errors="An error occurred while loading payment configurations." />;
   }
 
   return (
