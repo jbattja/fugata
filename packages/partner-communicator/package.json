@@ -1,0 +1,26 @@
+{
+  "name": "@fugata/partner-communicator",
+  "version": "1.0.0",
+  "description": "Partner communication service for Fugata",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "nest start --exec \"node dist/partner-communicator/src/main.js\"",
+    "start:dev": "nest start --watch --exec \"node dist/partner-communicator/src/main.js\"",
+    "start:debug": "nest start --debug --watch --exec \"node dist/partner-communicator/src/main.js\"",
+    "start:prod": "node dist/partner-communicator/src/main.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@fugata/shared": "1.0.0",
+    "@nestjs/config": "^4.0.2",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
+    "reflect-metadata": "^0.2.1"
+  }
+} 

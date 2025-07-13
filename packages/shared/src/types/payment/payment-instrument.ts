@@ -63,6 +63,10 @@ export class CardDetails extends PaymentInstrumentDetails {
     @IsOptional()
     country?: string;
 
+    @IsNumber()
+    @IsOptional()
+    number?: number;
+
     @IsString()
     @IsOptional()
     cvc?: string;

@@ -1,16 +1,32 @@
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
-import { AccountStatus, ProviderCredential } from '@fugata/shared';
+import { AccountStatus, ProviderCredential, Provider } from '@fugata/shared';
 import { useRouter } from 'next/router';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { callApi } from '@/lib/api/api-caller';
+import { useMemo } from 'react';
 
 export default function ProviderCredentials() {
   const { data: session } = useSession();
   const router = useRouter();
-  const providerCode = router.query.providerCode as string | undefined;
+  const providerData = router.query.provider as string;
+  
+  // Decode provider object from URL
+  const provider = useMemo(() => {
+    if (providerData) {
+      try {
+        return JSON.parse(atob(providerData)) as Provider;
+      } catch (error) {
+        console.error('Failed to decode provider data:', error);
+        return null;
+      }
+    }
+    return null;
+  }, [router.query.provider]);
+
+  const providerCode = provider?.accountCode || router.query.providerCode as string | undefined;
 
   const { data: credentials, isLoading, error } = useQuery<ProviderCredential[]>({
     queryKey: ['provider-credentials', providerCode],
@@ -50,8 +66,8 @@ export default function ProviderCredentials() {
   return (
     <DashboardLayout>
       <DataTable
-        title="Provider Credentials"
-        description="A list of all provider credentials including their provider details."
+        title={provider ? `Provider Credentials - ${provider.accountCode}` : "Provider Credentials"}
+        description={`A list of all provider credentials.`}
         data={credentials || []}
         columns={[
           { header: 'Account Code', accessor: 'accountCode' },
@@ -69,12 +85,12 @@ export default function ProviderCredentials() {
           },
         ]}
         searchKeys={['accountCode', 'description', 'provider.accountCode']}
-        onAdd={() => router.push('/provider-credentials/new' + (providerCode ? `?providerCode=${providerCode}` : ''))}
+        onAdd={() => router.push('/provider-credentials/new?provider=' + providerData)}
         addButtonText="Add Credential"
         actionButtons={[
           {
             name: 'Edit',
-            action: (cred) => router.push(`/provider-credentials/${cred.id}?providerCode=${providerCode}`),
+            action: (cred) => router.push(`/provider-credentials/${cred.id}?provider=${providerData}`),
           },
         ]}
       />

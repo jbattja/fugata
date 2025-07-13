@@ -1,30 +1,28 @@
-import { HttpService } from "@nestjs/axios";
 import { StripePaymentIntent, StripePaymentIntentStatus } from "./types/stripe-payment-intent";
-import { firstValueFrom } from "rxjs";
-import { getStripePaymentMethod, StripePaymentMethod } from "./types/stripe-payment-method";
-import { PaymentRequest } from "@fugata/shared";
+import { Payment } from "@fugata/shared";
+import axios from "axios";
 import { Logger } from "@nestjs/common";
+import { getStripePaymentMethod, StripePaymentMethod } from "./types/stripe-payment-method";
 
-export class StripeConnector  {
+export class StripeConnector {
     private static readonly logger = new Logger(StripeConnector.name);
     private static readonly baseUrl = 'https://api.stripe.com';
 
-    static async createPaymentIntent(paymentIntent: StripePaymentIntent, secretKey: string, originalRequest: PaymentRequest): Promise<StripePaymentIntent> {
-        const httpService = new HttpService();
-
+    static async createPaymentIntent(paymentIntent: StripePaymentIntent, secretKey: string, originalRequest: Payment): Promise<StripePaymentIntent> {
         try {
-            if (originalRequest.paymentMethod) {
-                const paymentMethod = getStripePaymentMethod(originalRequest.paymentMethod);
+            if (originalRequest.paymentInstrument?.paymentMethod) {
+                const paymentMethod = getStripePaymentMethod(originalRequest.paymentInstrument.paymentMethod);
                 const paymentMethodData = await this.createPaymentMethod(paymentMethod, secretKey);
                 paymentIntent.payment_method = paymentMethodData.id;
             }
 
-            const response = await firstValueFrom(httpService.post(`${this.baseUrl}/v1/payment_intents`, paymentIntent, {
+            const response = await axios.post(`${this.baseUrl}/v1/payment_intents`, paymentIntent, {
                 headers: {
                     'Authorization': `Bearer ${secretKey}`,
-                    'Content-Type': 'application/application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
-            }));
+            });
+
             if (response.data.status == StripePaymentIntentStatus.REQUIRES_CONFIRMATION) {
                 response.data.return_url = originalRequest.returnUrl;
                 return this.confirmPaymentIntent(response.data as StripePaymentIntent, secretKey);
@@ -42,15 +40,14 @@ export class StripeConnector  {
 
     static async createPaymentMethod(paymentMethod: string, secretKey: string): Promise<StripePaymentMethod> {
         const paymentMethodData = {"type": paymentMethod} as StripePaymentMethod;
-        const httpService = new HttpService();
 
         try {
-            const response = await firstValueFrom(httpService.post(`${this.baseUrl}/v1/payment_methods`, paymentMethodData, {
+            const response = await axios.post(`${this.baseUrl}/v1/payment_methods`, paymentMethodData, {
                 headers: {
                     'Authorization': `Bearer ${secretKey}`,
-                    'Content-Type': 'application/application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
-            }));
+            });
             return response.data as StripePaymentMethod;
         } catch (error) {
             this.logger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`);
@@ -67,14 +64,14 @@ export class StripeConnector  {
             payment_method: paymentIntent.payment_method,
             return_url: paymentIntent.return_url
         }
-        const httpService = new HttpService();
+
         try {
-            const response = await firstValueFrom(httpService.post(`${this.baseUrl}/v1/payment_intents/${paymentIntent.id}/confirm`, confirmPaymentObject, {
+            const response = await axios.post(`${this.baseUrl}/v1/payment_intents/${paymentIntent.id}/confirm`, confirmPaymentObject, {
                 headers: {
                     'Authorization': `Bearer ${secretKey}`,
-                    'Content-Type': 'application/application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
-            }));
+            });
             return response.data as StripePaymentIntent;
         } catch (error) {
             this.logger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`);
@@ -85,5 +82,4 @@ export class StripeConnector  {
             };
         }
     }
-}
-
+} 

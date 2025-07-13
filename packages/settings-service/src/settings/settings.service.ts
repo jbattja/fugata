@@ -6,7 +6,7 @@ import { ProviderCredential } from '../entities/provider-credential.entity';
 import { RoutingRule } from '../entities/routing-rule.entity';
 import { Provider } from 'src/entities/provider.entity';
 import { PaymentConfiguration } from 'src/entities/payment-configuration.entity';
-import { Account, AccountStatus, AccountType, PaymentMethod, validateAccountSettings } from '@fugata/shared';
+import { Account, AccountStatus, AccountType, PaymentMethod, validateAccountSettings, validateAndDeduplicateProviderCredential } from '@fugata/shared';
 
 @Injectable()
 export class SettingsService {
@@ -156,8 +156,11 @@ export class SettingsService {
       provider: provider,
     });
     providerCredential.provider = provider;
-    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL);
-    return this.providerCredentialRepository.save(providerCredential);
+    
+    // Validate and deduplicate settings before saving
+    const validatedAndDeduplicated = validateAndDeduplicateProviderCredential(providerCredential);
+    
+    return this.providerCredentialRepository.save(validatedAndDeduplicated);
   }
 
   async getProviderCredential(id: string): Promise<ProviderCredential> {
@@ -199,8 +202,11 @@ export class SettingsService {
   async updateProviderCredential(id: string, updates: Partial<ProviderCredential>): Promise<ProviderCredential> {
     const providerCredential = await this.getProviderCredential(id);
     Object.assign(providerCredential, updates);
-    await this.validateSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL);
-    return this.providerCredentialRepository.save(providerCredential);
+    
+    // Validate and deduplicate settings before saving
+    const validatedAndDeduplicated = validateAndDeduplicateProviderCredential(providerCredential);
+    
+    return this.providerCredentialRepository.save(validatedAndDeduplicated);
   }
 
   async deleteProviderCredential(id: string): Promise<void> {

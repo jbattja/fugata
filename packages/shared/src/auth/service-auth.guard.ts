@@ -1,6 +1,7 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { ServiceTokenPayload } from './types';
+import { SharedLogger } from '../utils/logger';
 
 export interface AuthenticatedRequest {
   user: ServiceTokenPayload;
@@ -121,7 +122,7 @@ export const RequirePermissions = (...permissions: string[]) => {
           throw new UnauthorizedException(`Missing required permissions: ${permissions.join(', ')}`);
         }
       } else {
-        Logger.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`, ServiceAuthGuard.name);
+        SharedLogger.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`, ServiceAuthGuard.name);
       }
       
       return originalMethod.apply(this, args);

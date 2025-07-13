@@ -2,7 +2,7 @@ import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { FormSelect } from '@/components/ui/forms/FormSelect';
@@ -23,9 +23,17 @@ export default function EditProviderCredential() {
   const { data: session } = useSession();
   const router = useRouter();
   const { id } = router.query;
-  const providerCode = router.query.providerCode as string;
+  const providerData = router.query.provider as string;
+  const provider = useMemo(() => {
+    if (providerData) {
+      return JSON.parse(atob(providerData)) as Provider;
+    }
+    return null;
+  }, [router.query.provider]);
+  const providerCode = provider?.accountCode || router.query.providerCode as string | undefined;
+
   const [error, setError] = useState<JSX.Element | null>(null);
-  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode));
+  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode || null));
 
   const [formData, setFormData] = useState<FormData>({
     accountCode: '',
@@ -86,7 +94,7 @@ export default function EditProviderCredential() {
       return response.json();
     },
     onSuccess: () => {
-      router.push('/provider-credentials' + (providerCode ? `?providerCode=${providerCode}` : ''));
+      router.push('/provider-credentials' + (providerData ? `?provider=${providerData}` : ''));
     },
   });
 

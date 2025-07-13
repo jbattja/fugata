@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { extractAuthHeaders } from '../clients/jwt.service';
 import { 
   PaymentContext, 
   WorkflowDefinition, 
@@ -9,16 +10,23 @@ import {
 import { ActionRegistry, ActionsType } from './actions/action-registry';
 import { WorkflowConditionEvaluator } from './condition-evaluator';
 import { DEFAULT_WORKFLOW } from './workflow-definition';
-import { getMerchant, Payment, SettingsClient } from '@fugata/shared';
+import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient } from '@fugata/shared';
 
 @Injectable()
 export class WorkflowOrchestrationService {
   private workflow: WorkflowDefinition;
   private conditionEvaluator: WorkflowConditionEvaluator;
 
-  constructor(private settingsClient: SettingsClient) {
+  constructor(
+    private settingsClient: SettingsClient,
+    private partnerCommunicatorClient: PartnerCommunicatorClient
+  ) {
     this.workflow = DEFAULT_WORKFLOW;
     this.conditionEvaluator = new WorkflowConditionEvaluator();
+    
+    // Set both clients in the action registry
+    ActionRegistry.setPartnerCommunicatorClient(this.partnerCommunicatorClient);
+    ActionRegistry.setSettingsClient(this.settingsClient);
   }
 
   /**
@@ -49,11 +57,11 @@ export class WorkflowOrchestrationService {
       const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
       if (merchantId) {
         // Extract authorization headers from the request
-        const authHeaders = this.extractAuthHeaders(request);
+        const authHeaders = extractAuthHeaders(request);
         context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
       } else {
         throw new Error('Merchant not found');
-      }      
+      }
       // Start with the first action (InitiatePayment)
       const result = await this.executeWorkflow(context, ActionsType.InitiatePayment);
       
@@ -69,35 +77,6 @@ export class WorkflowOrchestrationService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-  }
-
-  /**
-   * Extract authorization headers from the request
-   */
-  private extractAuthHeaders(request: any): Record<string, string> {
-    const headers: Record<string, string> = {};
-    
-    // Extract Authorization header
-    if (request.headers?.authorization) {
-      headers['Authorization'] = request.headers.authorization;
-    }
-    
-    // Extract X-Service-Token header
-    if (request.headers?.['x-service-token']) {
-      headers['X-Service-Token'] = request.headers['x-service-token'];
-    }
-    
-    // Extract X-Merchant-ID header
-    if (request.headers?.['x-merchant-id']) {
-      headers['X-Merchant-ID'] = request.headers['x-merchant-id'];
-    }
-    
-    // Extract Content-Type header
-    if (request.headers?.['content-type']) {
-      headers['Content-Type'] = request.headers['content-type'];
-    }
-    
-    return headers;
   }
 
   /**

@@ -1,40 +1,59 @@
-import { AuthorizationData, PaymentStatus } from "@fugata/shared";
+import { AuthorizationData, PaymentStatus, PartnerCommunicatorClient, SettingsClient } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
+import { extractAuthHeaders } from "src/clients/jwt.service";
 
 export class AuthorizeAction extends BaseAction {
+    constructor(private readonly partnerCommunicatorClient: PartnerCommunicatorClient,
+        private readonly settingsClient: SettingsClient) {
+        super();
+    }
+
     async execute(context: PaymentContext): Promise<PaymentContext> {
         context.authorizeAttempts++;
         this.log(`Executing Authorize action attempt number ${context.authorizeAttempts}`);
-        // TODO: Call authorization service
+
         let authorizationData = context.payment.authorizationData;
         if (!authorizationData) {
             authorizationData = new AuthorizationData();
         }
         context.payment.authorizationData = authorizationData;
 
-        Math.random() > 0.1 ? this.mockAuthorizationSuccess(context) : this.mockAuthorizationFailed(context);
-
-        this.log('Authorize action completed', context.payment.authorizationData);
+        try {
+            // Call partner communicator for authorization
+            context.payment = await this.authorizeWithPartner(context);
+        } catch (error) {
+            this.log('Partner communication failed', error.message);
+            this.handlePartnerError(context);
+        }
         return context;
     }
 
-    private mockAuthorizationSuccess(context: PaymentContext) { 
-        context.payment.status = PaymentStatus.AUTHORIZED;
-        context.payment.authorizationData.responseMessage = "Approved";
-        context.payment.authorizationData.networkResponseCode = "00";
-        context.payment.authorizationData.acquirerReference = "1234567890";
-        context.payment.authorizationData.avsResult = "D";
-        context.payment.authorizationData.authCode = "1234567890";
+    private async authorizeWithPartner(context: PaymentContext) {
+        const headers = extractAuthHeaders(context.request);
+
+        const partnerConfig = await this.getPartnerConfig(context);
+
+        return await this.partnerCommunicatorClient.authorizePayment(
+            headers,
+            partnerConfig.partnerIntegrationClass,
+            context.payment,
+            partnerConfig
+        );
     }
 
-    private mockAuthorizationFailed(context: PaymentContext) { 
-        context.payment.status = PaymentStatus.REFUSED;
-        context.payment.refusalReason = "Refused";
-        context.payment.authorizationData.responseMessage = "Do Not Honor";
-        context.payment.authorizationData.networkResponseCode = "05";
-        context.payment.authorizationData.acquirerReference = "1234567890";
-        context.payment.authorizationData.avsResult = "S";
-        context.payment.authorizationData.authCode = "1234567890";
+    private async getPartnerConfig(context: PaymentContext) {
+        const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(
+            extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
+        if (!providerCredential) {
+            throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
+        } else {
+            return providerCredential.settings;
         }
+    }
+
+    private handlePartnerError(context: PaymentContext) {
+        context.payment.status = PaymentStatus.REFUSED;
+        context.payment.refusalReason = "Partner communication failed";
+    }
 } 

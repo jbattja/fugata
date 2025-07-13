@@ -17,11 +17,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       }
       case 'POST': {
-        const { accountCode, providerCode, settings } = req.body;
+        Logger.log("Provider Credential POST request received", req.body, handler.name);
+        const { accountCode, description, providerCode, settings } = req.body;
         if (!accountCode || !providerCode || !settings) {
           return res.status(400).json({ error: 'Account code, provider code and settings are required' });
         }
-        const providerCredential = await settingsClient.createProviderCredential(authHeaders, accountCode, providerCode, settings);
+        const providerCredential = await settingsClient.createProviderCredential(authHeaders, accountCode, description, providerCode, settings);
         res.status(201).json(providerCredential);
         break;
       }

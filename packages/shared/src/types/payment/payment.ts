@@ -69,8 +69,8 @@ export class Action {
 export class Payment {
 
     @IsString()
-    @IsOptional()
-    paymentId?: string;
+    @IsNotEmpty()
+    paymentId!: string;
 
     @ValidateNested()
     @Type(() => Merchant)

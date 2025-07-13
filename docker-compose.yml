@@ -111,6 +111,7 @@ services:
     environment:
       CHECKOUT_URL: http://localhost:8081
       KAFKA_BROKERS: kafka:29092
+      PARTNER_COMMUNICATOR_URL: http://partner-communicator:3003
     env_file:
       - ./packages/payment-processor/.env
     ports:
@@ -123,6 +124,24 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      partner-communicator:
+        condition: service_started
+
+  partner-communicator:
+    build:
+      context: .
+      dockerfile: packages/partner-communicator/Dockerfile
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ./packages/partner-communicator/.env
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./packages/partner-communicator:/app/packages/partner-communicator
+      - ./packages/shared:/app/packages/shared
+      - /app/packages/partner-communicator/node_modules
+      - /app/packages/shared/node_modules
 
   payment-data:
     build:

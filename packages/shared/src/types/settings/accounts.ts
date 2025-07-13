@@ -1,6 +1,6 @@
 import { IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested, ValidationError } from 'class-validator';
 import { MerchantSettings, ProviderSettings, AccountSettingsConfig } from './account-settings';
-import { getSettingsConfigForProviderCredential } from './integrations/integration-settings';
+import { getSettingsConfigForProviderCredential, PartnerName } from './integrations/integration-settings';
 import { Type } from 'class-transformer';
 
 export enum AccountType {
@@ -84,11 +84,10 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
   let settingsConfig: AccountSettingsConfig;
   if (accountType === AccountType.PROVIDER_CREDENTIAL) {
     const providerCredential = account as ProviderCredential;
-    if (providerCredential.provider == null || providerCredential.provider.accountCode == null) {
-      throw new Error('Provider is null');
+    if (!providerCredential.provider?.accountCode) {
+      throw new Error('Provider code is required');
     }
-    const providerCode = providerCredential.provider.accountCode;
-    settingsConfig = getSettingsConfig(accountType, providerCode);
+    settingsConfig = getSettingsConfig(accountType, providerCredential.provider.accountCode);
   } else {
     settingsConfig = getSettingsConfig(accountType, null);
   }
@@ -228,14 +227,15 @@ export function validateAccountSettings(account: Account, accountType: AccountTy
   return errors;
 }
 
-export function getSettingsConfig(accountType: AccountType, parentAccountCode: string | null): AccountSettingsConfig {
+export function getSettingsConfig(accountType: AccountType, providerCode: string | null): AccountSettingsConfig {
   // Get the settings configuration based on the account type
   let settingsConfig: AccountSettingsConfig;
   if (accountType === AccountType.PROVIDER_CREDENTIAL) {
-    if (parentAccountCode == null) {
-      throw new Error('Parent account code is null');
+    if (providerCode == null || !Object.values(PartnerName).includes(providerCode as PartnerName)) {
+      throw new Error('Provider code is null or invalid, valid options are: ' + Object.values(PartnerName).join(', '));
     }
-    settingsConfig = getSettingsConfigForProviderCredential(parentAccountCode);
+    const partnerName = providerCode as PartnerName;
+    settingsConfig = getSettingsConfigForProviderCredential(partnerName);
   } else if (accountType === AccountType.MERCHANT) {
     settingsConfig = MerchantSettings;
   } else if (accountType === AccountType.PROVIDER) {
@@ -261,7 +261,7 @@ export function getSettings(account: Account, accountType: AccountType): Record<
   return settings;
 }
 
-export function getCombinedSettings(parentAccount: Account, childAccount: Account): Record<string, any> {
+export function getCombinedSettings(childAccount: Account, parentAccount: Account): Record<string, any> {
   let combinedSettings: Record<string, any> = {};
   if (parentAccount.settings != null) {
     combinedSettings = { ...parentAccount.settings };
@@ -270,4 +270,75 @@ export function getCombinedSettings(parentAccount: Account, childAccount: Accoun
     combinedSettings = {...combinedSettings, ...childAccount.settings };
   }
   return combinedSettings;
+}
+
+/**
+ * Deduplicates settings between a provider credential and its provider.
+ * Removes settings from the provider credential that are identical to the provider's settings,
+ * keeping only the delta (settings that differ or are unique to the credential).
+ * 
+ * Example:
+ * Provider settings: { apiKey: "shared-key", environment: "production" }
+ * Credential settings: { apiKey: "shared-key", environment: "production", merchantId: "merchant-123" }
+ * Result: { merchantId: "merchant-123" } (only the delta remains)
+ * 
+ * This ensures that:
+ * 1. Shared settings are stored only at the provider level
+ * 2. Provider credentials only store their unique overrides
+ * 3. Storage is optimized by avoiding duplication
+ * 4. When reading settings, getCombinedSettings() merges them back together
+ * 
+ * @param providerCredential The provider credential account
+ * @returns The provider credential with deduplicated settings (only delta remains)
+ */
+export function deduplicateProviderCredentialSettings(providerCredential: ProviderCredential): ProviderCredential {
+  if (!providerCredential.provider) {
+    throw new Error('Provider is required for deduplication');
+  }
+
+  const provider = providerCredential.provider;
+  const credentialSettings = providerCredential.settings || {};
+  const providerSettings = provider.settings || {};
+  
+  // Create a copy of the provider credential to avoid mutating the original
+  const deduplicatedCredential = { ...providerCredential };
+  deduplicatedCredential.settings = { ...credentialSettings };
+
+  // Remove settings from credential that are identical to provider settings
+  Object.keys(deduplicatedCredential.settings || {}).forEach(key => {
+    const credentialValue = deduplicatedCredential.settings![key];
+    const providerValue = providerSettings[key];
+    // Remove if both key and value are identical
+    if (providerValue !== undefined && JSON.stringify(credentialValue) === JSON.stringify(providerValue)) {
+      delete deduplicatedCredential.settings![key];
+    }
+  });
+
+  // If all settings were removed, set to empty object
+  if (Object.keys(deduplicatedCredential.settings || {}).length === 0) {
+    deduplicatedCredential.settings = {};
+  }
+
+  return deduplicatedCredential;
+}
+
+/**
+ * Validates and deduplicates provider credential settings before saving.
+ * This ensures that only the delta is stored on the provider credential.
+ * 
+ * @param providerCredential The provider credential to validate and deduplicate
+ * @returns The validated and deduplicated provider credential
+ */
+export function validateAndDeduplicateProviderCredential(providerCredential: ProviderCredential): ProviderCredential {
+  // First validate the settings
+  const validationErrors = validateAccountSettings(providerCredential, AccountType.PROVIDER_CREDENTIAL);
+  if (validationErrors.length > 0) {
+    const errorMessages = validationErrors.map(error => 
+      `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`
+    ).join('; ');
+    throw new Error(`Validation failed: ${errorMessages}`);
+  }
+
+  // Then deduplicate the settings
+  return deduplicateProviderCredentialSettings(providerCredential);
 }

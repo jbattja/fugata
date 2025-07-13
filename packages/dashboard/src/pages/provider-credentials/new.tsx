@@ -2,7 +2,7 @@ import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { FormSelect } from '@/components/ui/forms/FormSelect';
@@ -15,7 +15,14 @@ import { callApi } from '@/lib/api/api-caller';
 export default function NewProviderCredential() {
   const { data: session } = useSession();
   const router = useRouter();
-  const providerCode = router.query.providerCode as string;
+  const providerData = router.query.provider as string;
+  const provider = useMemo(() => {
+    if (providerData) {
+      return JSON.parse(atob(providerData)) as Provider;
+    }
+    return null;
+  }, [router.query.provider]);
+  const providerCode = provider?.accountCode || router.query.providerCode as string | undefined;
 
   const [formData, setFormData] = useState({
     accountCode: '',
@@ -24,8 +31,12 @@ export default function NewProviderCredential() {
     settings: {} as Record<string, string>,
   });
   const [error, setError] = useState<JSX.Element | null>(null);
-  const availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode));
-
+  let availableSettings: string[] = [];
+  try {
+    availableSettings = Object.keys(getSettingsConfig(AccountType.PROVIDER_CREDENTIAL, providerCode || null));
+  } catch (error) {
+    console.error('Failed to fetch available settings:', error);
+  }
 
   const { data: providers } = useQuery<Provider[]>({
     queryKey: ['providers'],
@@ -55,7 +66,7 @@ export default function NewProviderCredential() {
       return response.json();
     },
     onSuccess: () => {
-      router.push('/provider-credentials' + (providerCode ? `?providerCode=${providerCode}` : ''));
+      router.push('/provider-credentials' + (providerData ? `?provider=${providerData}` : ''));
     },
   });
 

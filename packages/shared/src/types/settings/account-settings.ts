@@ -6,6 +6,7 @@ export enum AccountSettingKey {
   ALLOW_SKIP_3DS = 'allowSkip3DS',
   ALLOW_SKIP_RISK = 'allowSkipRisk',
   MCC = 'mcc',
+  PARTNER_INTEGRATION_CLASS = 'partnerIntegrationClass',
 }
 
 // Type for setting value types
@@ -32,6 +33,7 @@ export const ProviderCredentialSettings: AccountSettingsConfig = {
   [AccountSettingKey.SECRET_KEY]: { type: 'string', required: false },
   [AccountSettingKey.MERCHANT_ACCOUNT]: { type: 'string', required: false },
   [AccountSettingKey.MCC]: { type: 'number', required: false, min: 1000, max: 9999 },
+  [AccountSettingKey.PARTNER_INTEGRATION_CLASS]: { type: 'string', required: true },
 };
 
 export const MerchantSettings: AccountSettingsConfig = {
@@ -42,4 +44,5 @@ export const MerchantSettings: AccountSettingsConfig = {
 
 export const ProviderSettings: AccountSettingsConfig = {
   [AccountSettingKey.API_KEY]: { type: 'string', required: false },
+  [AccountSettingKey.PARTNER_INTEGRATION_CLASS]: { type: 'string', required: false },
 };

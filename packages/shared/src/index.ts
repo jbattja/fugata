@@ -1,9 +1,10 @@
 import 'reflect-metadata';
 import { SettingsClient } from './clients/settings.client';
 import { PaymentDataClient } from './clients/payment-data.client';
+import { PartnerCommunicatorClient } from './clients/partner-communicator.client';
 
 export {
-  SettingsClient,PaymentDataClient
+  SettingsClient, PaymentDataClient, PartnerCommunicatorClient
 };
 
 export * from './types/settings/accounts'; 
@@ -27,3 +28,6 @@ export * from './types/payment/authentication';
 export * from './auth/service-auth.guard';
 export * from './auth/jwt.service';
 export * from './auth/types';
+
+// Export utilities
+export * from './utils/logger';

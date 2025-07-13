@@ -1,4 +1,5 @@
 import { PaymentMethod } from "@fugata/shared";
+import { MissingFieldsError } from "../../../exceptions/missing-fields-error.filter";
 
 class AdyenPaymentMethodMap {
     adyenMethod: string;
@@ -8,10 +9,7 @@ class AdyenPaymentMethodMap {
 export function getAdyenPaymentMethod(paymentMethod: PaymentMethod): string {
     const method = AdyenPaymentMethods.find(method => method.paymentMethod === paymentMethod);
     if (!method) {
-        throw {
-            statusCode: 500,
-            message: `Payment method ${paymentMethod} not supported for Adyen`,
-        };
+        throw new MissingFieldsError(`Payment method ${paymentMethod} not supported for Adyen`);
     }
     return method.adyenMethod;
 }
@@ -19,10 +17,7 @@ export function getAdyenPaymentMethod(paymentMethod: PaymentMethod): string {
 export function getPaymentMethod(adyenMethod: string): PaymentMethod {
     const method = AdyenPaymentMethods.find(method => method.adyenMethod === adyenMethod);
     if (!method) {
-        throw {
-            statusCode: 500,
-            message: `Payment method ${adyenMethod} not supported for Adyen`,
-        };
+        throw new MissingFieldsError(`Payment method ${adyenMethod} not supported for Adyen`);
     }
     return method.paymentMethod;
 }

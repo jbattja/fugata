@@ -10,7 +10,7 @@ import { AuthMiddleware } from './middleware/auth.middleware'
 import { IdempotencyMiddleware } from './middleware/idempotency.middleware'
 import { RouteConfig } from './types'
 import { routes } from './config/routes'
-import { Logger } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 
 // Environment variables
 const PORT = process.env.PORT || 4000
@@ -84,7 +84,7 @@ async function buildApp() {
   try {
     await redisService.ensureConnection()
   } catch (error) {
-    Logger.error('Failed to connect to Redis:', error, buildApp.name);
+    SharedLogger.error('Failed to connect to Redis:', 'buildApp', error);
     throw error
   }
 
@@ -133,7 +133,7 @@ async function start() {
     const app = await buildApp()
     await app.listen({ port: PORT as number, host: '0.0.0.0' })
   } catch (err) {
-    Logger.error('Error starting server:', err, start.name);
+    SharedLogger.error('Error starting server:', 'start', err);
     process.exit(1)
   }
 }

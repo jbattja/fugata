@@ -1,6 +1,6 @@
 import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TranformerError } from 'src/payment/routing/transformer';
+import { MissingFieldsError } from 'src/partner-communication/exceptions/missing-fields-error.filter';
 
 export enum StripePaymentIntentStatus {
   REQUIRES_PAYMENT_METHOD = 'requires_payment_method',
@@ -137,8 +137,8 @@ export class StripePaymentIntent {
   description?: string;
 
   @IsOptional()
-  @IsString()
-  last_payment_error?: string;
+  @IsObject()
+  last_payment_error?: Record<string, any>;
 
   @IsOptional()
   @IsString()
@@ -268,7 +268,7 @@ export class StripePaymentIntentBuilder {
     return this;
   }
 
-  withLastPaymentError(lastPaymentError?: string): StripePaymentIntentBuilder {
+  withLastPaymentError(lastPaymentError?: Record<string, any>): StripePaymentIntentBuilder {
     this.paymentIntent.last_payment_error = lastPaymentError;
     return this;
   }
@@ -332,7 +332,7 @@ export class StripePaymentIntentBuilder {
     const requiredFields = ['amount', 'currency'];
     const missingFields = requiredFields.filter(field => !this.paymentIntent[field]);
     if (missingFields.length > 0) {
-      throw new TranformerError(`Required fields are missing for Stripe Payment Intent: ${missingFields.join(', ')}`);
+      throw new MissingFieldsError(`Required fields are missing for Stripe Payment Intent: ${missingFields.join(', ')}`);
     }
     return new StripePaymentIntent(this.paymentIntent);
   }

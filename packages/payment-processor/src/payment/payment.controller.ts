@@ -1,8 +1,7 @@
-import { getMerchant, Payment, PaymentStatus, RequirePermissions, validatePaymentInstrument } from "@fugata/shared";
+import { FugataReference, getMerchant, Payment, PaymentStatus, RequirePermissions, validatePaymentInstrument } from "@fugata/shared";
 import { Body, Controller, Logger, Post, Req } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
-import { v4 as uuidv4 } from 'uuid';
 import { WorkflowOrchestrationService } from "src/core/workflow-orchestration.service";
 import { ValidationException } from "src/exceptions/validation.exception";
 
@@ -24,7 +23,7 @@ export class PaymentsController {
     this.logger.log(`Creating payment for merchant: ${merchant.id}`);
 
 
-    const paymentId = uuidv4();
+    const paymentId = FugataReference.generateReference();
     const payment = new Payment({
       paymentId: paymentId,
       status: PaymentStatus.INITIATED,

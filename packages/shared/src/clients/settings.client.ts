@@ -3,8 +3,8 @@ import axios, { AxiosInstance } from 'axios';
 import { Merchant } from '../types/settings/accounts';
 import { User, UserRole, UserStatus } from '../types/settings/users';
 import { PaymentMethod } from '../types/payment/payment-method';
-import { Logger } from '@nestjs/common';
 import { PaymentConfiguration } from '../types/settings/payment-configuration';
+import { SharedLogger } from '../utils/logger';
 
 export class SettingsClient {
   private readonly httpClient: AxiosInstance;
@@ -70,10 +70,10 @@ export class SettingsClient {
       if (response && response.status === 200) {
         return response.data;
       }
-      Logger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, SettingsClient.name);
+      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, 'SettingsClient');
       return null;
     } catch (error) {
-      Logger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, SettingsClient.name);
+      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, 'SettingsClient', error);
       return null;
     }
   }
@@ -132,8 +132,8 @@ export class SettingsClient {
     return response.data;
   }
 
-  async createProviderCredential(headers: Record<string, string>, accountCode: string, description: string, settings: Record<string, string>): Promise<ProviderCredential> {
-    const response = await this.httpClient.post('settings/provider-credentials', { accountCode, description, settings }, { headers: headers });
+  async createProviderCredential(headers: Record<string, string>, accountCode: string, description: string, providerCode: string, settings: Record<string, string>): Promise<ProviderCredential> {
+    const response = await this.httpClient.post('settings/provider-credentials', { accountCode, description, providerCode, settings }, { headers: headers });
     return response.data;
   }
 

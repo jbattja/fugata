@@ -1,7 +1,8 @@
 import { IsEnum, IsNumber, IsOptional, IsString, ValidateNested, IsObject } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TranformerError } from 'src/payment/routing/transformer';
+import { MissingFieldsError } from '../../../exceptions/missing-fields-error.filter';
 import { v4 as uuidv4 } from 'uuid';
+
 export enum AdyenPaymentResultCode {
   AUTHENTICATION_FINISHED = 'AuthenticationFinished',
   AUTHENTICATION_NOT_REQUIRED = 'AuthenticationNotRequired',
@@ -236,7 +237,7 @@ export class AdyenPaymentRequestBuilder {
     }
     const missingFields = requiredFields.filter(field => !this.paymentRequest[field]);
     if (missingFields.length > 0) {
-      throw new TranformerError(`Required fields are missing for Adyen Payment Request: ${missingFields.join(', ')}`);
+      throw new MissingFieldsError(`Required fields are missing for Adyen Payment Request: ${missingFields.join(', ')}`);
     }
 
     return new AdyenPaymentRequest(
@@ -292,7 +293,7 @@ export class AdyenPaymentResponseBuilder {
     const requiredFields = ['pspReference', 'resultCode'];
     const missingFields = requiredFields.filter(field => !this.paymentResponse[field]);
     if (missingFields.length > 0) {
-      throw new TranformerError(`Required fields are missing for Adyen Payment Response: ${missingFields.join(', ')}`);
+      throw new MissingFieldsError(`Required fields are missing for Adyen Payment Response: ${missingFields.join(', ')}`);
     }
     return new AdyenPaymentResponse(
       this.paymentResponse

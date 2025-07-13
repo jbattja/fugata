@@ -13,7 +13,11 @@ export class AuthenticateAction extends BaseAction {
         }
         context.payment.authenticationData = authenticationData;
 
-        Math.random() > 0.5 ? this.mockAuthenticationChallenge(context) : this.mockAuthenticationFrictionless(context);
+        if (context.payment.customer?.customerName?.toLowerCase() === 'challenge') {
+            this.mockAuthenticationChallenge(context);
+        } else {
+            this.mockAuthenticationFrictionless(context);
+        }
 
         this.log('Authenticate action completed', context.payment.authenticationData);
         return context;

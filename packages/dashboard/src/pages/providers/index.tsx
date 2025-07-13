@@ -76,7 +76,11 @@ export default function Providers() {
           },
           {
             name: 'Credentials',
-            action: (provider) => router.push(`/provider-credentials?providerCode=${provider.accountCode}`),
+            action: (provider) => {
+              const providerData = btoa(JSON.stringify(provider));
+              router.push(`/provider-credentials?provider=${providerData}`);
+              
+            },
           },
         ]}
       />
