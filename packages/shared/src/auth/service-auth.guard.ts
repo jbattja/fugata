@@ -122,7 +122,7 @@ export const RequirePermissions = (...permissions: string[]) => {
           throw new UnauthorizedException(`Missing required permissions: ${permissions.join(', ')}`);
         }
       } else {
-        SharedLogger.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`, ServiceAuthGuard.name);
+        SharedLogger.warn(`RequirePermissions decorator: Could not find request object with user in method ${propertyKey}`, undefined, ServiceAuthGuard.name);
       }
       
       return originalMethod.apply(this, args);

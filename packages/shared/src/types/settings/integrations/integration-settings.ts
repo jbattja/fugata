@@ -31,7 +31,7 @@ export function getSettingsConfigForProviderCredential(partnerName: PartnerName)
     const matchingSettings = integrationSettings.find(integration => integration.partnerName === partnerName);
     if (!matchingSettings) {
         // nothing to validate against, so no errors
-        SharedLogger.warn(`No matching integration settings found for partner integration: ${partnerName}`, 'getSettingsConfigForProviderCredential');
+        SharedLogger.warn(`No matching integration settings found for partner integration: ${partnerName}`, undefined, 'getSettingsConfigForProviderCredential');
     } else {
         settingsConfig = { ...settingsConfig, ...matchingSettings.requiredSettings };
     }

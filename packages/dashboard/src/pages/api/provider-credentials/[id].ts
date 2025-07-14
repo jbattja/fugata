@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { Logger } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const providerCredential = await settingsClient.getProviderCredential(authHeaders, id as string);
     res.status(200).json(providerCredential);
   } catch (error) {
-    Logger.error('Error fetching provider credential:', (error as any).message, handler.name);
+    SharedLogger.error('Error fetching provider credential:', error as any, handler.name);
     res.status(500).json({ error: 'Failed to fetch provider credential' });
   }
 } 

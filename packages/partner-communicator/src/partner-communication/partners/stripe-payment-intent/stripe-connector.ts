@@ -1,11 +1,10 @@
 import { StripePaymentIntent, StripePaymentIntentStatus } from "./types/stripe-payment-intent";
 import { Payment } from "@fugata/shared";
 import axios from "axios";
-import { Logger } from "@nestjs/common";
+import { SharedLogger } from '@fugata/shared';
 import { getStripePaymentMethod, StripePaymentMethod } from "./types/stripe-payment-method";
 
 export class StripeConnector {
-    private static readonly logger = new Logger(StripeConnector.name);
     private static readonly baseUrl = 'https://api.stripe.com';
 
     static async createPaymentIntent(paymentIntent: StripePaymentIntent, secretKey: string, originalRequest: Payment): Promise<StripePaymentIntent> {
@@ -29,7 +28,7 @@ export class StripeConnector {
             }
             return response.data as StripePaymentIntent;
         } catch (error) {
-            this.logger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`);
+            SharedLogger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
             throw {
                 statusCode: error.response?.status || 500,
                 message: error.response?.data?.error?.message || 'Failed to process payment with Stripe',
@@ -50,7 +49,7 @@ export class StripeConnector {
             });
             return response.data as StripePaymentMethod;
         } catch (error) {
-            this.logger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`);
+            SharedLogger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
             throw {
                 statusCode: error.response?.status || 500,
                 message: error.response?.data?.error?.message || 'Failed to create payment method with Stripe',
@@ -74,7 +73,7 @@ export class StripeConnector {
             });
             return response.data as StripePaymentIntent;
         } catch (error) {
-            this.logger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`);
+            SharedLogger.error(`Stripe API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
             throw {
                 statusCode: error.response?.status || 500,
                 message: error.response?.data?.error?.message || 'Failed to confirm payment with Stripe',

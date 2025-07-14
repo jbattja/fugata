@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]';
-import { Logger } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       }
       case 'POST': {
-        Logger.log("Provider Credential POST request received", req.body, handler.name);
+        SharedLogger.log("Provider Credential POST request received", undefined, handler.name);
         const { accountCode, description, providerCode, settings } = req.body;
         if (!accountCode || !providerCode || !settings) {
           return res.status(400).json({ error: 'Account code, provider code and settings are required' });
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       }
       case 'PUT': {
-        Logger.log("Provider Credential PUT request received", req.body, handler.name);
+        SharedLogger.log("Provider Credential PUT request received", undefined, handler.name);
         const { id, ...updates } = req.body;
         if (!id) {
           return res.status(400).json({ error: 'Provider ID is required' });
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error.response && error.response.status == 400) {
       res.status(400).json(error.response.data);
     } else {
-      Logger.error('Error handling provider credential request:', (error as any).message, handler.name);
+      SharedLogger.error('Error handling provider credential request:', error as any, handler.name);
       res.status(500).json({ error: 'Failed to process provider credential request' });
     }
   }

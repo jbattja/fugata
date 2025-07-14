@@ -1,7 +1,7 @@
 import axios from 'axios'
 import * as crypto from 'crypto'
 import { ApiKey } from '../types'
-import { Logger } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { jwtService } from '../lib/jwt.service'
 
 interface SettingsApiCredential {
@@ -40,7 +40,7 @@ export class ApiKeyService {
       const response = await axios.get(`${this.settingsServiceUrl}/api-credentials`, { headers: jwtService.getAuthHeadersForServiceAccount() })
       return response.data
     } catch (error) {
-      Logger.error('Failed to fetch API credentials from settings service:', error, ApiKeyService.name);
+      SharedLogger.error('Failed to fetch API credentials from settings service:', error as any, ApiKeyService.name);
       throw new Error('Failed to fetch API credentials')
     }
   }
@@ -87,9 +87,9 @@ export class ApiKeyService {
       }
 
       this.lastCacheUpdate = now
-      Logger.log(`Updated API key cache with ${this.apiKeysCache.size} active keys`, ApiKeyService.name);
+      SharedLogger.log(`Updated API key cache with ${this.apiKeysCache.size} active keys`, undefined, ApiKeyService.name);
     } catch (error) {
-      Logger.error('Failed to update API key cache:', error, ApiKeyService.name);
+      SharedLogger.error('Failed to update API key cache:', error as any, ApiKeyService.name);
       // Don't throw here, we'll continue with existing cache
     }
   }

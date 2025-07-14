@@ -1,4 +1,5 @@
-import { Controller, Get, Query, Param, Logger, Req, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Query, Param, Req, NotFoundException } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { PaymentSessionsService } from './payment-sessions.service';
 import { PaymentSession, RequirePermissions, getMerchant } from '@fugata/shared';
 
@@ -17,7 +18,7 @@ export class PaymentSessionsController {
     @Req() request?: any
   ) {
     const merchant = getMerchant(request);
-    Logger.log(`Listing payment sessions for merchant: ${merchant.id}`, PaymentSessionsController.name);
+    SharedLogger.log(`Listing payment sessions for merchant: ${merchant.id}`, undefined, PaymentSessionsController.name);
     
     const filters: Partial<PaymentSession> = {};
     if (merchant && merchant.id) filters.merchant = { id: merchant.id };
@@ -36,7 +37,7 @@ export class PaymentSessionsController {
   @Get(':id')
   @RequirePermissions('payments:read')
   async getPaymentSession(@Param('id') sessionId: string, @Req() request?: any) {
-    Logger.log(`Getting payment session: ${sessionId}`, PaymentSessionsController.name);
+    SharedLogger.log(`Getting payment session: ${sessionId}`, undefined, PaymentSessionsController.name);
     const merchant = getMerchant(request);
     let session: PaymentSession | null = null;
     if (!merchant || !merchant.id) {

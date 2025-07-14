@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { paymentDataClient, getAuthHeaders } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { Logger } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { getMerchantContextFromRequest } from '@/lib/api/merchant-context';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (error) {
-    Logger.error('Error fetching payments:', (error as any).message, handler.name);
+    SharedLogger.error('Error fetching payments:', error as any, handler.name);
     res.status(500).json({ error: 'Failed to fetch payments' });
   }
 } 

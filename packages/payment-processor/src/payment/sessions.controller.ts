@@ -1,4 +1,5 @@
-import { Body, Controller, Post, Logger, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { PaymentSession, SessionStatus, RequirePermissions, getMerchant, SessionMode } from '@fugata/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -8,7 +9,6 @@ import { PaymentProducerService } from '../kafka/payment-producer.service';
 @ApiTags('sessions')
 @Controller('sessions')
 export class SessionsController {
-  private readonly logger = new Logger(SessionsController.name);
 
   constructor(
     private readonly paymentProducer: PaymentProducerService,
@@ -20,7 +20,7 @@ export class SessionsController {
   @ApiResponse({ status: 201, description: 'Payment session created successfully', type: PaymentSession })
   async createSession(@Body() sessionData: CreateSessionDto, @Req() request: any): Promise<PaymentSession> {
     const merchant = getMerchant(request);
-    this.logger.log(`Creating payment session for merchant: ${merchant.id}`);
+    SharedLogger.log(`Creating payment session for merchant: ${merchant.id}`, undefined, SessionsController.name);
     
     const paymentLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8080';
     const sessionId = uuidv4();

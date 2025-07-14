@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { extractAuthHeaders } from '../clients/jwt.service';
 import { 
   PaymentContext, 
@@ -70,7 +71,7 @@ export class WorkflowOrchestrationService {
         context: result
       };
     } catch (error) {
-      Logger.error('Workflow execution failed:', error, WorkflowOrchestrationService.name);
+      SharedLogger.error('Workflow execution failed:', error, WorkflowOrchestrationService.name);
       return {
         success: false,
         context: { payment, request },
@@ -88,7 +89,7 @@ export class WorkflowOrchestrationService {
     const maxExecutions = 100; // Prevent infinite loops
 
     while (currentActionName && executionCount < maxExecutions) {
-      Logger.log(`Executing action: ${currentActionName}`,WorkflowOrchestrationService.name);
+      SharedLogger.log(`Executing action: ${currentActionName}`, undefined, WorkflowOrchestrationService.name);
       
       // Execute the current action
       context = await this.executeAction(currentActionName, context);
@@ -100,7 +101,7 @@ export class WorkflowOrchestrationService {
       
       // If we reach Terminate, stop the workflow
       if (currentActionName === ActionsType.Terminate) {
-        Logger.log('Workflow terminated',WorkflowOrchestrationService.name);
+        SharedLogger.log('Workflow terminated', undefined, WorkflowOrchestrationService.name);
         break;
       }
     }
@@ -129,7 +130,7 @@ export class WorkflowOrchestrationService {
       const result = await action.execute(context);
       return result;
     } catch (error) {
-      Logger.error(`Action ${actionName} failed:`, error, WorkflowOrchestrationService.name);
+      SharedLogger.error(`Action ${actionName} failed:`, error, WorkflowOrchestrationService.name);
       throw error;
     }
   }
@@ -141,7 +142,7 @@ export class WorkflowOrchestrationService {
     const workflowAction = this.findWorkflowAction(currentActionName);
     
     if (!workflowAction) {
-      Logger.warn(`No workflow definition found for action: ${currentActionName}`,WorkflowOrchestrationService.name);
+      SharedLogger.warn(`No workflow definition found for action: ${currentActionName}`, undefined, WorkflowOrchestrationService.name);
       return ActionsType.Terminate;
     }
 
@@ -156,7 +157,7 @@ export class WorkflowOrchestrationService {
       }
     }
     // If no conditions are met, terminate
-    Logger.warn('No conditions met for next actions, terminating workflow',WorkflowOrchestrationService.name);
+    SharedLogger.warn('No conditions met for next actions, terminating workflow', undefined, WorkflowOrchestrationService.name);
     return ActionsType.Terminate;
   }
 

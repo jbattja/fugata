@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentSessionEntity } from '../entities/payment-session.entity';
@@ -12,7 +13,7 @@ export class PaymentSessionsService {
   ) {}
 
   async getPaymentSession(sessionId: string, merchantId?: string): Promise<PaymentSession | null> {
-    Logger.log(`Getting payment session: ${sessionId} for merchant: ${merchantId}`, PaymentSessionsService.name);
+    SharedLogger.log(`Getting payment session: ${sessionId} for merchant: ${merchantId}`, undefined, PaymentSessionsService.name);
     
     if (!merchantId) {
       const session = await this.paymentSessionRepository.findOne({ where: { sessionId: sessionId} });
@@ -64,7 +65,7 @@ export class PaymentSessionsService {
   }
 
   async createPaymentSession(paymentSession: PaymentSession): Promise<PaymentSession> {
-    Logger.log(`Creating payment session ${JSON.stringify(paymentSession)}`, PaymentSessionsService.name);
+    SharedLogger.log(`Creating payment session ${JSON.stringify(paymentSession)}`, undefined, PaymentSessionsService.name);
     const entity = this.paymentSessionRepository.create(paymentSession);
     const savedEntity = await this.paymentSessionRepository.save(entity);
     return savedEntity.toPaymentSession();

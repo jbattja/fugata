@@ -3,7 +3,7 @@ import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.
 import { StripeConnector } from "./stripe-connector";
 import { StripePaymentIntent, StripePaymentIntentStatus, StripeCaptureMethod, StripeConfirmationMethod, StripePaymentIntentNextAction, StripePaymentIntentNextActionType, StripePaymentIntentBuilder } from "./types/stripe-payment-intent";
 import { getStripePaymentMethod } from "./types/stripe-payment-method";
-import { Logger } from "@nestjs/common";
+import { SharedLogger } from '@fugata/shared';
 
 export class StripePaymentIntentAuthorize {
 
@@ -27,7 +27,7 @@ export class StripePaymentIntentAuthorize {
             return this.transformStripeResponseToPayment(request.payment, stripeResponse);
             
         } catch (error) {
-            Logger.error(`Stripe authorization failed: ${error.message}`, StripePaymentIntentAuthorize.name);
+            SharedLogger.error(`Stripe authorization failed: ${error.message}`, error, StripePaymentIntentAuthorize.name);
             throw error;
         }
     }

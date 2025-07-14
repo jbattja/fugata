@@ -1,4 +1,4 @@
-import { AuthorizationData, PaymentStatus, PartnerCommunicatorClient, SettingsClient } from "@fugata/shared";
+import { AuthorizationData, PaymentStatus, PartnerCommunicatorClient, SettingsClient, SharedLogger } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
 import { extractAuthHeaders } from "src/clients/jwt.service";
@@ -23,7 +23,7 @@ export class AuthorizeAction extends BaseAction {
             // Call partner communicator for authorization
             context.payment = await this.authorizeWithPartner(context);
         } catch (error) {
-            this.log('Partner communication failed', error.message);
+            this.error('Partner communication failed', error);
             this.handlePartnerError(context);
         }
         return context;
@@ -33,6 +33,8 @@ export class AuthorizeAction extends BaseAction {
         const headers = extractAuthHeaders(context.request);
 
         const partnerConfig = await this.getPartnerConfig(context);
+
+        SharedLogger.log('Authorizing payment with partner', partnerConfig, AuthorizeAction.name);
 
         return await this.partnerCommunicatorClient.authorizePayment(
             headers,
@@ -47,9 +49,8 @@ export class AuthorizeAction extends BaseAction {
             extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
         if (!providerCredential) {
             throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
-        } else {
-            return providerCredential.settings;
-        }
+        } 
+        return { ...providerCredential.provider.settings, ...providerCredential.settings };
     }
 
     private handlePartnerError(context: PaymentContext) {

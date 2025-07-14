@@ -70,10 +70,10 @@ export class SettingsClient {
       if (response && response.status === 200) {
         return response.data;
       }
-      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, 'SettingsClient');
+      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, undefined, 'SettingsClient');
       return null;
     } catch (error) {
-      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, 'SettingsClient', error);
+      SharedLogger.error(`Failed to get provider credential for merchant ${merchantId} with payment method ${paymentMethod}`, error as any, 'SettingsClient');
       return null;
     }
   }

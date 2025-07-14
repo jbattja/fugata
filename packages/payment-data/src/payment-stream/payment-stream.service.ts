@@ -1,4 +1,5 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { PaymentRequestsService } from '../payment-requests/payment-requests.service';
@@ -7,7 +8,6 @@ import { PaymentRequest, PaymentSession } from '@fugata/shared';
 
 @Injectable()
 export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(PaymentStreamService.name);
 
   constructor(
     private readonly paymentRequestsService: PaymentRequestsService,
@@ -41,15 +41,15 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
                 await this.onPaymentSession(payload);
                 break;
               default:
-                this.logger.warn(`Received message from unknown topic: ${topic}`);
+                SharedLogger.warn(`Received message from unknown topic: ${topic}`, undefined, PaymentStreamService.name);
             }
           } catch (error) {
-            this.logger.error(`Error processing message from topic ${topic}:`, error);
+            SharedLogger.error(`Error processing message from topic ${topic}:`, error, PaymentStreamService.name);
           }
         },
       });
     } catch (error) {
-      this.logger.error('Failed to initialize PaymentStreamService:', error);
+      SharedLogger.error('Failed to initialize PaymentStreamService:', error, PaymentStreamService.name);
       throw error;
     }
   }
@@ -58,7 +58,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.kafkaClient.close();
     } catch (error) {
-      this.logger.error('Error closing Kafka client:', error);
+      SharedLogger.error('Error closing Kafka client:', error, PaymentStreamService.name);
     }
   }
 
@@ -66,7 +66,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.paymentRequestsService.createPaymentRequest(paymentRequest);
     } catch (error) {
-      this.logger.error('Error saving payment request:', error);
+      SharedLogger.error('Error saving payment request:', error, PaymentStreamService.name);
       throw error;
     }
   }
@@ -75,7 +75,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.paymentSessionsService.createPaymentSession(paymentSession);
     } catch (error) {
-      this.logger.error('Error saving payment session:', error);
+      SharedLogger.error('Error saving payment session:', error, PaymentStreamService.name);
       throw error;
     }
   }

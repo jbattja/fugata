@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentRequestEntity } from '../entities/payment-request.entity';
@@ -51,7 +52,7 @@ export class PaymentRequestsService {
   }
 
   async createPaymentRequest(paymentRequest: PaymentRequest): Promise<PaymentRequest> {
-    Logger.log(`Creating payment request ${JSON.stringify(paymentRequest)}`, PaymentRequestsService.name);
+    SharedLogger.log(`Creating payment request ${JSON.stringify(paymentRequest)}`, undefined, PaymentRequestsService.name);
     const entity = this.paymentRequestRepository.create(paymentRequest);
     const savedEntity = await this.paymentRequestRepository.save(entity);
     return savedEntity.toPaymentRequest();

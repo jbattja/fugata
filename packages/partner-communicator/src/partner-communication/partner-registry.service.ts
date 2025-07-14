@@ -1,4 +1,5 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { PartnerInterface } from './interfaces/partner.interface';
 import { DemoPartner } from './partners/demo-partner/demo-partner';
 import { AdyenCheckout } from './partners/adyen-checkout/adyen-checkout';
@@ -23,7 +24,7 @@ export class PartnerRegistryService implements OnModuleInit {
   }
 
   registerPartner(partner: PartnerInterface): void {
-    Logger.log(`Registering partner ${partner.partnerName}`, PartnerRegistryService.name);
+    SharedLogger.log(`Registering partner ${partner.partnerName}`, undefined, PartnerRegistryService.name);
     this.partners.set(partner.partnerName, partner);
   }
 

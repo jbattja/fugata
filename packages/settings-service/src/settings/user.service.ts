@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SharedLogger } from '@fugata/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -39,7 +40,7 @@ export class UserService {
       });
       return this.userRepository.save(user);
     } catch (error) {
-      Logger.error('Error creating user:', error, UserService.name);
+      SharedLogger.error('Error creating user:', error, UserService.name);
       throw error;
     }
   }

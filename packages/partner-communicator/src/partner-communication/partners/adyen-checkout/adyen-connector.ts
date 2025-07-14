@@ -1,9 +1,8 @@
 import { AdyenPaymentRequest, AdyenPaymentResponse } from "./types/adyen-payment";
 import axios from "axios";
-import { Logger } from "@nestjs/common";
+import { SharedLogger } from '@fugata/shared';
 
 export class AdyenConnector {
-    private static readonly logger = new Logger(AdyenConnector.name);
     private static readonly baseUrl = 'https://checkout-test.adyen.com/v71';
 
     static async createPayment(request: AdyenPaymentRequest, apiKey: string): Promise<AdyenPaymentResponse> {
@@ -16,7 +15,7 @@ export class AdyenConnector {
             });
             return response.data as AdyenPaymentResponse;
         } catch (error) {
-            this.logger.error(`Adyen API error: ${error.response?.data?.message || error.message}`);
+            SharedLogger.error(`Adyen API error: ${error.response?.data?.message || error.message}`, error, AdyenConnector.name);
             throw {
                 statusCode: error.response?.status || 500,
                 message: error.response?.data?.message || 'Failed to process payment with Adyen',

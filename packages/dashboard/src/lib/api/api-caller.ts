@@ -1,5 +1,4 @@
-import { Merchant } from '@fugata/shared';
-import { Logger } from '@nestjs/common';
+import { Merchant, SharedLogger } from '@fugata/shared';
 import { NextApiResponse } from 'next';
 
 export async function callApi(
@@ -24,7 +23,7 @@ export function handleApiError(error: any, apiName: string, res: NextApiResponse
   if (error.response && error.response.status == 400) {
     res.status(400).json(error.response.data);
   } else {
-    Logger.error(`Error in ${apiName}:`, (error as any).message, apiName);
+    SharedLogger.error(`Error in ${apiName}:`, error as any, apiName);
     res.status(500).json({ message: `Failed to process ${apiName} request` });
   }
 }
