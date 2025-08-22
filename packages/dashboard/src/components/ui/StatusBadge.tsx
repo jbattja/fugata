@@ -1,15 +1,4 @@
-import { PaymentStatus, AccountStatus, PaymentRequestStatus } from "@fugata/shared";
-
-const paymentRequestStatusColors: Record<PaymentRequestStatus, string> = {
-  [PaymentRequestStatus.REQUIRES_ACTION]: 'bg-yellow-100 text-yellow-800',
-  [PaymentRequestStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-  [PaymentRequestStatus.AWAITING_PAYMENT_METHOD]: 'bg-yellow-100 text-yellow-800',
-  [PaymentRequestStatus.AWAITING_CAPTURE]: 'bg-yellow-100 text-yellow-800',
-  [PaymentRequestStatus.AWAITING_CONFIRMATION]: 'bg-yellow-100 text-yellow-800',
-  [PaymentRequestStatus.CANCELED]: 'bg-red-100 text-red-800',
-  [PaymentRequestStatus.SUCCEEDED]: 'bg-green-100 text-green-800',
-  [PaymentRequestStatus.FAILED]: 'bg-red-100 text-red-800',
-};
+import { PaymentStatus, AccountStatus, SessionStatus } from "@fugata/shared";
 
 const paymentStatusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.INITIATED]: 'bg-yellow-100 text-yellow-800',
@@ -23,6 +12,14 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.REFUNDED]: 'bg-red-100 text-red-800',
 };
 
+const sessionStatusColors: Record<SessionStatus, string> = {
+  [SessionStatus.ACTIVE]: 'bg-green-100 text-green-800',
+  [SessionStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
+  [SessionStatus.EXPIRED]: 'bg-yellow-100 text-yellow-800',
+  [SessionStatus.CANCELLED]: 'bg-yellow-100 text-yellow-800',
+  [SessionStatus.FAILED]: 'bg-red-100 text-red-800',
+  [SessionStatus.COMPLETED]: 'bg-green-100 text-green-800',
+};
 
 const accountStatusColors: Record<AccountStatus, string> = {
   [AccountStatus.ACTIVE]: 'bg-green-100 text-green-800',
@@ -31,14 +28,27 @@ const accountStatusColors: Record<AccountStatus, string> = {
 };
 
 interface StatusBadgeProps {
-  status: PaymentStatus | AccountStatus | PaymentRequestStatus;
-  type: 'payment' | 'account' | 'payment-request';
+  status: PaymentStatus | AccountStatus | SessionStatus;
+  type: 'payment' | 'account' | 'session';
 }
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {
+  const getStatusColor = () => {
+    switch (type) {
+      case 'payment':
+        return paymentStatusColors[status as PaymentStatus];
+      case 'session':
+        return sessionStatusColors[status as SessionStatus];
+      case 'account':
+        return accountStatusColors[status as AccountStatus];
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${type === 'payment' ? paymentStatusColors[status as PaymentStatus] : type === 'payment-request' ? paymentRequestStatusColors[status as PaymentRequestStatus] : accountStatusColors[status as AccountStatus]}`}>
-    {status}
-  </span>
-);
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getStatusColor()}`}>
+      {status}
+    </span>
+  );
 }

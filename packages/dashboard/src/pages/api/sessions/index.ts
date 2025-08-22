@@ -13,17 +13,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     switch (req.method) {
       case 'GET': {
         const authHeaders = await getAuthHeaders(session, merchantContext);
-        const payments = await paymentDataClient.listPayments(authHeaders);
-        res.status(200).json(payments);
+        const sessions = await paymentDataClient.listPaymentSessions(authHeaders);
+        res.status(200).json(sessions);
         break;
       }
       default: {
-        res.setHeader('Allow', ['GET', 'POST', 'PUT']);
+        res.setHeader('Allow', ['GET']);
         res.status(405).json({ error: `Method ${req.method} not allowed` });
       }
     }
   } catch (error) {
-    SharedLogger.error('Error fetching payments:', error as any, handler.name);
-    res.status(500).json({ error: 'Failed to fetch payments' });
+    SharedLogger.error('Error fetching sessions:', error as any, handler.name);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
   }
-} 
+}

@@ -1,7 +1,5 @@
-import { SharedLogger } from '@fugata/shared';
 import { ActionInterface, PaymentContext } from '../types/workflow.types';
 import { Logger } from '@nestjs/common';
-import { AxiosError } from 'axios';
 
 export abstract class BaseAction implements ActionInterface {
   abstract execute(context: PaymentContext): Promise<PaymentContext>;

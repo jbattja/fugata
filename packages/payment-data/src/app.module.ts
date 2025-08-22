@@ -1,9 +1,10 @@
 import { Module, Global } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
-import { PaymentRequestsModule } from './payment-requests/payment-requests.module';
 import { PaymentStreamModule } from './payment-stream/payment-stream.module';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentSessionsModule } from './payment-sessions/payment-sessions.module';
+import { PaymentsModule } from './payments/payments.module';
+import { PaymentEventsModule } from './payment-events/payment-events.module';
 import { ServiceAuthGuard } from '@fugata/shared';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -14,8 +15,9 @@ import { APP_GUARD } from '@nestjs/core';
       isGlobal: true,
     }),
     DatabaseModule,
-    PaymentRequestsModule,
     PaymentSessionsModule,
+    PaymentsModule,
+    PaymentEventsModule,
     PaymentStreamModule
   ],
   providers: [

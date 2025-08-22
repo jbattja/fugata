@@ -20,6 +20,12 @@ export interface PaymentContext {
   refund?: any;
   refundAttempts?: number;
   voidAttempts?: number;
+  config?: {
+    maxAuthorizeAttempts?: number;
+    maxCaptureAttempts?: number;
+    maxRefundAttempts?: number;
+    maxVoidAttempts?: number;
+  }
 }
 
 // Structured condition types

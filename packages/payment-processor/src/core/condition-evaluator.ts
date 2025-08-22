@@ -33,7 +33,14 @@ export class WorkflowConditionEvaluator implements ConditionEvaluator {
 
   private evaluatePropertyCondition(condition: PropertyCondition, context: PaymentContext): boolean {
     const value = this.getNestedValue(context, condition.path);
-    return this.compareValues(value, condition.operator, condition.value);
+    
+    // Handle dynamic value comparison (when value is a path to another context property)
+    let expectedValue = condition.value;
+    if (typeof condition.value === 'string' && condition.value.includes('.')) {
+      expectedValue = this.getNestedValue(context, condition.value);
+    }
+    
+    return this.compareValues(value, condition.operator, expectedValue);
   }
 
   private evaluateConditionGroup(condition: ConditionGroup, context: PaymentContext): boolean {

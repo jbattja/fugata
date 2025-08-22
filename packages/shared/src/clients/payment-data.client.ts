@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
-import { PaymentRequest } from "../types/payment/payment-request";
 import { PaymentSession } from "../types/payment/payment-session";
+import { Payment } from "../types/payment/payment";
 
 export class PaymentDataClient {
   private readonly httpClient: AxiosInstance;
@@ -11,9 +11,20 @@ export class PaymentDataClient {
     });
   }
 
-  // Payment
-  async listPaymentRequests(headers: Record<string, string>): Promise<PaymentRequest[]> {
-    const response = await this.httpClient.get('payment-requests', { headers: headers });
+  // Payments
+  async listPayments(headers: Record<string, string>): Promise<{ data: Payment[] }> {
+    const response = await this.httpClient.get('payments', { headers: headers });
+    return response.data;
+  }
+
+  async getPayment(headers: Record<string, string>, id: string): Promise<Payment> {
+    const response = await this.httpClient.get(`payments/${id}`, { headers: headers });
+    return response.data;
+  }
+
+  // Payment Sessions
+  async listPaymentSessions(headers: Record<string, string>): Promise<{ data: PaymentSession[] }> {
+    const response = await this.httpClient.get('payment-sessions', { headers: headers });
     return response.data;
   }
 

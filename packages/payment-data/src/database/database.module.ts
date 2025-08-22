@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PaymentRequestEntity } from '../entities/payment-request.entity';
+import { PaymentEntity } from '../entities/payment.entity';
 import { PaymentSessionEntity } from '../entities/payment-session.entity';
+import { PaymentEventEntity } from '../entities/payment-event.entity';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { PaymentSessionEntity } from '../entities/payment-session.entity';
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      entities: [PaymentRequestEntity, PaymentSessionEntity],
+      entities: [PaymentEntity, PaymentSessionEntity, PaymentEventEntity],
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV === 'development'
     })

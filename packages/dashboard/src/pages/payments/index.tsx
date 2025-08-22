@@ -1,6 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { PaymentRequest, PaymentRequestStatus } from '@fugata/shared';
+import { Payment, PaymentStatus } from '@fugata/shared';
 import { formatAmount } from '@/lib/utils/currency';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DataTable } from '@/components/ui/DataTable';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default function PaymentsPage() {
   const { data: session } = useSession();
   const { activeMerchant } = useMerchantContext();
-  const { data: payments, isLoading, error } = useQuery<PaymentRequest[]>({
+  const { data: payments, isLoading, error } = useQuery<{ data: Payment[] }>({
     queryKey: ['payments'],
     queryFn: async () => {
       const response = await callApi('/api/payments', {}, activeMerchant);
@@ -21,7 +21,7 @@ export default function PaymentsPage() {
         throw new Error('Failed to fetch payments');
       }
       const data = await response.json();
-      return Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+      return data;
     },
   });
 
@@ -52,8 +52,12 @@ export default function PaymentsPage() {
       <DataTable
         title="Payments"
         description="A list of all payments including their status, amount, and customer details."
-        data={payments || []}
+        data={payments?.data || []}
         columns={[
+          {
+            header: 'Payment ID',
+            accessor: 'paymentId',
+          },
           {
             header: 'Amount',
             accessor: (payment) => payment.amount ? formatAmount(payment.amount.value, payment.amount.currency) : '-',
@@ -61,13 +65,26 @@ export default function PaymentsPage() {
           {
             header: 'Status',
             accessor: (payment) => (
-              <StatusBadge status={payment.status || PaymentRequestStatus.PENDING} type="payment-request" />
+              <StatusBadge status={payment.status || PaymentStatus.INITIATED} type="payment" />
             ),
           },
-          { header: 'Payment Method', accessor: 'paymentMethod' },
+          {
+            header: 'Settlement Status',
+            accessor: (payment) => payment.settlementStatus || '-',
+          },
+          {
+            header: 'Chargeback Status',
+            accessor: (payment) => payment.chargebackStatus || '-',
+          },
           { header: 'Reference', accessor: 'reference' },
-          { header: 'Merchant', accessor: 'merchantCode' },
-          { header: 'Provider', accessor: 'providerCode' },
+          {
+            header: 'Merchant',
+            accessor: (payment) => payment.merchant?.accountCode || '-',
+          },
+          {
+            header: 'Provider',
+            accessor: (payment) => payment.providerCredential?.provider?.accountCode || '-',
+          },
           {
             header: 'Customer',
             accessor: (payment) => (
@@ -79,10 +96,14 @@ export default function PaymentsPage() {
           },
           {
             header: 'Created',
-            accessor: (payment) => payment.created ? new Date(payment.created).toLocaleString() : '-',
+            accessor: (payment) => payment.createdAt ? new Date(payment.createdAt).toLocaleString() : '-',
+          },
+          {
+            header: 'Updated',
+            accessor: (payment) => payment.updatedAt ? new Date(payment.updatedAt).toLocaleString() : '-',
           },
         ]}
-        searchKeys={['customer.customerName', 'customer.customerEmail', 'reference']}
+        searchKeys={['customer.customerName', 'customer.customerEmail', 'reference', 'paymentId']}
       />
     </DashboardLayout>
   );

@@ -12,10 +12,8 @@ export * from './types/settings/account-settings';
 export * from './types/settings/integrations/integration-settings';
 export * from './types/settings/payment-configuration'; 
 export * from './types/settings/users';
-export * from './types/payment/payment-request';
 export * from './types/payment/amount';
 export * from './types/payment/payment-method';
-export * from './types/payment/payment-status';
 export * from './types/payment/customer';
 export * from './types/payment/fugata-reference';
 export * from './types/payment/payment-common';
@@ -23,6 +21,7 @@ export * from './types/payment/payment-session';
 export * from './types/payment/payment';
 export * from './types/payment/payment-instrument';
 export * from './types/payment/authentication';
+export * from './types/payment/payment-event';
 
 // Export authentication components
 export * from './auth/service-auth.guard';

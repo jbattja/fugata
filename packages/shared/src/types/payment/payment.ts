@@ -171,13 +171,12 @@ export class Payment {
 
     constructor(partial: Partial<Payment>) {
         Object.assign(this, partial);
-      }
+      }    
+}
 
-    addAction(action: Action) {
-        if (!this.actions) {
-            this.actions = [];
-        }
-        this.actions.push(action);
+export function addActionToPayment(payment: Payment, action: Action) {
+    if (!payment.actions) {
+        payment.actions = [];
     }
-    
+    payment.actions.push(action);
 }

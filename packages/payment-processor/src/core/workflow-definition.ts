@@ -175,7 +175,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "authorizeAttempts",
                 operator: "lessThan",
-                value: 5
+                value: "config.maxAuthorizeAttempts"
               }
             ]
           }
@@ -248,7 +248,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "captureAttempts",
                 operator: "lessThan",
-                value: 5
+                value: "config.maxCaptureAttempts"
               }
             ]
           }
@@ -275,7 +275,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "voidAttempts",
                 operator: "lessThan",
-                value: 5
+                value: "config.maxVoidAttempts"
               }
             ]
           }
@@ -302,7 +302,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "refundAttempts",
                 operator: "lessThan",
-                value: 5
+                value: "config.maxRefundAttempts"
               }
             ]
           }

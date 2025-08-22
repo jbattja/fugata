@@ -2,13 +2,9 @@ import { AuthorizationData, PaymentStatus, PartnerCommunicatorClient, SettingsCl
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
 import { extractAuthHeaders } from "src/clients/jwt.service";
+import { ActionRegistry } from "./action-registry";
 
 export class AuthorizeAction extends BaseAction {
-    constructor(private readonly partnerCommunicatorClient: PartnerCommunicatorClient,
-        private readonly settingsClient: SettingsClient) {
-        super();
-    }
-
     async execute(context: PaymentContext): Promise<PaymentContext> {
         context.authorizeAttempts++;
         this.log(`Executing Authorize action attempt number ${context.authorizeAttempts}`);
@@ -26,6 +22,15 @@ export class AuthorizeAction extends BaseAction {
             this.error('Partner communication failed', error);
             this.handlePartnerError(context);
         }
+        if (context.payment.status === PaymentStatus.REFUSED && context.authorizeAttempts < context.config.maxAuthorizeAttempts) {
+            return context;
+        }
+        // Publish payment authorized event
+        const paymentProducer = ActionRegistry.getPaymentProducer();
+        if (paymentProducer) {
+            await paymentProducer.publishPaymentAuthorized(context.payment);
+            this.log('Published PAYMENT_AUTHORIZED event');
+        }
         return context;
     }
 
@@ -36,7 +41,7 @@ export class AuthorizeAction extends BaseAction {
 
         SharedLogger.log('Authorizing payment with partner', partnerConfig, AuthorizeAction.name);
 
-        return await this.partnerCommunicatorClient.authorizePayment(
+        return await ActionRegistry.getPartnerCommunicatorClient().authorizePayment(
             headers,
             partnerConfig.partnerIntegrationClass,
             context.payment,
@@ -45,11 +50,11 @@ export class AuthorizeAction extends BaseAction {
     }
 
     private async getPartnerConfig(context: PaymentContext) {
-        const providerCredential = await this.settingsClient.getProviderCredentialForMerchant(
+        const providerCredential = await ActionRegistry.getSettingsClient().getProviderCredentialForMerchant(
             extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
         if (!providerCredential) {
             throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
-        } 
+        }
         return { ...providerCredential.provider.settings, ...providerCredential.settings };
     }
 

@@ -8,6 +8,7 @@ import { CaptureAction } from './capture-action';
 import { VoidAction } from './void-action';
 import { RefundAction } from './refund-action';
 import { PartnerCommunicatorClient, SettingsClient } from '@fugata/shared';
+import { PaymentProducerService } from '../../kafka/payment-producer.service';
 
 export enum ActionsType {
   InitiatePayment = 'InitiatePayment',
@@ -24,6 +25,7 @@ export class ActionRegistry {
   private static actions: Map<ActionsType, () => ActionInterface> = new Map();
   private static partnerCommunicatorClient: PartnerCommunicatorClient | null = null;
   private static settingsClient: SettingsClient | null = null;
+  private static paymentProducer: PaymentProducerService | null = null;
 
   static {
     // Register all available actions
@@ -31,7 +33,7 @@ export class ActionRegistry {
     ActionRegistry.register(ActionsType.Terminate, () => new TerminateAction());
     ActionRegistry.register(ActionsType.FraudScore, () => new FraudScoreAction());
     ActionRegistry.register(ActionsType.Authenticate, () => new AuthenticateAction());
-    ActionRegistry.register(ActionsType.Authorize, () => new AuthorizeAction(ActionRegistry.partnerCommunicatorClient!, ActionRegistry.settingsClient!));
+    ActionRegistry.register(ActionsType.Authorize, () => new AuthorizeAction());
     ActionRegistry.register(ActionsType.Capture, () => new CaptureAction());
     ActionRegistry.register(ActionsType.Void, () => new VoidAction());
     ActionRegistry.register(ActionsType.Refund, () => new RefundAction());
@@ -45,8 +47,24 @@ export class ActionRegistry {
     ActionRegistry.partnerCommunicatorClient = client;
   }
 
+  static getPartnerCommunicatorClient(): PartnerCommunicatorClient | null {
+    return ActionRegistry.partnerCommunicatorClient;
+  }
+
   static setSettingsClient(client: SettingsClient): void {
     ActionRegistry.settingsClient = client;
+  }
+
+  static getSettingsClient(): SettingsClient | null {
+    return ActionRegistry.settingsClient;
+  }
+
+  static setPaymentProducer(producer: PaymentProducerService): void {
+    ActionRegistry.paymentProducer = producer;
+  }
+
+  static getPaymentProducer(): PaymentProducerService | null {
+    return ActionRegistry.paymentProducer;
   }
 
   static getAction(action: ActionsType): ActionInterface | null {

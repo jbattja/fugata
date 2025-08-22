@@ -40,7 +40,7 @@ export const routes: RouteConfig[] = [
     method: 'GET',
     path: '/payments',
     service: 'payment-data',
-    targetPath: '/payment-requests',
+    targetPath: '/payments',
     requiresIdempotency: false,
     requiredPermission: 'payments:read',
     rateLimit: {

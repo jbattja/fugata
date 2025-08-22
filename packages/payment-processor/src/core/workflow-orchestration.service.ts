@@ -12,6 +12,8 @@ import { ActionRegistry, ActionsType } from './actions/action-registry';
 import { WorkflowConditionEvaluator } from './condition-evaluator';
 import { DEFAULT_WORKFLOW } from './workflow-definition';
 import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient } from '@fugata/shared';
+import { Inject } from '@nestjs/common';
+import { PaymentProducerService } from '../kafka/payment-producer.service';
 
 @Injectable()
 export class WorkflowOrchestrationService {
@@ -20,14 +22,16 @@ export class WorkflowOrchestrationService {
 
   constructor(
     private settingsClient: SettingsClient,
-    private partnerCommunicatorClient: PartnerCommunicatorClient
+    private partnerCommunicatorClient: PartnerCommunicatorClient,
+    @Inject(PaymentProducerService) private paymentProducer: PaymentProducerService
   ) {
     this.workflow = DEFAULT_WORKFLOW;
     this.conditionEvaluator = new WorkflowConditionEvaluator();
     
-    // Set both clients in the action registry
+    // Set all clients in the action registry
     ActionRegistry.setPartnerCommunicatorClient(this.partnerCommunicatorClient);
     ActionRegistry.setSettingsClient(this.settingsClient);
+    ActionRegistry.setPaymentProducer(this.paymentProducer);
   }
 
   /**

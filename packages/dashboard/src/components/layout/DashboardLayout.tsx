@@ -8,6 +8,7 @@ import {
   UserIcon,
   BuildingStorefrontIcon,
   UsersIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import { MerchantContextIndicator } from './MerchantContextIndicator';
 const adminNavigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
+  { name: 'Sessions', href: '/sessions', icon: ClockIcon },
   { name: 'Merchants', href: '/merchants', icon: BuildingStorefrontIcon },
   { name: 'Providers', href: '/providers', icon: CogIcon },
 ];
@@ -25,6 +27,7 @@ const adminNavigation = [
 const merchantNavigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
+  { name: 'Sessions', href: '/sessions', icon: ClockIcon },
   { name: 'Business Settings', href: '/settings/business-settings', icon: CogIcon },
   { name: 'Users', href: '/settings/users', icon: UsersIcon },
   { name: 'Payment Configuration', href: '/settings/payment-configuration', icon: CreditCardIcon },

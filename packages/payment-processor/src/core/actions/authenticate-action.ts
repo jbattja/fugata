@@ -1,7 +1,8 @@
-import { Action, ActionType, AuthenticationData, AuthenticationFlow, PaymentStatus, RedirectMethod } from "@fugata/shared";
+import { Action, ActionType, addActionToPayment, AuthenticationData, AuthenticationFlow, PaymentStatus, RedirectMethod } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
 import { v4 as uuidv4 } from 'uuid';
+import { ActionRegistry } from "..";
 
 export class AuthenticateAction extends BaseAction {
     async execute(context: PaymentContext): Promise<PaymentContext> {
@@ -20,6 +21,12 @@ export class AuthenticateAction extends BaseAction {
         }
 
         this.log('Authenticate action completed', context.payment.authenticationData);
+        // Publish payment authenticated event
+        const paymentProducer = ActionRegistry.getPaymentProducer();
+        if (paymentProducer) {
+            await paymentProducer.publishPaymentAuthenticated(context.payment);
+            this.log('Published PAYMENT_AUTHENTICATED event');
+        }
         return context;
     }
 
@@ -30,7 +37,7 @@ export class AuthenticateAction extends BaseAction {
         action.actionType = ActionType.REDIRECT;
         action.redirectUrl = `${redirectLinkUrl}/redirect/${context.payment.paymentId}`;
         action.redirectMethod = RedirectMethod.GET;
-        context.payment.addAction(action);
+        addActionToPayment(context.payment, action);
     }
 
     private mockAuthenticationFrictionless(context: PaymentContext) { 
