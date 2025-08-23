@@ -17,25 +17,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     switch (req.method) {
       case 'GET': {
         const authHeaders = await getAuthHeaders(session, merchantContext);
-        const merchant = await settingsClient.getMerchant(authHeaders, merchantContext.merchantId);
-        res.status(200).json(merchant.paymentConfigurations || []);
+        const { paymentConfigurationId } = req.query;
+        
+        if (!paymentConfigurationId || typeof paymentConfigurationId !== 'string') {
+          return res.status(400).json({ error: 'Payment configuration ID is required' });
+        }
+        
+        const routingRules = await settingsClient.getRoutingRulesByConfiguration(
+          authHeaders, 
+          paymentConfigurationId
+        );
+        res.status(200).json(routingRules);
         break;
       }
       case 'POST': {
         const authHeaders = await getAuthHeaders(session, merchantContext);
-        const { name, isDefault } = req.body;
+        const { paymentConfigurationId, providerCredentialCode, paymentMethod, weight } = req.body;
         
-        if (!name) {
-          return res.status(400).json({ error: 'Name is required' });
+        if (!paymentConfigurationId || !providerCredentialCode || !paymentMethod) {
+          return res.status(400).json({ 
+            error: 'Payment configuration ID, provider credential code, and payment method are required' 
+          });
         }
         
-        const paymentConfiguration = await settingsClient.createPaymentConfiguration(
-          authHeaders, 
-          merchantContext.merchantId, 
-          name, 
-          isDefault || false
+        const routingRule = await settingsClient.createRoutingRule(
+          authHeaders,
+          paymentConfigurationId,
+          providerCredentialCode,
+          paymentMethod,
+          weight || 1.0
         );
-        res.status(201).json(paymentConfiguration);
+        res.status(201).json(routingRule);
         break;
       }
       case 'PUT': {
@@ -43,15 +55,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const { id, ...updates } = req.body;
         
         if (!id) {
-          return res.status(400).json({ error: 'Payment configuration ID is required' });
+          return res.status(400).json({ error: 'Routing rule ID is required' });
         }
         
-        const updatedConfiguration = await settingsClient.updatePaymentConfiguration(
+        const updatedRule = await settingsClient.updateRoutingRule(
           authHeaders, 
           id, 
           updates
         );
-        res.status(200).json(updatedConfiguration);
+        res.status(200).json(updatedRule);
         break;
       }
       case 'DELETE': {
@@ -59,10 +71,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const { id } = req.query;
         
         if (!id || typeof id !== 'string') {
-          return res.status(400).json({ error: 'Payment configuration ID is required' });
+          return res.status(400).json({ error: 'Routing rule ID is required' });
         }
         
-        await settingsClient.deletePaymentConfiguration(authHeaders, id);
+        await settingsClient.deleteRoutingRule(authHeaders, id);
         res.status(204).end();
         break;
       }
@@ -72,6 +84,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (error: any) {
-    handleApiError(error, 'payment configuration', res);
+    handleApiError(error, 'routing rule', res);
   }
-} 
+}

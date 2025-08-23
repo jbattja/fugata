@@ -52,9 +52,6 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
     try {
       const response = await callApi(`/api/settings/users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(newUser),
       }, activeMerchant);
 
@@ -88,9 +85,6 @@ export function MerchantUsers({ merchantId }: MerchantUsersProps) {
   const handleRemoveUser = async (userId: string) => {
     const response = await callApi(`/api/settings/users`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ id: userId }),
     }, activeMerchant);
 

@@ -59,9 +59,6 @@ export default function EditProvider() {
     mutationFn: async (data: typeof formData) => {
       const response = await callApi('/api/providers', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ ...data, id }),
       });
 

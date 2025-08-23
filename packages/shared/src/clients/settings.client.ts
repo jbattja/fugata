@@ -5,6 +5,7 @@ import { User, UserRole, UserStatus } from '../types/settings/users';
 import { PaymentMethod } from '../types/payment/payment-method';
 import { PaymentConfiguration } from '../types/settings/payment-configuration';
 import { SharedLogger } from '../utils/logger';
+import { RoutingRule } from '../types/settings/payment-configuration';
 
 export class SettingsClient {
   private readonly httpClient: AxiosInstance;
@@ -149,6 +150,62 @@ export class SettingsClient {
 
   async getPaymentConfigurationsByMerchantId(headers: Record<string, string>, merchantId: string): Promise<PaymentConfiguration[]> {
     const response = await this.httpClient.get(`settings/payment-configurations/${merchantId}`, { headers: headers });
+    return response.data;
+  }
+
+  async createPaymentConfiguration(headers: Record<string, string>, merchantId: string, name: string, isDefault: boolean): Promise<PaymentConfiguration> {
+    const response = await this.httpClient.post('settings/payment-configurations', { 
+      merchantId, 
+      name, 
+      isDefault 
+    }, { headers: headers });
+    return response.data;
+  }
+
+  async updatePaymentConfiguration(headers: Record<string, string>, id: string, updates: Partial<PaymentConfiguration>): Promise<PaymentConfiguration> {
+    const response = await this.httpClient.put(`settings/payment-configurations/${id}`, updates, { headers: headers });
+    return response.data;
+  }
+
+  async deletePaymentConfiguration(headers: Record<string, string>, id: string): Promise<void> {
+    await this.httpClient.delete(`settings/payment-configurations/${id}`, { headers: headers });
+  }
+
+  async getPaymentConfiguration(headers: Record<string, string>, id: string): Promise<PaymentConfiguration> {
+    const response = await this.httpClient.get(`settings/payment-configurations/${id}`, { headers: headers });
+    return response.data;
+  }
+
+  // Routing Rules
+  async getRoutingRulesByConfiguration(headers: Record<string, string>, paymentConfigurationId: string): Promise<RoutingRule[]> {
+    const response = await this.httpClient.get(`settings/routing-rules`, {
+      params: { paymentConfigurationId },
+      headers: headers
+    });
+    return response.data;
+  }
+
+  async createRoutingRule(headers: Record<string, string>, paymentConfigurationId: string, providerCredentialCode: string, paymentMethod: PaymentMethod, weight: number = 1.0): Promise<RoutingRule> {
+    const response = await this.httpClient.post('settings/routing-rules', {
+      paymentConfigurationId,
+      providerCredentialCode,
+      paymentMethod,
+      weight
+    }, { headers: headers });
+    return response.data;
+  }
+
+  async updateRoutingRule(headers: Record<string, string>, id: string, updates: Partial<RoutingRule>): Promise<RoutingRule> {
+    const response = await this.httpClient.put(`settings/routing-rules/${id}`, updates, { headers: headers });
+    return response.data;
+  }
+
+  async deleteRoutingRule(headers: Record<string, string>, id: string): Promise<void> {
+    await this.httpClient.delete(`settings/routing-rules/${id}`, { headers: headers });
+  }
+
+  async getRoutingRule(headers: Record<string, string>, id: string): Promise<RoutingRule> {
+    const response = await this.httpClient.get(`settings/routing-rules/${id}`, { headers: headers });
     return response.data;
   }
 

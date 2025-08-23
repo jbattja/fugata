@@ -32,9 +32,6 @@ export default function NewProvider() {
     mutationFn: async (data: typeof formData) => {
       const response = await callApi('/api/providers', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data),
       });
 

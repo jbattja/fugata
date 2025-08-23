@@ -28,9 +28,6 @@ export function BusinessSettings({ merchantId, initialData, availableSettings }:
     mutationFn: async (data: { id: string; accountCode: string; description: string; settings: Record<string, string> }) => {
       const response = await callApi('/api/settings/business-settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data),
       }, activeMerchant);
       if (!response.ok) {

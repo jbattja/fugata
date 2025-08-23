@@ -133,7 +133,10 @@ export class SettingsController {
   }
 
   @Get('routing-rules')
-  async getAllRoutingRules(): Promise<RoutingRule[]> {
+  async getAllRoutingRules(@Query('paymentConfigurationId') paymentConfigurationId?: string): Promise<RoutingRule[]> {
+    if (paymentConfigurationId) {
+      return this.settingsService.getRoutingRulesByConfiguration(paymentConfigurationId);
+    }
     return this.settingsService.getAllRoutingRules();
   }
 

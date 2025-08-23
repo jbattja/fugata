@@ -12,6 +12,10 @@ export async function callApi(
     headers.set('x-merchant-id', merchant.id!);
     headers.set('x-merchant-code', merchant.accountCode);
   }
+
+  if (options.method === 'POST' || options.method === 'PUT') {
+    headers.set('Content-Type', 'application/json');
+  }
   
   return fetch(url, {
     ...options,

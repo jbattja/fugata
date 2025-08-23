@@ -54,7 +54,6 @@ export default function NewProviderCredential() {
     mutationFn: async (data: typeof formData) => {
       const response = await callApi('/api/provider-credentials', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (!response.ok) {

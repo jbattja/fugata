@@ -29,12 +29,9 @@ export default function NewMerchant() {
   const availableSettings = Object.keys(getSettingsConfig(AccountType.MERCHANT, null));
 
   const createMerchant = useMutation({
-    mutationFn: async (data: { accountCode: string; description: string; settings: Record<string, string> }) => {
+    mutationFn: async (data: typeof formData) => {
       const response = await callApi('/api/merchants', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data),
       });
       if (!response.ok) {

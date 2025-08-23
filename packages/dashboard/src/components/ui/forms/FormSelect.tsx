@@ -11,15 +11,20 @@ interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
 }
 
-export function FormSelect({ label, options, error, className = '', ...props }: FormSelectProps) {
+export function FormSelect({ label, options, error, className = '', required, ...props }: FormSelectProps) {
+  // Check if any option has an empty string value (like "Any")
+  const hasEmptyValueOption = options.some(option => option.value === '');
+  
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <select
         className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
         {...props}
+        // Remove required attribute when we have an empty value option to prevent HTML5 validation conflicts
+        required={hasEmptyValueOption ? false : required}
       >
-        <option value="">Select an option</option>
+        {!hasEmptyValueOption && <option value="">Select an option</option>}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

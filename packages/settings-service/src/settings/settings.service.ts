@@ -247,7 +247,7 @@ export class SettingsService {
   async createRoutingRule(
     paymentConfigurationId: string,
     providerCredentialCode: string,
-    paymentMethod: PaymentMethod,
+    paymentMethod: PaymentMethod | string,
     weight: number = 1.0,
   ): Promise<RoutingRule> {
     const paymentConfiguration = await this.paymentConfigurationRepository.findOne({
@@ -261,10 +261,13 @@ export class SettingsService {
       throw new NotFoundException(`Provider credential ${providerCredentialCode} not found`);
     }
 
+    // Convert empty string to null for "Any" payment method
+    const normalizedPaymentMethod = paymentMethod === '' ? null : paymentMethod as PaymentMethod;
+
     const routingRule = this.routingRuleRepository.create({
       paymentConfigurationId: paymentConfiguration.id,
       providerCredentialId: providerCredential.id,
-      paymentMethod,
+      paymentMethod: normalizedPaymentMethod,
       weight,
       isActive: true,
     });
@@ -288,14 +291,27 @@ export class SettingsService {
     });
   }
 
+  async getRoutingRulesByConfiguration(paymentConfigurationId: string): Promise<RoutingRule[]> {
+    return this.routingRuleRepository.find({
+      where: { paymentConfigurationId: paymentConfigurationId },
+      relations: ['providerCredential', 'providerCredential.provider'],
+    });
+  }
+
   async updateRoutingRule(
     routingRuleId: string,
-    updates: Partial<RoutingRule>,
+    updates: Partial<RoutingRule> & { paymentMethod?: PaymentMethod | string },
   ): Promise<RoutingRule> {
     const routingRule = await this.routingRuleRepository.findOneBy({ id: routingRuleId });
     if (!routingRule) {
       throw new NotFoundException(`Routing rule ${routingRuleId} not found`);
     }
+    
+    // Convert empty string to null for "Any" payment method
+    if (updates.paymentMethod === '' as any) {
+      updates.paymentMethod = null;
+    }
+    
     Object.assign(routingRule, updates);
     return this.routingRuleRepository.save(routingRule);
   }
@@ -333,6 +349,15 @@ export class SettingsService {
     if (!merchant) {
       throw new NotFoundException(`Merchant ${merchantId} not found`);
     }
+    
+    // If this is being set as default, unset other defaults
+    if (isDefault) {
+      await this.paymentConfigurationRepository.update(
+        { merchantId: merchantId, isDefault: true },
+        { isDefault: false }
+      );
+    }
+    
     const paymentConfiguration = this.paymentConfigurationRepository.create({
       merchant: merchant,
       name: name,
@@ -354,11 +379,30 @@ export class SettingsService {
 
   async updatePaymentConfiguration(id: string, updates: Partial<PaymentConfiguration>): Promise<PaymentConfiguration> {
     const paymentConfiguration = await this.getPaymentConfiguration(id);
+    
+    // If this is being set as default, unset other defaults
+    if (updates.isDefault === true) {
+      await this.paymentConfigurationRepository
+        .createQueryBuilder()
+        .update(PaymentConfiguration)
+        .set({ isDefault: false })
+        .where('merchantId = :merchantId', { merchantId: paymentConfiguration.merchantId })
+        .andWhere('isDefault = :isDefault', { isDefault: true })
+        .andWhere('id != :id', { id: id })
+        .execute();
+    }
+    
     Object.assign(paymentConfiguration, updates);
     return this.paymentConfigurationRepository.save(paymentConfiguration);
   }
 
   async deletePaymentConfiguration(id: string): Promise<void> {
+    const paymentConfiguration = await this.getPaymentConfiguration(id);
+    
+    if (paymentConfiguration.isDefault) {
+      throw new BadRequestException('Cannot delete the default payment configuration');
+    }
+    
     const result = await this.paymentConfigurationRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Payment configuration ${id} not found`);
