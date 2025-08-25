@@ -52,7 +52,7 @@ export class ApiKeyService {
         id: credential.merchant.id,
         accountCode: credential.merchant.accountCode
       } : null,
-      permissions: ['payments:read', 'payments:write', 'settings:read', 'settings:write'], // Default permissions for now
+      permissions: ['payments:read', 'payments:write', 'settings:read', 'settings:write', 'tokens:read', 'tokens:write'], // Default permissions for now
       rateLimit: {
         requests: 100,
         interval: 60 // 60 seconds

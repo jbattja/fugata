@@ -1,4 +1,4 @@
-import { AuthorizationData, PaymentStatus, PartnerCommunicatorClient, SettingsClient, SharedLogger } from "@fugata/shared";
+import { AuthorizationData, PaymentStatus, SharedLogger } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
 import { extractAuthHeaders } from "src/clients/jwt.service";
@@ -39,7 +39,7 @@ export class AuthorizeAction extends BaseAction {
 
         const partnerConfig = await this.getPartnerConfig(context);
 
-        SharedLogger.log('Authorizing payment with partner', partnerConfig, AuthorizeAction.name);
+        SharedLogger.log('Authorizing payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, AuthorizeAction.name);
 
         return await ActionRegistry.getPartnerCommunicatorClient().authorizePayment(
             headers,

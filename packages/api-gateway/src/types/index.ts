@@ -28,7 +28,7 @@ export interface IdempotencyKey {
 }
 
 // Route configuration types
-export type ServiceName = 'payment-processor' | 'payment-data' | 'settings-service'
+export type ServiceName = 'payment-processor' | 'payment-data' | 'settings-service' | 'token-vault'
 
 export interface RouteConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'

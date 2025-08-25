@@ -1,9 +1,9 @@
-import { Payment, PaymentStatus, Amount, PaymentMethod, ActionType, RedirectMethod, Action } from "@fugata/shared";
+import { Payment, PaymentStatus, Amount, PaymentMethod, ActionType, RedirectMethod, Action, PaymentInstrument, CardDetails } from "@fugata/shared";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { AdyenConnector } from "./adyen-connector";
 import { AdyenPaymentRequest, AdyenPaymentResponse, AdyenAmount, AdyenPaymentMethod, AdyenPaymentResultCode, AdyenShopper, AdyenActionMethod, AdyenActionType, AdyenAction, AdyenPaymentRequestBuilder } from "./types/adyen-payment";
 import { getAdyenPaymentMethod } from "./types/adyen-payment-method";
-import { Logger } from "@nestjs/common";
+import { SharedLogger } from "@fugata/shared";
 
 export class AdyenCheckoutAuthorize {
 
@@ -28,7 +28,7 @@ export class AdyenCheckoutAuthorize {
             return this.transformAdyenResponseToPayment(request.payment, adyenResponse);
             
         } catch (error) {
-            Logger.error(`Adyen authorization failed: ${error.message}`, AdyenCheckoutAuthorize.name);
+            SharedLogger.error(`Adyen authorization failed: ${error.message}`, AdyenCheckoutAuthorize.name);
             throw error;
         }
     }
@@ -39,7 +39,7 @@ export class AdyenCheckoutAuthorize {
             .withMerchantAccount(merchantAccount)
             .withReference(payment.reference || `payment_${Date.now()}`)
             .withReturnUrl(payment.returnUrl)
-            .withPaymentMethod(this.mapPaymentMethodToAdyenMethod(payment.paymentInstrument?.paymentMethod))
+            .withPaymentMethod(this.mapPaymentMethodToAdyenMethod(payment.paymentInstrument))
             .withMetadata(payment.metadata)
             .build();
 
@@ -56,7 +56,6 @@ export class AdyenCheckoutAuthorize {
                 }
             }
         }
-
         return adyenRequest;
     }
 
@@ -107,12 +106,32 @@ export class AdyenCheckoutAuthorize {
         return new AdyenAmount(amount.value, amount.currency);
     }
 
-    private static mapPaymentMethodToAdyenMethod(paymentMethod: PaymentMethod): AdyenPaymentMethod {
-        if (!paymentMethod) {
+    private static mapPaymentMethodToAdyenMethod(paymentInstrument: PaymentInstrument, testMode: boolean = true): AdyenPaymentMethod {
+        if (!paymentInstrument) {
+            return null;
+        }
+        if (!paymentInstrument.paymentMethod) {
             return null;
         }
         const adyenMethod = new AdyenPaymentMethod();
-        adyenMethod.type = getAdyenPaymentMethod(paymentMethod);
+        adyenMethod.type = getAdyenPaymentMethod(paymentInstrument.paymentMethod);
+        if (paymentInstrument.paymentMethod === PaymentMethod.CARD) {
+            const cardDetails = paymentInstrument.instrumentDetails as CardDetails;
+            if (!cardDetails) {
+                return adyenMethod;
+            }
+            if (testMode) {
+                adyenMethod.encryptedCardNumber = cardDetails.number ? 'test_' + cardDetails.number : null;
+                adyenMethod.encryptedExpiryMonth = cardDetails.expiryMonth ? 'test_' + cardDetails.expiryMonth.toString() : null;
+                adyenMethod.encryptedExpiryYear = cardDetails.expiryYear ? 'test_' + cardDetails.expiryYear.toString() : null;
+                adyenMethod.encryptedSecurityCode = cardDetails.cvc ? 'test_' + cardDetails.cvc : null;
+            } else {
+                adyenMethod.number = cardDetails.number;
+                adyenMethod.expiryMonth = cardDetails.expiryMonth.toString();
+                adyenMethod.expiryYear = cardDetails.expiryYear.toString();
+                adyenMethod.cvc = cardDetails.cvc;
+            }
+        }
         return adyenMethod;
     }
 

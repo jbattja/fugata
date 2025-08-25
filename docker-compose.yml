@@ -30,6 +30,20 @@ services:
       timeout: 5s
       retries: 5
 
+  token-vault-db:
+    image: postgres:15-alpine
+    env_file:
+      - ./packages/token-vault/.env
+    ports:
+      - "5434:5432"
+    volumes:
+      - token-vault-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # Kafka services
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -114,6 +128,7 @@ services:
       CHECKOUT_URL: http://localhost:8081
       KAFKA_BROKERS: kafka:29092
       PARTNER_COMMUNICATOR_URL: http://partner-communicator:3003
+      TOKEN_VAULT_URL: http://token-vault:3006
     env_file:
       - ./packages/payment-processor/.env
     ports:
@@ -127,6 +142,8 @@ services:
       kafka:
         condition: service_healthy
       partner-communicator:
+        condition: service_started
+      token-vault:
         condition: service_started
 
   partner-communicator:
@@ -144,6 +161,27 @@ services:
       - ./packages/shared:/app/packages/shared
       - /app/packages/partner-communicator/node_modules
       - /app/packages/shared/node_modules
+
+  token-vault:
+    build:
+      context: .
+      dockerfile: packages/token-vault/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=token-vault-db
+      - DB_PORT=5432
+    env_file:
+      - ./packages/token-vault/.env
+    ports:
+      - "3006:3006"
+    volumes:
+      - ./packages/token-vault:/app/packages/token-vault
+      - ./packages/shared:/app/packages/shared
+      - /app/packages/token-vault/node_modules
+      - /app/packages/shared/node_modules
+    depends_on:
+      token-vault-db:
+        condition: service_healthy
 
   payment-data:
     build:
@@ -246,6 +284,7 @@ services:
       - PAYMENT_PROCESSOR_URL=http://payment-processor:3002
       - PAYMENT_DATA_URL=http://payment-data:3001
       - SETTINGS_SERVICE_URL=http://settings-service:3000
+      - TOKEN_VAULT_URL=http://token-vault:3006
     env_file:
       - ./packages/api-gateway/.env
     ports:
@@ -260,4 +299,5 @@ services:
 volumes:
   settings-db-data:
   payment-data-db-data:
+  token-vault-db-data:
   redis-data: 

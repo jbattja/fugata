@@ -3,7 +3,6 @@ export class FugataReference {
     private static readonly MAX_COUNTER = 999;
     private static readonly COUNTER_PADDING = 3;
 
-    // TODO: Make this configurable as process.env doesn't work yet. Maybe need to configure it in Docker per service?
     private static serverId = process.env.FUGATA_SERVER_ID || 'FG-001';
 
     /**

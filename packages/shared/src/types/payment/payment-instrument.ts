@@ -1,7 +1,7 @@
-import { Type } from "class-transformer";
+import { Type, Transform } from "class-transformer";
 import { RecurringUsage } from "./payment-common";
 import { CardNetwork, PaymentMethod } from "./payment-method";
-import { IsString, IsEnum, ValidateNested, IsObject, IsDate, IsOptional, IsNumber, IsNotEmpty } from "class-validator";
+import { IsString, IsEnum, ValidateNested, IsDate, IsOptional, IsNumber, IsNotEmpty } from "class-validator";
 import { Payment } from "./payment";
 
 export enum PaymentInstrumentStatus {
@@ -63,13 +63,32 @@ export class CardDetails extends PaymentInstrumentDetails {
     @IsOptional()
     country?: string;
 
-    @IsNumber()
+    @IsString()
     @IsOptional()
-    number?: number;
+    number?: string;
 
     @IsString()
     @IsOptional()
     cvc?: string;
+}
+
+// Custom transformer function to handle different payment instrument types
+function transformInstrumentDetails(value: any, obj: any): PaymentInstrumentDetails | undefined {
+    if (!value || !obj.paymentMethod) {
+        return undefined;
+    }
+
+    switch (obj.paymentMethod) {
+        case PaymentMethod.CARD:
+            return Object.assign(new CardDetails(), value);
+        // Future payment methods can be added here:
+        // case PaymentMethod.SEPA:
+        //     return Object.assign(new SepaDetails(), value);
+        // case PaymentMethod.ACH:
+        //     return Object.assign(new AchDetails(), value);
+        default:
+            return value;
+    }
 }
 
 export class PaymentInstrument {
@@ -94,13 +113,9 @@ export class PaymentInstrument {
     paymentMethod!: PaymentMethod;
 
     @ValidateNested()
-    @Type(() => PaymentInstrumentDetails)
+    @Transform(({ value, obj }) => transformInstrumentDetails(value, obj))
     @IsOptional()
     instrumentDetails?: PaymentInstrumentDetails;
-
-    @IsObject() 
-    @IsOptional()
-    tokens?: Record<string, string>;
 
     @IsDate()
     @IsOptional()

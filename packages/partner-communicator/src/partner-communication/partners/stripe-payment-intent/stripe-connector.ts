@@ -1,5 +1,5 @@
 import { StripePaymentIntent, StripePaymentIntentStatus } from "./types/stripe-payment-intent";
-import { Payment } from "@fugata/shared";
+import { CardDetails, Payment, PaymentInstrument, PaymentMethod } from "@fugata/shared";
 import axios from "axios";
 import { SharedLogger } from '@fugata/shared';
 import { getStripePaymentMethod, StripePaymentMethod } from "./types/stripe-payment-method";
@@ -10,8 +10,8 @@ export class StripeConnector {
     static async createPaymentIntent(paymentIntent: StripePaymentIntent, secretKey: string, originalRequest: Payment): Promise<StripePaymentIntent> {
         try {
             if (originalRequest.paymentInstrument?.paymentMethod) {
-                const paymentMethod = getStripePaymentMethod(originalRequest.paymentInstrument.paymentMethod);
-                const paymentMethodData = await this.createPaymentMethod(paymentMethod, secretKey);
+                let paymentMethodData = this.createPaymentMethodData(originalRequest.paymentInstrument);
+                paymentMethodData = await this.createPaymentMethod(paymentMethodData, secretKey);
                 paymentIntent.payment_method = paymentMethodData.id;
             }
 
@@ -37,9 +37,26 @@ export class StripeConnector {
         }
     }
 
-    static async createPaymentMethod(paymentMethod: string, secretKey: string): Promise<StripePaymentMethod> {
-        const paymentMethodData = {"type": paymentMethod} as StripePaymentMethod;
+    static createPaymentMethodData(paymentInstrument: PaymentInstrument): StripePaymentMethod {
+        const paymentMethod = getStripePaymentMethod(paymentInstrument.paymentMethod);
 
+        const paymentMethodData = {"type": paymentMethod} as StripePaymentMethod;
+        if (paymentInstrument.paymentMethod === PaymentMethod.CARD) {
+            const cardDetails = paymentInstrument.instrumentDetails as CardDetails;
+            if (!cardDetails) {
+                return paymentMethodData;
+            }
+            paymentMethodData.card = {
+                number: cardDetails.number,
+                exp_month: cardDetails.expiryMonth,
+                exp_year: cardDetails.expiryYear,
+                cvc: cardDetails.cvc
+            };
+        }
+        return paymentMethodData;
+    }
+
+    static async createPaymentMethod(paymentMethodData: StripePaymentMethod, secretKey: string): Promise<StripePaymentMethod> {
         try {
             const response = await axios.post(`${this.baseUrl}/v1/payment_methods`, paymentMethodData, {
                 headers: {

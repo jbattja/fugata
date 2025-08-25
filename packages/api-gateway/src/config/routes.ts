@@ -77,5 +77,47 @@ export const routes: RouteConfig[] = [
     targetPath: '/api-credentials/api-key',
     requiresIdempotency: false,
     requiredPermission: 'settings:write'
+  },
+
+  // Token Vault (Card Tokens)
+  {
+    method: 'POST',
+    path: '/token-vault/tokens',
+    service: 'token-vault',
+    targetPath: '/token-vault/tokens',
+    requiresIdempotency: true,
+    requiredPermission: 'tokens:write'
+  },
+  {
+    method: 'GET',
+    path: '/token-vault/tokens/:token',
+    service: 'token-vault',
+    targetPath: '/token-vault/tokens/:token',
+    requiresIdempotency: false,
+    requiredPermission: 'tokens:read'
+  },
+  {
+    method: 'DELETE',
+    path: '/token-vault/tokens/:token',
+    service: 'token-vault',
+    targetPath: '/token-vault/tokens/:token',
+    requiresIdempotency: false,
+    requiredPermission: 'tokens:write'
+  },
+  {
+    method: 'GET',
+    path: '/token-vault/customers/:customerId/tokens',
+    service: 'token-vault',
+    targetPath: '/token-vault/customers/:customerId/tokens',
+    requiresIdempotency: false,
+    requiredPermission: 'tokens:read'
+  },
+  {
+    method: 'GET',
+    path: '/token-vault/merchants/:merchantId/tokens',
+    service: 'token-vault',
+    targetPath: '/token-vault/merchants/:merchantId/tokens',
+    requiresIdempotency: false,
+    requiredPermission: 'tokens:read'
   }
 ] 

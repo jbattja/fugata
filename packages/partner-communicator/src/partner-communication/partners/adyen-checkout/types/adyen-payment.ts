@@ -77,6 +77,22 @@ export class AdyenPaymentMethod {
   @IsOptional()
   @IsString()
   holderName?: string;
+
+  @IsOptional()
+  @IsString()
+  number?: string;
+
+  @IsOptional()
+  @IsString()
+  expiryMonth?: string;
+
+  @IsOptional()
+  @IsString()
+  expiryYear?: string;
+
+  @IsOptional()
+  @IsString()
+  cvc?: string;
 }
 
 export class AdyenPaymentRequest {

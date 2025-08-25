@@ -8,6 +8,7 @@ import { ServiceAuthGuard } from '@fugata/shared';
 import { WorkflowOrchestrationModule } from './core/workflow-orchestration.module';
 import { SettingsModule } from './clients/settings.module';
 import { PartnerCommunicatorModule } from './clients/partner-communicator.module';
+import { TokenVaultModule } from './clients/token-vault.module';
 
 @Global()
 @Module({
@@ -16,7 +17,8 @@ import { PartnerCommunicatorModule } from './clients/partner-communicator.module
     PaymentsModule,
     SettingsModule,
     PartnerCommunicatorModule,
-    WorkflowOrchestrationModule
+    WorkflowOrchestrationModule, 
+    TokenVaultModule
   ],
   controllers: [],
   providers: [

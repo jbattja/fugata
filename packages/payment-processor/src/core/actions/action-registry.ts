@@ -7,7 +7,7 @@ import { AuthorizeAction } from './authorize-action';
 import { CaptureAction } from './capture-action';
 import { VoidAction } from './void-action';
 import { RefundAction } from './refund-action';
-import { PartnerCommunicatorClient, SettingsClient } from '@fugata/shared';
+import { PartnerCommunicatorClient, SettingsClient, TokenVaultClient } from '@fugata/shared';
 import { PaymentProducerService } from '../../kafka/payment-producer.service';
 
 export enum ActionsType {
@@ -26,6 +26,7 @@ export class ActionRegistry {
   private static partnerCommunicatorClient: PartnerCommunicatorClient | null = null;
   private static settingsClient: SettingsClient | null = null;
   private static paymentProducer: PaymentProducerService | null = null;
+  private static tokenVaultClient: TokenVaultClient | null = null;
 
   static {
     // Register all available actions
@@ -65,6 +66,14 @@ export class ActionRegistry {
 
   static getPaymentProducer(): PaymentProducerService | null {
     return ActionRegistry.paymentProducer;
+  }
+
+  static setTokenVaultClient(client: TokenVaultClient): void {
+    ActionRegistry.tokenVaultClient = client;
+  }
+
+  static getTokenVaultClient(): TokenVaultClient | null {
+    return ActionRegistry.tokenVaultClient;
   }
 
   static getAction(action: ActionsType): ActionInterface | null {

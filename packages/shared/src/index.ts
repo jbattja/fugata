@@ -2,9 +2,10 @@ import 'reflect-metadata';
 import { SettingsClient } from './clients/settings.client';
 import { PaymentDataClient } from './clients/payment-data.client';
 import { PartnerCommunicatorClient } from './clients/partner-communicator.client';
+import { TokenVaultClient, CreateCardTokenRequest, DecryptedCardData } from './clients/token-vault.client';
 
 export {
-  SettingsClient, PaymentDataClient, PartnerCommunicatorClient
+  SettingsClient, PaymentDataClient, PartnerCommunicatorClient, TokenVaultClient, CreateCardTokenRequest, DecryptedCardData
 };
 
 export * from './types/settings/accounts'; 
@@ -30,3 +31,4 @@ export * from './auth/types';
 
 // Export utilities
 export * from './utils/logger';
+export * from './utils/card-validation';

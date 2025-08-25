@@ -2,6 +2,7 @@ import { PaymentSession, Payment, PaymentEvent, PaymentEventType } from '@fugata
 import { Inject } from '@nestjs/common';
 import { SharedLogger } from '@fugata/shared';
 import { ClientKafka } from '@nestjs/microservices';
+import { TokenizationUtils } from 'src/core/tokenization.utils';
 export class PaymentProducerService {
 
   constructor(@Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka) {
@@ -16,7 +17,6 @@ export class PaymentProducerService {
   }
 
   async publishPaymentSession(paymentSession: PaymentSession): Promise<void> {
-    SharedLogger.log(`Publishing payment session to Kafka: ${JSON.stringify(paymentSession)}`, undefined, PaymentProducerService.name);
     await this.kafkaClient.producer.send({
       topic: 'payment-sessions',
       messages: [
@@ -29,11 +29,17 @@ export class PaymentProducerService {
   }
 
   async publishPaymentEvent(payment: Payment, eventType: PaymentEventType): Promise<void> {
+    // Create a deep copy of the payment object to avoid modifying the original
+    const paymentToPublish = JSON.parse(JSON.stringify(payment));
+    
+    if (paymentToPublish.paymentInstrument) {
+      paymentToPublish.paymentInstrument = TokenizationUtils.cleanUpSensitiveData(paymentToPublish.paymentInstrument);
+    }
     const event: PaymentEvent = {
       eventType,
-      paymentId: payment.paymentId,
+      paymentId: paymentToPublish.paymentId,
       timestamp: new Date().toISOString(),
-      data: payment
+      data: paymentToPublish
     };
 
     SharedLogger.log(`Publishing payment event: ${eventType} for payment ${payment.paymentId}`, undefined, PaymentProducerService.name);

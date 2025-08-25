@@ -1,0 +1,24 @@
+{
+  "name": "@fugata/token-vault",
+  "version": "1.0.0",
+  "description": "Token vault service for Fugata - handles secure storage of payment instrument data",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "nest start --exec \"node dist/token-vault/src/main.js\"",
+    "start:dev": "nest start --watch --exec \"node dist/token-vault/src/main.js\"",
+    "start:debug": "nest start --debug --watch --exec \"node dist/token-vault/src/main.js\"",
+    "start:prod": "node dist/token-vault/src/main.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@fugata/shared": "1.0.0",
+    "typeorm": "^0.3.20",
+    "pg": "^8.11.3"
+  }
+}

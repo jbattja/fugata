@@ -18,6 +18,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 const SETTINGS_SERVICE_URL = process.env.SETTINGS_SERVICE_URL || 'http://localhost:3000'
 const PAYMENT_PROCESSOR_URL = process.env.PAYMENT_PROCESSOR_URL || 'http://localhost:3002'
 const PAYMENT_DATA_URL = process.env.PAYMENT_DATA_URL || 'http://localhost:3001'
+const TOKEN_VAULT_URL = process.env.TOKEN_VAULT_URL || 'http://localhost:3006'
 
 function registerRoute(
   app: ReturnType<typeof fastify>,
@@ -94,7 +95,7 @@ async function buildApp() {
     closeClient: true
   })
 
-  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, SETTINGS_SERVICE_URL)
+  const proxyService = new ProxyService(PAYMENT_PROCESSOR_URL, PAYMENT_DATA_URL, SETTINGS_SERVICE_URL, TOKEN_VAULT_URL)
 
   // Initialize middleware
   const authMiddleware = new AuthMiddleware(redisService, apiKeyService)

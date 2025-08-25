@@ -2,8 +2,13 @@ import { BaseAction } from './base-action';
 import { PaymentContext } from '../types/workflow.types';
 import { PaymentStatus } from '@fugata/shared';
 import { ActionRegistry } from './action-registry';
+import { TokenizationUtils } from '../tokenization.utils';
 
 export class InitiatePaymentAction extends BaseAction {
+  constructor() {
+    super();
+  }
+
   async execute(context: PaymentContext): Promise<PaymentContext> {
     this.log('Executing InitiatePayment action');
 
@@ -15,17 +20,36 @@ export class InitiatePaymentAction extends BaseAction {
     context.refundAttempts = 0;
     context.voidAttempts = 0;
     context.config = {
-      maxAuthorizeAttempts: 5,
+      maxAuthorizeAttempts: 1,
       maxCaptureAttempts: 5,
       maxRefundAttempts: 5,
       maxVoidAttempts: 5
     };
 
+    // Process payment instrument data if this is a card payment
+    if (context.payment.paymentInstrument && context.merchant?.id) {
+      try {
+        const tokenVaultClient = ActionRegistry.getTokenVaultClient();
+        if (!tokenVaultClient) {
+          throw new Error('Token vault client not available');
+        }
+        
+        const updatedInstrument = await TokenizationUtils.processPaymentInstrumentData(
+          context.payment.paymentInstrument,
+          context.merchant.id,
+          tokenVaultClient
+        );
+        context.payment.paymentInstrument = updatedInstrument;
+      } catch (error) {
+        this.log(`Payment instrument data processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
+    }
+
     // Publish payment initiated event
     const paymentProducer = ActionRegistry.getPaymentProducer();
     if (paymentProducer) {
       await paymentProducer.publishPaymentInitiated(context.payment);
-      this.log('Published PAYMENT_INITIATED event');
     } else {
       this.log('No payment producer found');
     }

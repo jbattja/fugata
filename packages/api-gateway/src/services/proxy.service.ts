@@ -11,6 +11,7 @@ export class ProxyService {
     private paymentProcessorUrl: string,
     private paymentDataUrl: string,
     private settingsServiceUrl: string,
+    private tokenVaultUrl: string,
   ) {}
 
   private getServiceUrl(service: ServiceName): string {
@@ -21,6 +22,8 @@ export class ProxyService {
           return this.paymentDataUrl
       case 'settings-service':
         return this.settingsServiceUrl
+      case 'token-vault':
+        return this.tokenVaultUrl
       default:
         throw new Error(`Unknown service: ${service}`)
     }

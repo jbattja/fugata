@@ -11,9 +11,10 @@ import {
 import { ActionRegistry, ActionsType } from './actions/action-registry';
 import { WorkflowConditionEvaluator } from './condition-evaluator';
 import { DEFAULT_WORKFLOW } from './workflow-definition';
-import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient } from '@fugata/shared';
+import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient, TokenVaultClient } from '@fugata/shared';
 import { Inject } from '@nestjs/common';
 import { PaymentProducerService } from '../kafka/payment-producer.service';
+import { TokenizationUtils } from './tokenization.utils';
 
 @Injectable()
 export class WorkflowOrchestrationService {
@@ -23,7 +24,8 @@ export class WorkflowOrchestrationService {
   constructor(
     private settingsClient: SettingsClient,
     private partnerCommunicatorClient: PartnerCommunicatorClient,
-    @Inject(PaymentProducerService) private paymentProducer: PaymentProducerService
+    @Inject(PaymentProducerService) private paymentProducer: PaymentProducerService,
+    private tokenVaultClient: TokenVaultClient
   ) {
     this.workflow = DEFAULT_WORKFLOW;
     this.conditionEvaluator = new WorkflowConditionEvaluator();
@@ -32,6 +34,7 @@ export class WorkflowOrchestrationService {
     ActionRegistry.setPartnerCommunicatorClient(this.partnerCommunicatorClient);
     ActionRegistry.setSettingsClient(this.settingsClient);
     ActionRegistry.setPaymentProducer(this.paymentProducer);
+    ActionRegistry.setTokenVaultClient(this.tokenVaultClient);
   }
 
   /**
@@ -76,11 +79,7 @@ export class WorkflowOrchestrationService {
       };
     } catch (error) {
       SharedLogger.error('Workflow execution failed:', error, WorkflowOrchestrationService.name);
-      return {
-        success: false,
-        context: { payment, request },
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      throw error;
     }
   }
 
@@ -114,6 +113,10 @@ export class WorkflowOrchestrationService {
       throw new Error('Maximum workflow executions reached - possible infinite loop');
     }
 
+    // Clean up sensitive data at the end of workflow execution
+    if (context.payment.paymentInstrument) {
+      context.payment.paymentInstrument = TokenizationUtils.cleanUpSensitiveData(context.payment.paymentInstrument);
+    }
     return context;
   }
 
