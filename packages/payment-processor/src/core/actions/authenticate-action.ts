@@ -32,7 +32,7 @@ export class AuthenticateAction extends BaseAction {
 
     private mockAuthenticationChallenge(context: PaymentContext) { 
         context.payment.authenticationData.authenticationFlow = AuthenticationFlow.CHALLENGE;
-        const redirectLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8080';
+        const redirectLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8081';
         const action = new Action();
         action.actionType = ActionType.REDIRECT;
         action.redirectUrl = `${redirectLinkUrl}/redirect/${context.payment.paymentId}`;

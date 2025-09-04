@@ -21,6 +21,11 @@ import { BinLookupModule } from './bin-lookup/bin-lookup.module';
             provide: 'JWT_SECRET',
             useValue: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
         },
+        {
+            provide: APP_GUARD,
+            useFactory: (jwtSecret: string) => new ServiceAuthGuard(jwtSecret),
+            inject: ['JWT_SECRET'],
+        }
     ],
 })
 export class AppModule { }

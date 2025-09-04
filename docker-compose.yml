@@ -125,7 +125,7 @@ services:
       context: .
       dockerfile: packages/payment-processor/Dockerfile
     environment:
-      CHECKOUT_URL: http://localhost:8081
+      PAYMENT_LINK_URL: http://localhost:8081
       KAFKA_BROKERS: kafka:29092
       PARTNER_COMMUNICATOR_URL: http://partner-communicator:3003
       TOKEN_VAULT_URL: http://token-vault:3006
@@ -236,6 +236,7 @@ services:
     environment:
       - NODE_ENV=development
       - PAYMENT_DATA_SERVICE_URL=http://payment-data:3001
+      - PAYMENT_PROCESSOR_SERVICE_URL=http://payment-processor:3002
     env_file:
       - ./packages/checkout/.env
     volumes:

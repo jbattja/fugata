@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
-import { SharedLogger } from '@fugata/shared';
+import { FugataReference, SharedLogger } from '@fugata/shared';
 import { PaymentSession, SessionStatus, RequirePermissions, getMerchant, SessionMode } from '@fugata/shared';
-import { v4 as uuidv4 } from 'uuid';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { PaymentProducerService } from '../kafka/payment-producer.service';
@@ -22,18 +21,18 @@ export class SessionsController {
     const merchant = getMerchant(request);
     SharedLogger.log(`Creating payment session for merchant: ${merchant.id}`, undefined, SessionsController.name);
     
-    const paymentLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8080';
-    const sessionId = uuidv4();
+    const paymentLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8081';
+    const sessionId = FugataReference.generateReference();
     const expiresAt = sessionData.mode === SessionMode.HOSTED ? new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now for hosted sessions
     : new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now for component sessions
 
-    const session = new PaymentSession({  
+    const session = new PaymentSession({
       sessionId: sessionId,
       status: SessionStatus.ACTIVE,
       createdAt: new Date(),
       updatedAt: new Date(),
       expiresAt: expiresAt,
-      url: `${paymentLinkUrl}/session/${sessionId}`,
+      url: `${paymentLinkUrl}/sessions/${sessionId}`,
       merchant: {
         id: merchant.id,
         accountCode: merchant.accountCode

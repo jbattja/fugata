@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { paymentDataClient, getAuthHeaders } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { SharedLogger } from '@fugata/shared';
 import { getMerchantContextFromRequest } from '@/lib/api/merchant-context';
+import { handleApiError } from '@/lib/api/api-caller';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -23,7 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (error) {
-    SharedLogger.error('Error fetching payments:', error as any, handler.name);
-    res.status(500).json({ error: 'Failed to fetch payments' });
+    handleApiError(error, 'payment', res);
   }
 } 

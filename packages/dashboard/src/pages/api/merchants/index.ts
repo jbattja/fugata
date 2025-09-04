@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { SharedLogger } from '@fugata/shared';
+import { handleApiError } from '@/lib/api/api-caller';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -38,11 +38,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
   } catch (error: any) {
-    if (error.response && error.response.status == 400) {
-      res.status(400).json(error.response.data);
-    } else {
-      SharedLogger.error('Error handling merchant request:', error as any, handler.name);
-      res.status(500).json({ error: 'Failed to process merchant request' });
-    }
+    handleApiError(error, 'merchant', res);
   }
 } 

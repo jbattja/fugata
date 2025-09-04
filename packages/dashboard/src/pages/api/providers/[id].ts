@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthHeaders, settingsClient } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { SharedLogger } from '@fugata/shared';
+import { handleApiError } from '@/lib/api/api-caller';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -19,7 +19,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const provider = await settingsClient.getProvider(authHeaders, id as string);
     res.status(200).json(provider);
   } catch (error) {
-    SharedLogger.error('Error fetching provider:', error as any, handler.name);
-    res.status(500).json({ error: 'Failed to fetch provider' });
+    handleApiError(error, 'provider', res);
   }
 } 

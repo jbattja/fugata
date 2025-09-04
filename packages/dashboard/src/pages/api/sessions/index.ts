@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { paymentDataClient, getAuthHeaders } from '@/lib/api/clients';
 import { authOptions } from '../auth/[...nextauth]';
 import { getServerSession } from 'next-auth';
-import { SharedLogger } from '@fugata/shared';
 import { getMerchantContextFromRequest } from '@/lib/api/merchant-context';
+import { handleApiError } from '@/lib/api/api-caller';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -22,8 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(405).json({ error: `Method ${req.method} not allowed` });
       }
     }
-  } catch (error) {
-    SharedLogger.error('Error fetching sessions:', error as any, handler.name);
-    res.status(500).json({ error: 'Failed to fetch sessions' });
+  } catch (error: any) {
+    handleApiError(error, 'session', res);
   }
 }

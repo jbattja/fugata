@@ -2,6 +2,7 @@ import { BaseAction } from './base-action';
 import { PaymentContext } from '../types/workflow.types';
 import { PaymentStatus } from '@fugata/shared';
 import { ActionRegistry } from './action-registry';
+import { extractAuthHeaders } from '../../clients/jwt.service';
 import { TokenizationUtils } from '../tokenization.utils';
 
 export class InitiatePaymentAction extends BaseAction {
@@ -34,10 +35,13 @@ export class InitiatePaymentAction extends BaseAction {
           throw new Error('Token vault client not available');
         }
         
+        const headers = extractAuthHeaders(context.request);
+        
         const updatedInstrument = await TokenizationUtils.processPaymentInstrumentData(
           context.payment.paymentInstrument,
           context.merchant.id,
-          tokenVaultClient
+          tokenVaultClient,
+          headers
         );
         context.payment.paymentInstrument = updatedInstrument;
       } catch (error) {

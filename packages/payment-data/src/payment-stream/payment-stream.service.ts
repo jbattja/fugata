@@ -1,10 +1,10 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { SharedLogger } from '@fugata/shared';
-import { PaymentSessionsService } from '../payment-sessions/payment-sessions.service';
+import { PaymentStatus, SessionStatus, SharedLogger } from '@fugata/shared';
+import { PaymentSessionsService } from '../payments/payment-sessions.service';
 import { PaymentsService } from '../payments/payments.service';
 import { PaymentEventsService } from '../payment-events/payment-events.service';
-import { PaymentSession, PaymentEvent } from '@fugata/shared';
+import { PaymentSession, PaymentEvent, Payment } from '@fugata/shared';
 
 @Injectable()
 export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
@@ -113,9 +113,53 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
           SharedLogger.warn(`Replayed payment: ${paymentId} with newer event from ${timestamp}`, undefined, PaymentStreamService.name);
         }
       }
+      if (event.data.sessionId) {
+        await this.updatePaymentSession(event.data.sessionId, event.data);
+      }
     } catch (error) {
       SharedLogger.error('Error processing payment event:', error, PaymentStreamService.name);
       throw error;
     }
+  }
+
+  private async updatePaymentSession(sessionId: string, payment: Payment): Promise<void> {
+    const paymentSession = await this.paymentSessionsService.getPaymentSession(sessionId);
+    if (!paymentSession) {
+      return;
+    }
+    const sessionIsExpired = paymentSession.expiresAt < new Date();
+    switch (payment.status) {
+      case PaymentStatus.INITIATED:
+        paymentSession.status = SessionStatus.PENDING;
+        break;
+      case PaymentStatus.AUTHORIZATION_PENDING:
+        paymentSession.status = SessionStatus.PENDING;
+        break;
+      case PaymentStatus.AUTHORIZED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      case PaymentStatus.REFUSED:
+        sessionIsExpired ? paymentSession.status = SessionStatus.FAILED : paymentSession.status = SessionStatus.ACTIVE;
+        break;
+      case PaymentStatus.PARTIALLY_CAPTURED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      case PaymentStatus.CAPTURED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      case PaymentStatus.VOIDED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      case PaymentStatus.REVERSED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      case PaymentStatus.REFUNDED:
+        paymentSession.status = SessionStatus.COMPLETED;
+        break;
+      default:
+        sessionIsExpired ? paymentSession.status = SessionStatus.EXPIRED : paymentSession.status = SessionStatus.ACTIVE;
+        break;
+    }
+    await this.paymentSessionsService.updatePaymentSession(sessionId, paymentSession); 
   }
 } 

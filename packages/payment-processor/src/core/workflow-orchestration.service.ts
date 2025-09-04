@@ -54,12 +54,13 @@ export class WorkflowOrchestrationService {
   /**
    * Execute the payment workflow
    */
-  async executePayment(payment: Payment, request: any): Promise<WorkflowResult> {
+  async executePayment(payment: Payment, request: any, sessionId?: string): Promise<WorkflowResult> {
     try {
       // Initialize payment context
       const context: PaymentContext = {
         payment,
         request,
+        sessionId,
       };
       
       const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;

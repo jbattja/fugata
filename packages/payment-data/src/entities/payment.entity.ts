@@ -83,6 +83,9 @@ export class PaymentEntity {
   @Column('jsonb', { nullable: true })
   metadata: Record<string, string>;
 
+  @Column({ name: 'session_id', nullable: true })
+  sessionId: string;
+
   @CreateDateColumn({ name: 'created_at', type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
   createdAt: Date;
 
@@ -112,6 +115,7 @@ export class PaymentEntity {
       chargebackStatus: this.chargebackStatus,
       refusalReason: this.refusalReason,
       metadata: this.metadata,
+      sessionId: this.sessionId,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     });

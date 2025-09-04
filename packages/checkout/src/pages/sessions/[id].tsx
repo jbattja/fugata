@@ -3,24 +3,14 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PaymentForm } from '@/components/PaymentForm';
 import { formatAmount } from '@/lib/utils/currency';
-
-interface SessionData {
-  id: string;
-  reference: string;
-  amount: {
-    value: number;
-    currency: string;
-  };
-  status: string;
-  orderLines: {}[];
-}
+import { PaymentSession, SessionStatus } from '@fugata/shared';
 
 export default function SessionCheckout() {
   const router = useRouter();
   const { id } = router.query;
   const [isValid, setIsValid] = useState<boolean | null>(null);
 
-  const { data: session, error, isLoading } = useQuery<SessionData>({
+  const { data: session, error, isLoading } = useQuery<PaymentSession>({
     queryKey: ['session', id],
     queryFn: async () => {
       if (!id) throw new Error('No session ID provided');
@@ -39,9 +29,25 @@ export default function SessionCheckout() {
     if (error) {
       setIsValid(false);
     } else if (session) {
+      // Check if session is in a final state and redirect accordingly
+      if (session.status === SessionStatus.EXPIRED) {
+        router.push(`/sessions/expired?returnUrl=${encodeURIComponent(session.returnUrl || '')}`);
+        return;
+      } else if (session.status === SessionStatus.COMPLETED) {
+        router.push(`/sessions/success?sessionId=${id}&returnUrl=${encodeURIComponent(session.returnUrl || '')}`);
+        return;
+      } else if (session.status === SessionStatus.FAILED) {
+        router.push(`/sessions/refused?sessionId=${id}&returnUrl=${encodeURIComponent(session.returnUrl || '')}`);
+        return;
+      } else if (session.status === SessionStatus.CANCELLED) {
+        router.push(`/sessions/refused?sessionId=${id}&returnUrl=${encodeURIComponent(session.returnUrl || '')}`);
+        return;
+      }
+      
+      // Session is active/pending, show the payment form
       setIsValid(true);
     }
-  }, [session, error]);
+  }, [session, error, router, id]);
 
   if (isLoading) {
     return (
@@ -67,7 +73,7 @@ export default function SessionCheckout() {
       <div className="w-full max-w-md flex flex-col gap-4">
         {/* Amount/Product Card */}
         <div className="bg-white rounded-xl shadow p-8 text-center">
-          <div className="text-4xl font-bold mb-2">{formatAmount(session?.amount.value ?? 0, session?.amount.currency ?? 'USD')}</div>
+          <div className="text-4xl font-bold mb-2">{formatAmount(session?.amount?.value ?? 0, session?.amount?.currency ?? 'USD')}</div>
           <div className="text-gray-700 text-base">{session?.reference} 
             {session?.orderLines && <a href="#" className="text-blue-600 hover:underline font-medium ml-2">View details <span className="inline-block align-middle">▼</span></a>} 
             </div> 
@@ -75,7 +81,7 @@ export default function SessionCheckout() {
         {/* Payment Form Card */}
         <div className="bg-white rounded-xl shadow p-8">
           <div className="text-lg font-semibold mb-4">Payment method</div>
-          <PaymentForm sessionId={id as string} />
+          <PaymentForm sessionId={id as string} sessionData={session} />
         </div>
       </div>
       <div className="text-xs text-gray-400 text-center mt-8 select-none">Powered by Fugata</div>

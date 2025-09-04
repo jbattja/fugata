@@ -1,12 +1,17 @@
 import 'reflect-metadata';
 import { SettingsClient } from './clients/settings.client';
 import { PaymentDataClient } from './clients/payment-data.client';
+import { PaymentProcessorClient } from './clients/payment-processor.client';
 import { PartnerCommunicatorClient } from './clients/partner-communicator.client';
 import { TokenVaultClient, CreateCardTokenRequest, DecryptedCardData } from './clients/token-vault.client';
 
+// Export classes (values)
 export {
-  SettingsClient, PaymentDataClient, PartnerCommunicatorClient, TokenVaultClient, CreateCardTokenRequest, DecryptedCardData
+  SettingsClient, PaymentDataClient, PaymentProcessorClient, PartnerCommunicatorClient, TokenVaultClient
 };
+
+// Export types
+export type { CreateCardTokenRequest, DecryptedCardData };
 
 export * from './types/settings/accounts'; 
 export * from './types/settings/account-settings';

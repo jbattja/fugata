@@ -1,11 +1,15 @@
-import { Controller, Get, Query, Param, Req, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Query, Param, Req, NotFoundException, UnauthorizedException, Post } from '@nestjs/common';
 import { getMerchantIds, isAdmin, SharedLogger } from '@fugata/shared';
 import { PaymentSessionsService } from './payment-sessions.service';
+import { SessionExpirationService } from './session-expiration.service';
 import { PaymentSession, RequirePermissions, getMerchant } from '@fugata/shared';
 
 @Controller('payment-sessions')
 export class PaymentSessionsController {
-  constructor(private readonly paymentSessionsService: PaymentSessionsService) {}
+  constructor(
+    private readonly paymentSessionsService: PaymentSessionsService,
+    private readonly sessionExpirationService: SessionExpirationService
+  ) {}
 
   @Get()
   @RequirePermissions('payments:read')
@@ -57,5 +61,31 @@ export class PaymentSessionsController {
       throw new NotFoundException('Payment session not found');
     }
     return session;
+  }
+
+  @Post('expire')
+  @RequirePermissions('payments:write')
+  async triggerSessionExpiration(@Req() request?: any) {
+    if (!isAdmin(request)) {
+      throw new UnauthorizedException('Only administrators can trigger session expiration');
+    }
+    
+    SharedLogger.log('Manual session expiration triggered', undefined, PaymentSessionsController.name);
+    const expiredCount = await this.sessionExpirationService.triggerExpiration();
+    
+    return {
+      message: `Successfully expired ${expiredCount} sessions`,
+      expiredCount
+    };
+  }
+
+  @Get('expiration/health')
+  @RequirePermissions('payments:read')
+  async getExpirationHealth(@Req() request?: any) {
+    if (!isAdmin(request)) {
+      throw new UnauthorizedException('Only administrators can check expiration health');
+    }
+    
+    return await this.sessionExpirationService.healthCheck();
   }
 } 

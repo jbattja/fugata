@@ -48,7 +48,7 @@ export class JwtService {
     expiresIn: string = '5m'
   ): string {
     const permissions = this.getPermissionsForRole(user.role);
-    
+
     const payload: Omit<ServiceTokenPayload, 'iat' | 'exp'> = {
       userId: user.id,
       username: user.username,
@@ -71,12 +71,18 @@ export class JwtService {
   }
 
   // Service account token generation
-  generateServiceAccountToken(): string {
+  generateServiceAccountToken(merchantId?: string, merchantCode?: string,
+  ): string {
     return jwt.sign(
       {
         service: this.service,
         permissions: this.servicePermissions,
-        role: 'service'
+        role: 'service',
+        merchant: merchantId && merchantCode ? {
+          id: merchantId,
+          accountCode: merchantCode
+        } : undefined
+
       },
       this.secret,
       {
@@ -94,6 +100,15 @@ export class JwtService {
       'Authorization': `Bearer ${serviceToken}`,
       'X-Service-Token': 'true',
       'Content-Type': 'application/json'
+    };
+  }
+
+  getAuthHeadersForServiceAccountWithMerchant(merchantId: string, merchantCode: string): Record<string, string> {
+    const serviceToken = this.generateServiceAccountToken(merchantId, merchantCode);
+    return {
+      'Authorization': `Bearer ${serviceToken}`,
+      'X-Service-Token': 'true',
+      'Content-Type': 'application/json',
     };
   }
 

@@ -161,6 +161,10 @@ export class Payment {
     @IsOptional()
     metadata?: Record<string, string>;
 
+    @IsString()
+    @IsOptional()
+    sessionId?: string;
+
     @IsDate()
     @IsOptional()
     createdAt?: Date;

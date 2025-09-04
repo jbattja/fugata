@@ -10,6 +10,7 @@ export interface PaymentContext {
   payment: Payment;
   merchant?: Partial<Merchant>;
   request: any;
+  sessionId?: string;
   authorizeAttempts?: number;
   fraud?: {
     score: number;

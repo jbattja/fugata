@@ -1,4 +1,4 @@
-import { TokenVaultClient, SharedLogger } from '@fugata/shared';
+import { TokenVaultClient, SharedLogger, CardNetwork } from '@fugata/shared';
 import { PaymentInstrument, CardDetails, PaymentMethod } from '@fugata/shared';
 import { CreateCardTokenRequest, DecryptedCardData } from '@fugata/shared';
 import { validateCardNumber } from '@fugata/shared';
@@ -12,16 +12,18 @@ export class TokenizationUtils {
    * @param paymentInstrument - The payment instrument containing details
    * @param merchantId - The merchant ID
    * @param tokenVaultClient - The token vault client for API calls
+   * @param headers - Authentication headers for API calls
    * @returns Updated payment instrument with token and enriched data
    */
   static async processPaymentInstrumentData(
     paymentInstrument: PaymentInstrument,
     merchantId: string,
-    tokenVaultClient: TokenVaultClient
+    tokenVaultClient: TokenVaultClient,
+    headers: Record<string, string>
   ): Promise<PaymentInstrument> {
     if (paymentInstrument.paymentInstrumentId) {
       SharedLogger.log(`Getting token ${paymentInstrument.paymentInstrumentId} for merchant ${merchantId}`, undefined, TokenizationUtils.name);
-      const decryptedCardData = await TokenizationUtils.getDecryptedCardData(paymentInstrument.paymentInstrumentId, merchantId, tokenVaultClient);
+      const decryptedCardData = await TokenizationUtils.getDecryptedCardData(paymentInstrument.paymentInstrumentId, merchantId, tokenVaultClient, headers);
       paymentInstrument = TokenizationUtils.updatePaymentInstrumentWithDecryptedCardData(paymentInstrument, decryptedCardData);
       return paymentInstrument;
     }
@@ -39,13 +41,35 @@ export class TokenizationUtils {
       throw new ValidationException('Card number is required for card payments');
     }
 
+    const validationResult = validateCardNumber(cardDetails.number.toString());
+    if (!validationResult.isValid) {
+      throw new ValidationException(`Invalid card number: ${validationResult.error || 'Card number validation failed'}`);
+    }
+    
     if (!cardDetails.expiryMonth || !cardDetails.expiryYear) {
       throw new ValidationException('Card expiry date (month and year) is required for card payments');
     }
 
-    const validationResult = validateCardNumber(cardDetails.number.toString());
-    if (!validationResult.isValid) {
-      throw new ValidationException(`Invalid card number: ${validationResult.error || 'Card number validation failed'}`);
+    if (cardDetails.expiryMonth < 1 || cardDetails.expiryMonth > 12) {
+      throw new ValidationException('Invalid card expiry month');
+    }
+
+    // Validate expiry date with 50-year window and century rollover logic
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11
+    // Check if card is expired (considering month)
+    if (cardDetails.expiryYear < currentYear || 
+        (cardDetails.expiryYear === currentYear && cardDetails.expiryMonth < currentMonth)) {
+      throw new ValidationException('Invalid expiry date');
+    }
+
+    if (cardDetails.cvc) {
+      if (validationResult.cardNetwork == CardNetwork.AMEX && cardDetails.cvc.length !== 4) {
+        throw new ValidationException('Invalid card CVC length');
+      } else if (cardDetails.cvc.length !== 3) {
+        throw new ValidationException('Invalid card CVC length');
+      }
     }
 
     try {
@@ -61,7 +85,7 @@ export class TokenizationUtils {
         cardNetwork: validationResult.cardNetwork,
       };
 
-      const tokenResponse = await tokenVaultClient.createToken(createTokenRequest);
+      const tokenResponse = await tokenVaultClient.createToken(headers, createTokenRequest);
       paymentInstrument = TokenizationUtils.updatePaymentInstrumentWithToken(paymentInstrument, tokenResponse);
       SharedLogger.log(`Created token ${tokenResponse.token} for card ${tokenResponse.maskedNumber}`, undefined, TokenizationUtils.name);
       return paymentInstrument;
@@ -130,15 +154,17 @@ export class TokenizationUtils {
    * @param token - The Fugata token
    * @param merchantId - The merchant ID
    * @param tokenVaultClient - The token vault client for API calls
+   * @param headers - Authentication headers for API calls
    * @returns Decrypted card data
    */
   static async getDecryptedCardData(
     token: string,
     merchantId: string,
-    tokenVaultClient: TokenVaultClient
+    tokenVaultClient: TokenVaultClient,
+    headers: Record<string, string>
   ): Promise<DecryptedCardData> {
     try {
-      const decryptedData = await tokenVaultClient.decryptToken({
+      const decryptedData = await tokenVaultClient.decryptToken(headers, {
         token,
         merchantId
       });

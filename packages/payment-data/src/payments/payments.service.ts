@@ -4,12 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentEntity } from '../entities/payment.entity';
 import { Payment } from '@fugata/shared';
+import { PaymentSessionEntity } from '../entities/payment-session.entity';
 
 @Injectable()
 export class PaymentsService {
   constructor(
     @InjectRepository(PaymentEntity)
-    private readonly paymentRepository: Repository<PaymentEntity>
+    private readonly paymentRepository: Repository<PaymentEntity>,
+    @InjectRepository(PaymentSessionEntity)
+    private readonly paymentSessionRepository: Repository<PaymentSessionEntity>
   ) {}
 
   async getPayment(paymentId: string, merchantId?: string): Promise<Payment | null> {
@@ -71,6 +74,12 @@ export class PaymentsService {
   }
 
   async createPayment(payment: Payment): Promise<Payment> {
+    if (payment.sessionId) {
+      const session = await this.paymentSessionRepository.findOne({ where: { sessionId: payment.sessionId } });
+      if (!session) {
+        payment.sessionId = null;
+      }
+    }
     SharedLogger.log(`Creating payment ${JSON.stringify(payment)}`, undefined, PaymentsService.name);
     const entity = this.paymentRepository.create(payment);
     const savedEntity = await this.paymentRepository.save(entity);
@@ -78,6 +87,12 @@ export class PaymentsService {
   }
 
   async updatePayment(paymentId: string, updates: Partial<Payment>): Promise<Payment | null> {
+    if (updates.sessionId) {
+      const session = await this.paymentSessionRepository.findOne({ where: { sessionId: updates.sessionId } });
+      if (!session) {
+        updates.sessionId = null;
+      }
+    }
     SharedLogger.log(`Updating payment: ${paymentId}`, undefined, PaymentsService.name);
     
     const existingPayment = await this.paymentRepository.findOne({ where: { paymentId } });

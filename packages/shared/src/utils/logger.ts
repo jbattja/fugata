@@ -54,7 +54,7 @@ export class SharedLogger {
     }
   }
 
-  static error(message: string, context?: string, error?: any): void {
+  static error(message: string, error?: any, context?: string): void {
     if (!this.isServerSide()) {
       // don't log in the browser
       return;
@@ -65,8 +65,10 @@ export class SharedLogger {
         Logger.error(`${message}`, error.response.data, context);
       } else if (error && error.message) {
         Logger.error(`${message}`, error.message, context);
+      } else if (error) {
+        Logger.error(message, error, context);
       } else {
-        Logger.error(`${message}`, context);
+        Logger.error(message, context);
       }
       } catch {
       // Fallback to console if NestJS Logger is not available

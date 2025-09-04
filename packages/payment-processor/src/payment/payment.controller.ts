@@ -1,5 +1,5 @@
 import { FugataReference, getMerchant, Payment, PaymentStatus, RequirePermissions, validatePaymentInstrument } from "@fugata/shared";
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, Post, Req, UnauthorizedException } from "@nestjs/common";
 import { SharedLogger } from '@fugata/shared';
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
@@ -19,9 +19,13 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Create a new payment' })
   @ApiResponse({ status: 201, description: 'Payment created successfully', type: Payment })
   async createPayment(@Body() paymentData: CreatePaymentDto, @Req() request: any): Promise<Payment> {
+    SharedLogger.log(`Creating payment`, undefined, PaymentsController.name);
     const merchant = getMerchant(request);
-    SharedLogger.log(`Creating payment for merchant: ${merchant.id}`, undefined, PaymentsController.name);
-
+    if (!merchant) {
+      throw new UnauthorizedException('Merchant not found');
+    }
+    const sessionId = request.headers['x-session-id'];
+    SharedLogger.log(`Creating payment for merchant: ${merchant.id}${sessionId ? ` with session: ${sessionId}` : ''}`, undefined, PaymentsController.name);
 
     const paymentId = FugataReference.generateReference();
     const payment = new Payment({
@@ -33,6 +37,7 @@ export class PaymentsController {
         id: merchant.id,
         accountCode: merchant.accountCode
       },
+      sessionId: sessionId
     });
     // Merge provided data
     Object.assign(payment, paymentData);
@@ -41,7 +46,7 @@ export class PaymentsController {
     } catch (error) {
       throw new ValidationException(error.message);
     }
-    const workflowResult = await this.workflowOrchestrationService.executePayment(payment, request);
+    const workflowResult = await this.workflowOrchestrationService.executePayment(payment, request, sessionId);
     return workflowResult.context.payment;
   }
 }

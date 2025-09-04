@@ -58,75 +58,75 @@ export interface BinLookupResponse {
 export class TokenVaultClient {
   private client: AxiosInstance;
 
-  constructor(baseURL: string, apiKey?: string) {
+  constructor(baseUrl: string) {
     this.client = axios.create({
-      baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey && { 'Authorization': `Bearer ${apiKey}` }),
-      },
+      baseURL: baseUrl
     });
   }
 
-  async createToken(request: CreateCardTokenRequest): Promise<TokenResponse> {
-    const response = await this.client.post('/token-vault/tokens', request);
+  async createToken(headers: Record<string, string>, request: CreateCardTokenRequest): Promise<TokenResponse> {
+    const response = await this.client.post('/token-vault/tokens', request, { headers });
     return response.data;
   }
 
-  async getToken(token: string, merchantId: string): Promise<TokenResponse> {
+  async getToken(headers: Record<string, string>, token: string, merchantId: string): Promise<TokenResponse> {
     const response = await this.client.get(`/token-vault/tokens/${token}`, {
-      params: { merchantId }
+      params: { merchantId },
+      headers
     });
     return response.data;
   }
 
-  async decryptToken(request: DecryptTokenRequest): Promise<DecryptedCardData> {
-    const response = await this.client.post(`/token-vault/tokens/${request.token}/decrypt`, request);
+  async decryptToken(headers: Record<string, string>, request: DecryptTokenRequest): Promise<DecryptedCardData> {
+    const response = await this.client.post(`/token-vault/tokens/${request.token}/decrypt`, request, { headers });
     return response.data;
   }
 
-  async deactivateToken(token: string, merchantId: string): Promise<void> {
+  async deactivateToken(headers: Record<string, string>, token: string, merchantId: string): Promise<void> {
     await this.client.delete(`/token-vault/tokens/${token}`, {
-      params: { merchantId }
+      params: { merchantId },
+      headers
     });
   }
 
-  async getTokensByCustomer(customerId: string, merchantId: string): Promise<TokenResponse[]> {
+  async getTokensByCustomer(headers: Record<string, string>, customerId: string, merchantId: string): Promise<TokenResponse[]> {
     const response = await this.client.get(`/token-vault/customers/${customerId}/tokens`, {
-      params: { merchantId }
+      params: { merchantId },
+      headers
     });
     return response.data;
   }
 
-  async getTokensByMerchant(merchantId: string): Promise<TokenResponse[]> {
-    const response = await this.client.get(`/token-vault/merchants/${merchantId}/tokens`);
+  async getTokensByMerchant(headers: Record<string, string>, merchantId: string): Promise<TokenResponse[]> {
+    const response = await this.client.get(`/token-vault/merchants/${merchantId}/tokens`, { headers });
     return response.data;
   }
 
-  async lookupBin(bin: string): Promise<BinLookupResponse> {
-    const response = await this.client.get(`/bin-lookup/${bin}`);
+  async lookupBin(headers: Record<string, string>, bin: string): Promise<BinLookupResponse> {
+    const response = await this.client.get(`/bin-lookup/${bin}`, { headers });
     return response.data;
   }
 
-  async searchBins(query: string): Promise<BinLookupResponse[]> {
+  async searchBins(headers: Record<string, string>, query: string): Promise<BinLookupResponse[]> {
     const response = await this.client.get('/bin-lookup/search', {
-      params: { q: query }
+      params: { q: query },
+      headers
     });
     return response.data;
   }
 
-  async getBinsByNetwork(network: CardNetwork): Promise<BinLookupResponse[]> {
-    const response = await this.client.get(`/bin-lookup/network/${network}`);
+  async getBinsByNetwork(headers: Record<string, string>, network: CardNetwork): Promise<BinLookupResponse[]> {
+    const response = await this.client.get(`/bin-lookup/network/${network}`, { headers });
     return response.data;
   }
 
-  async getBinsByCountry(countryCode: string): Promise<BinLookupResponse[]> {
-    const response = await this.client.get(`/bin-lookup/country/${countryCode}`);
+  async getBinsByCountry(headers: Record<string, string>, countryCode: string): Promise<BinLookupResponse[]> {
+    const response = await this.client.get(`/bin-lookup/country/${countryCode}`, { headers });
     return response.data;
   }
 
-  async getBinsByCardType(cardType: string): Promise<BinLookupResponse[]> {
-    const response = await this.client.get(`/bin-lookup/type/${cardType}`);
+  async getBinsByCardType(headers: Record<string, string>, cardType: string): Promise<BinLookupResponse[]> {
+    const response = await this.client.get(`/bin-lookup/type/${cardType}`, { headers });
     return response.data;
   }
 }
