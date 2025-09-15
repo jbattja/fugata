@@ -3,7 +3,6 @@ import { AuthorizePaymentRequestDto } from '../../dto/authorize-payment-request.
 import { Capture, PartnerIntegrationClass, Payment } from '@fugata/shared';
 import { DemoPartnerAuthorize } from './demo-partner-authorize';
 import { Logger } from '@nestjs/common';
-import { UnsupportedOperationError } from 'src/partner-communication/exceptions/unsupported-operation-error.filter';
 import { CapturePaymentRequestDto } from 'src/partner-communication/dto/capture-payment-request.dto';
 import { DemoPartnerCapture } from './demo-partner-capture';
 
