@@ -29,7 +29,6 @@ export class AuthorizeAction extends BaseAction {
         const paymentProducer = ActionRegistry.getPaymentProducer();
         if (paymentProducer) {
             await paymentProducer.publishPaymentAuthorized(context.payment);
-            this.log('Published PAYMENT_AUTHORIZED event');
         }
         return context;
     }
@@ -38,6 +37,7 @@ export class AuthorizeAction extends BaseAction {
         const headers = extractAuthHeaders(context.request);
 
         const partnerConfig = await this.getPartnerConfig(context);
+        context.payment.providerCredential = {id: context.providerCredential.id, accountCode: context.providerCredential.accountCode};
 
         SharedLogger.log('Authorizing payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, AuthorizeAction.name);
 
@@ -55,6 +55,7 @@ export class AuthorizeAction extends BaseAction {
         if (!providerCredential) {
             throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
         }
+        context.providerCredential = providerCredential;
         return { ...providerCredential.provider.settings, ...providerCredential.settings };
     }
 

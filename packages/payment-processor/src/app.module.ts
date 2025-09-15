@@ -9,6 +9,7 @@ import { WorkflowOrchestrationModule } from './core/workflow-orchestration.modul
 import { SettingsModule } from './clients/settings.module';
 import { PartnerCommunicatorModule } from './clients/partner-communicator.module';
 import { TokenVaultModule } from './clients/token-vault.module';
+import { PaymentDataModule } from './clients/payment-data.module';
 
 @Global()
 @Module({
@@ -18,7 +19,8 @@ import { TokenVaultModule } from './clients/token-vault.module';
     SettingsModule,
     PartnerCommunicatorModule,
     WorkflowOrchestrationModule, 
-    TokenVaultModule
+    TokenVaultModule,
+    PaymentDataModule
   ],
   controllers: [],
   providers: [

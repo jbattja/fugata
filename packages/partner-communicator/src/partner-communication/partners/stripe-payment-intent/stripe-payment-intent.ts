@@ -1,9 +1,11 @@
-import { Payment } from "@fugata/shared";
+import { Capture, Payment } from "@fugata/shared";
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { StripePaymentIntentAuthorize } from "./stripe-payment-intent-authorize";
 import { SharedLogger } from '@fugata/shared';
 import { PartnerIntegrationClass } from "@fugata/shared";
+import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
+import { UnsupportedOperationError } from "src/partner-communication/exceptions/unsupported-operation-error.filter";
 
 export class StripePaymentIntent extends BasePartner {
     readonly partnerName = PartnerIntegrationClass.STRIPE_PAYMENT_INTENT;
@@ -15,6 +17,10 @@ export class StripePaymentIntent extends BasePartner {
         } catch (error) {
             return this.createConnectionFailedPayment(request.payment, error.message || 'Stripe payment intent authorization failed');
         }
+    }
+
+    async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
+        throw new UnsupportedOperationError('Stripe payment intent capture not implemented');
     }
 
     async healthCheck(): Promise<boolean> {

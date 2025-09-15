@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { SharedLogger } from '@fugata/shared';
+import { CaptureStatus, PaymentStatus, SharedLogger } from '@fugata/shared';
 import { extractAuthHeaders } from '../clients/jwt.service';
-import { 
-  PaymentContext, 
-  WorkflowDefinition, 
-  WorkflowResult, 
+import {
+  PaymentContext,
+  WorkflowDefinition,
+  WorkflowResult,
   WorkflowAction,
   Condition
 } from './types/workflow.types';
 import { ActionRegistry, ActionsType } from './actions/action-registry';
 import { WorkflowConditionEvaluator } from './condition-evaluator';
 import { DEFAULT_WORKFLOW } from './workflow-definition';
-import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient, TokenVaultClient } from '@fugata/shared';
+import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient, TokenVaultClient, PaymentDataClient, Capture } from '@fugata/shared';
 import { Inject } from '@nestjs/common';
 import { PaymentProducerService } from '../kafka/payment-producer.service';
 import { TokenizationUtils } from './tokenization.utils';
@@ -25,11 +25,12 @@ export class WorkflowOrchestrationService {
     private settingsClient: SettingsClient,
     private partnerCommunicatorClient: PartnerCommunicatorClient,
     @Inject(PaymentProducerService) private paymentProducer: PaymentProducerService,
-    private tokenVaultClient: TokenVaultClient
+    private tokenVaultClient: TokenVaultClient,
+    private paymentDataClient: PaymentDataClient
   ) {
     this.workflow = DEFAULT_WORKFLOW;
     this.conditionEvaluator = new WorkflowConditionEvaluator();
-    
+
     // Set all clients in the action registry
     ActionRegistry.setPartnerCommunicatorClient(this.partnerCommunicatorClient);
     ActionRegistry.setSettingsClient(this.settingsClient);
@@ -62,7 +63,7 @@ export class WorkflowOrchestrationService {
         request,
         sessionId,
       };
-      
+
       const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
       if (merchantId) {
         // Extract authorization headers from the request
@@ -73,13 +74,59 @@ export class WorkflowOrchestrationService {
       }
       // Start with the first action (InitiatePayment)
       const result = await this.executeWorkflow(context, ActionsType.InitiatePayment);
-      
+
       return {
         success: true,
         context: result
       };
     } catch (error) {
       SharedLogger.error('Workflow execution failed:', error, WorkflowOrchestrationService.name);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute capture for an existing payment
+   */
+  async executeCapture(paymentId: string, capture: Capture, request: any, finalCapture: boolean): Promise<WorkflowResult> {
+    try {
+      // Extract authorization headers from the request
+      const authHeaders = extractAuthHeaders(request);
+
+      // Retrieve the payment from the payment data service
+      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
+
+      if (!payment) {
+        throw new Error(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Initialize payment context for capture
+      const context: PaymentContext = {
+        payment,
+        request,
+        capture
+      };
+
+      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+      if (merchantId) {
+        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
+      } else {
+        throw new Error('Merchant not found');
+      }
+
+      // Execute the capture action directly
+      const result = await this.executeAction(ActionsType.Capture, context);
+
+      // If this is the final capture and the capture was successful, and the payment is partially captured, void the remaining amount
+      if (finalCapture && context.capture.status === CaptureStatus.SUCCEEDED && context.payment.status === PaymentStatus.PARTIALLY_CAPTURED) {
+        await this.executeAction(ActionsType.Void, context);
+      }
+      return {
+        success: true,
+        context: result
+      };
+    } catch (error) {
+      SharedLogger.error('Capture execution failed:', error, WorkflowOrchestrationService.name);
       throw error;
     }
   }
@@ -94,15 +141,15 @@ export class WorkflowOrchestrationService {
 
     while (currentActionName && executionCount < maxExecutions) {
       SharedLogger.log(`Executing action: ${currentActionName}`, undefined, WorkflowOrchestrationService.name);
-      
+
       // Execute the current action
       context = await this.executeAction(currentActionName, context);
-      
+
       // Find the next action based on conditions
       currentActionName = this.determineNextAction(currentActionName, context);
-      
+
       executionCount++;
-      
+
       // If we reach Terminate, stop the workflow
       if (currentActionName === ActionsType.Terminate) {
         SharedLogger.log('Workflow terminated', undefined, WorkflowOrchestrationService.name);
@@ -129,7 +176,7 @@ export class WorkflowOrchestrationService {
       throw new Error(`Action '${actionName}' not a valid action`);
     }
     const action = ActionRegistry.getAction(actionName as ActionsType);
-    
+
     if (!action) {
       throw new Error(`Action '${actionName}' not found in registry`);
     }
@@ -148,7 +195,7 @@ export class WorkflowOrchestrationService {
    */
   private determineNextAction(currentActionName: ActionsType, context: PaymentContext): ActionsType | null {
     const workflowAction = this.findWorkflowAction(currentActionName);
-    
+
     if (!workflowAction) {
       SharedLogger.warn(`No workflow definition found for action: ${currentActionName}`, undefined, WorkflowOrchestrationService.name);
       return ActionsType.Terminate;

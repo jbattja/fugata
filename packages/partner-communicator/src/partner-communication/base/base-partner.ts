@@ -1,12 +1,14 @@
 import { PartnerInterface } from '../interfaces/partner.interface';
 import { AuthorizePaymentRequestDto } from '../dto/authorize-payment-request.dto';
-import { PartnerIntegrationClass, Payment, PaymentStatus } from '@fugata/shared';
+import { Capture, PartnerIntegrationClass, Payment, PaymentStatus } from '@fugata/shared';
+import { CapturePaymentRequestDto } from '../dto/capture-payment-request.dto';
 
 export abstract class BasePartner implements PartnerInterface {
   abstract readonly partnerName: PartnerIntegrationClass;
   abstract readonly version: string;
 
   abstract authorizePayment(request: AuthorizePaymentRequestDto): Promise<Payment>;
+  abstract capturePayment(request: CapturePaymentRequestDto): Promise<Capture>;
 
   async healthCheck(): Promise<boolean> {
     // Default health check - can be overridden by specific partners

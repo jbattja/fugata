@@ -1,8 +1,11 @@
 import { BasePartner } from '../../base/base-partner';
 import { AuthorizePaymentRequestDto } from '../../dto/authorize-payment-request.dto';
-import { PartnerIntegrationClass, Payment } from '@fugata/shared';
+import { Capture, PartnerIntegrationClass, Payment } from '@fugata/shared';
 import { DemoPartnerAuthorize } from './demo-partner-authorize';
 import { Logger } from '@nestjs/common';
+import { UnsupportedOperationError } from 'src/partner-communication/exceptions/unsupported-operation-error.filter';
+import { CapturePaymentRequestDto } from 'src/partner-communication/dto/capture-payment-request.dto';
+import { DemoPartnerCapture } from './demo-partner-capture';
 
 export class DemoPartner extends BasePartner {
   readonly partnerName = PartnerIntegrationClass.DEMO_PARTNER;
@@ -12,6 +15,9 @@ export class DemoPartner extends BasePartner {
       // Simulate processing with the partner
       Logger.log(`Processing payment ${request.payment.paymentId} with Demo Partner`, DemoPartner.name);
       return DemoPartnerAuthorize.authorize(request);
+  } 
+  async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
+    return DemoPartnerCapture.capture(request);
   }
 
   async healthCheck(): Promise<boolean> {
@@ -23,4 +29,4 @@ export class DemoPartner extends BasePartner {
       return false;
     }
   }
-} 
+}

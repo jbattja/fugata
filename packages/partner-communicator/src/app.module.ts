@@ -4,6 +4,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ServiceAuthGuard } from '@fugata/shared';
 import { PartnerCommunicationModule } from './partner-communication/partner-communication.module';
 import { MissingFieldsErrorFilter } from './partner-communication/exceptions/missing-fields-error.filter';
+import { UnsupportedOperationErrorFilter } from './partner-communication/exceptions/unsupported-operation-error.filter';
 
 @Global()
 @Module({
@@ -17,6 +18,10 @@ import { MissingFieldsErrorFilter } from './partner-communication/exceptions/mis
         {
             provide: APP_FILTER,
             useClass: MissingFieldsErrorFilter,
+        },
+        {
+            provide: APP_FILTER,
+            useClass: UnsupportedOperationErrorFilter,
         },
         {
             provide: 'JWT_SECRET',

@@ -17,7 +17,7 @@ export class MissingFieldsErrorFilter implements ExceptionFilter {
     response.status(HttpStatus.UNPROCESSABLE_ENTITY).json({
       statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       message: [exception.message],
-      error: 'Bad Request',
+      error: 'Missing Fields',
     });
     return;
   }

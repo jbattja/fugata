@@ -1,4 +1,4 @@
-import { Merchant, Payment } from "@fugata/shared";
+import { Capture, Merchant, Payment, ProviderCredential } from "@fugata/shared";
 
 export enum FraudAdvice {
   CHALLENGE = 'CHALLENGE',
@@ -9,6 +9,7 @@ export enum FraudAdvice {
 export interface PaymentContext {
   payment: Payment;
   merchant?: Partial<Merchant>;
+  providerCredential?: Partial<ProviderCredential>;
   request: any;
   sessionId?: string;
   authorizeAttempts?: number;
@@ -16,7 +17,7 @@ export interface PaymentContext {
     score: number;
     advice: FraudAdvice;
   };
-  capture?: any;
+  capture?: Capture;
   captureAttempts?: number; 
   refund?: any;
   refundAttempts?: number;

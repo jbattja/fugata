@@ -60,6 +60,14 @@ export const routes: RouteConfig[] = [
       interval: 60
     }
   },
+  {
+    method: 'POST',
+    path: '/payments/:id/capture',
+    service: 'payment-processor',
+    targetPath: '/payments/:id/capture',
+    requiresIdempotency: true,
+    requiredPermission: 'payments:write'
+  },
 
   // API Credentials
   {

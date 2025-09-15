@@ -1,8 +1,10 @@
-import { PartnerIntegrationClass, Payment } from "@fugata/shared";
+import { Capture, PartnerIntegrationClass, Payment } from "@fugata/shared";
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { AdyenCheckoutAuthorize } from "./adyen-checkout-authorize";
 import { Logger } from "@nestjs/common";
+import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
+import { UnsupportedOperationError } from "src/partner-communication/exceptions/unsupported-operation-error.filter";
 
 export class AdyenCheckout extends BasePartner {
     readonly partnerName = PartnerIntegrationClass.ADYEN_CHECKOUT;
@@ -14,6 +16,10 @@ export class AdyenCheckout extends BasePartner {
         } catch (error) {
             return this.createConnectionFailedPayment(request.payment, error.message || 'Adyen checkout authorization failed');
         }
+    }
+
+    async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
+        throw new UnsupportedOperationError('Adyen checkout capture not implemented');
     }
 
     async healthCheck(): Promise<boolean> {

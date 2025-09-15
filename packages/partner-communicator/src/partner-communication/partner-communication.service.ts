@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PartnerRegistryService } from './partner-registry.service';
 import { AuthorizePaymentRequestDto } from './dto/authorize-payment-request.dto';
-import { Payment } from '@fugata/shared';
+import { Capture, Payment } from '@fugata/shared';
+import { CapturePaymentRequestDto } from './dto/capture-payment-request.dto';
 
 @Injectable()
 export class PartnerCommunicationService {
@@ -17,5 +18,15 @@ export class PartnerCommunicationService {
     }
 
     return partner.authorizePayment(request);
+  }
+
+  async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
+    const partner = this.partnerRegistryService.getPartner(request.partnerName);
+    
+    if (!partner) {
+      throw new Error(`Partner '${request.partnerName}' not found`);
+    }
+
+    return partner.capturePayment(request);
   }
 } 
