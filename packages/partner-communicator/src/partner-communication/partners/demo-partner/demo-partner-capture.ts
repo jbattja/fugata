@@ -1,4 +1,4 @@
-import { Capture, CaptureStatus } from "@fugata/shared";
+import { Capture, OperationStatus } from "@fugata/shared";
 import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
 
 export class DemoPartnerCapture {
@@ -7,13 +7,13 @@ export class DemoPartnerCapture {
         if (request.payment.customer?.customerName) {
             switch (request.payment.customer.customerName.toLowerCase()) {
                 case 'refused':
-                    request.capture.status = CaptureStatus.FAILED;
+                    request.capture.status = OperationStatus.FAILED;
                     break;
                 case 'capture failed':
-                    request.capture.status = CaptureStatus.FAILED;
+                    request.capture.status = OperationStatus.FAILED;
                     break;
                 default:
-                    request.capture.status = CaptureStatus.SUCCEEDED;
+                    request.capture.status = OperationStatus.SUCCEEDED;
             }
         }
         return request.capture;

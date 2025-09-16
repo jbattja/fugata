@@ -1,4 +1,4 @@
-import { Capture, Merchant, Payment, ProviderCredential } from "@fugata/shared";
+import { Capture, Merchant, Payment, ProviderCredential, Refund, Void, Operation } from "@fugata/shared";
 
 export enum FraudAdvice {
   CHALLENGE = 'CHALLENGE',
@@ -19,9 +19,11 @@ export interface PaymentContext {
   };
   capture?: Capture;
   captureAttempts?: number; 
-  refund?: any;
+  refund?: Refund;
   refundAttempts?: number;
+  void?: Void;
   voidAttempts?: number;
+  operations?: Operation[];
   config?: {
     maxAuthorizeAttempts?: number;
     maxCaptureAttempts?: number;

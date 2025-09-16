@@ -61,10 +61,50 @@ export const routes: RouteConfig[] = [
     }
   },
   {
+    method: 'GET',
+    path: '/payments/:id',
+    service: 'payment-data',
+    targetPath: '/payments/:id',
+    requiresIdempotency: false,
+    requiredPermission: 'payments:read'
+  },
+  {
+    method: 'GET',
+    path: '/payments/:id/operations',
+    service: 'payment-data',
+    targetPath: '/payments/:id/operations',
+    requiresIdempotency: false,
+    requiredPermission: 'payments:read'
+  },
+  {
+    method: 'GET',
+    path: '/payments/operations/:operationId',
+    service: 'payment-data',
+    targetPath: '/payments/operations/:operationId',
+    requiresIdempotency: false,
+    requiredPermission: 'payments:read'
+  },
+  {
     method: 'POST',
     path: '/payments/:id/capture',
     service: 'payment-processor',
     targetPath: '/payments/:id/capture',
+    requiresIdempotency: true,
+    requiredPermission: 'payments:write'
+  },
+  {
+    method: 'POST',
+    path: '/payments/:id/refund',
+    service: 'payment-processor',
+    targetPath: '/payments/:id/refund',
+    requiresIdempotency: true,
+    requiredPermission: 'payments:write'
+  },
+  {
+    method: 'POST',
+    path: '/payments/:id/void',
+    service: 'payment-processor',
+    targetPath: '/payments/:id/void',
     requiresIdempotency: true,
     requiredPermission: 'payments:write'
   },

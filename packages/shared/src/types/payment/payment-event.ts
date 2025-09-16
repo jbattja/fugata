@@ -1,4 +1,5 @@
 import { Payment } from './payment';
+import { Operation } from './operation';
 
 export enum PaymentEventType {
   PAYMENT_INITIATED = 'PAYMENT_INITIATED',
@@ -9,10 +10,15 @@ export enum PaymentEventType {
   PAYMENT_REFUNDED = 'PAYMENT_REFUNDED'
 }
 
+export interface PaymentEventData {
+  payment: Payment;
+  operations?: Operation[];
+}
+
 export interface PaymentEvent {
   eventType: PaymentEventType;
   paymentId: string;
   timestamp: string;
-  data: Payment;
+  data: PaymentEventData;
   metadata?: Record<string, any>;
 }

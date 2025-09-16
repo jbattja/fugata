@@ -28,7 +28,7 @@ export * from './types/payment/payment';
 export * from './types/payment/payment-instrument';
 export * from './types/payment/authentication';
 export * from './types/payment/payment-event';
-export * from './types/payment/capture';
+export * from './types/payment/operation';
 
 // Export authentication components
 export * from './auth/service-auth.guard';

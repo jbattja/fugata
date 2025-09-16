@@ -56,15 +56,15 @@ export class PaymentEventsService {
       throw new Error(`No events found for payment ${paymentId}`);
     }
 
-    // Start with the first event's data
-    let currentPayment = events[0].data;
+    // Start with the first event's payment data
+    let currentPayment = events[0].data.payment;
 
     // Apply each subsequent event
     for (let i = 1; i < events.length; i++) {
       const event = events[i];
       currentPayment = {
         ...currentPayment,
-        ...event.data,
+        ...event.data.payment,
         updatedAt: new Date(event.timestamp)
       };
     }

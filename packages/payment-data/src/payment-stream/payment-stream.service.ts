@@ -1,9 +1,10 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { PaymentStatus, SessionStatus, SharedLogger } from '@fugata/shared';
+import { Operation, PaymentStatus, SessionStatus, SharedLogger } from '@fugata/shared';
 import { PaymentSessionsService } from '../payments/payment-sessions.service';
 import { PaymentsService } from '../payments/payments.service';
 import { PaymentEventsService } from '../payment-events/payment-events.service';
+import { OperationsService } from '../operations/operations.service';
 import { PaymentSession, PaymentEvent, Payment } from '@fugata/shared';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
     private readonly paymentSessionsService: PaymentSessionsService,
     private readonly paymentsService: PaymentsService,
     private readonly paymentEventsService: PaymentEventsService,
+    private readonly operationsService: OperationsService,
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka
   ) {}
 
@@ -89,7 +91,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
       if (!existingPayment) {
         // Create new payment if it doesn't exist
         const paymentWithTimestamp = {
-          ...event.data,
+          ...event.data.payment,
           updatedAt: eventTime // Use event timestamp for updatedAt
         };
         await this.paymentsService.createPayment(paymentWithTimestamp);
@@ -101,7 +103,7 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
         if (eventTime > existingTime) {
           // This event is newer, update the payment
           const paymentWithTimestamp = {
-            ...event.data,
+            ...event.data.payment,
             updatedAt: eventTime // Use event timestamp for updatedAt
           };
           await this.paymentsService.updatePayment(paymentId, paymentWithTimestamp);
@@ -113,12 +115,21 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
           SharedLogger.warn(`Replayed payment: ${paymentId} with newer event from ${timestamp}`, undefined, PaymentStreamService.name);
         }
       }
-      if (event.data.sessionId) {
-        await this.updatePaymentSession(event.data.sessionId, event.data);
+      if (event.data.payment.sessionId) {
+        await this.updatePaymentSession(event.data.payment.sessionId, event.data.payment);
+      }
+      if (event.data.operations) {
+        await this.processOperations(event.data.operations);
       }
     } catch (error) {
       SharedLogger.error('Error processing payment event:', error, PaymentStreamService.name);
       throw error;
+    }
+  }
+
+  private async processOperations(operations: Operation[]): Promise<void> {
+    for (const operation of operations) {
+      await this.operationsService.storeOperation(operation);
     }
   }
 

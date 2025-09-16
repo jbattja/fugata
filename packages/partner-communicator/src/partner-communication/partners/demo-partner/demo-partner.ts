@@ -1,10 +1,14 @@
 import { BasePartner } from '../../base/base-partner';
 import { AuthorizePaymentRequestDto } from '../../dto/authorize-payment-request.dto';
-import { Capture, PartnerIntegrationClass, Payment } from '@fugata/shared';
+import { Capture, PartnerIntegrationClass, Payment, Refund, Void } from '@fugata/shared';
 import { DemoPartnerAuthorize } from './demo-partner-authorize';
 import { Logger } from '@nestjs/common';
 import { CapturePaymentRequestDto } from 'src/partner-communication/dto/capture-payment-request.dto';
+import { RefundPaymentRequestDto } from 'src/partner-communication/dto/refund-payment-request.dto';
+import { VoidPaymentRequestDto } from 'src/partner-communication/dto/void-payment-request.dto';
 import { DemoPartnerCapture } from './demo-partner-capture';
+import { DemoPartnerRefund } from './demo-partner-refund';
+import { DemoPartnerVoid } from './demo-partner-void';
 
 export class DemoPartner extends BasePartner {
   readonly partnerName = PartnerIntegrationClass.DEMO_PARTNER;
@@ -17,6 +21,14 @@ export class DemoPartner extends BasePartner {
   } 
   async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
     return DemoPartnerCapture.capture(request);
+  }
+
+  async refundPayment(request: RefundPaymentRequestDto): Promise<Refund> {
+    return DemoPartnerRefund.refund(request);
+  }
+
+  async voidPayment(request: VoidPaymentRequestDto): Promise<Void> {
+    return DemoPartnerVoid.void(request);
   }
 
   async healthCheck(): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { Capture, Payment } from "@fugata/shared";
+import { Capture, Payment, Refund, Void } from "@fugata/shared";
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { StripePaymentIntentAuthorize } from "./stripe-payment-intent-authorize";
@@ -6,6 +6,8 @@ import { SharedLogger } from '@fugata/shared';
 import { PartnerIntegrationClass } from "@fugata/shared";
 import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
 import { UnsupportedOperationError } from "src/partner-communication/exceptions/unsupported-operation-error.filter";
+import { VoidPaymentRequestDto } from "src/partner-communication/dto/void-payment-request.dto";
+import { RefundPaymentRequestDto } from "src/partner-communication/dto/refund-payment-request.dto";
 
 export class StripePaymentIntent extends BasePartner {
     readonly partnerName = PartnerIntegrationClass.STRIPE_PAYMENT_INTENT;
@@ -21,6 +23,13 @@ export class StripePaymentIntent extends BasePartner {
 
     async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
         throw new UnsupportedOperationError('Stripe payment intent capture not implemented');
+    }
+    async refundPayment(request: RefundPaymentRequestDto): Promise<Refund> {
+        throw new UnsupportedOperationError('Adyen checkout refund not implemented');
+    }
+
+    async voidPayment(request: VoidPaymentRequestDto): Promise<Void> {
+        throw new UnsupportedOperationError('Adyen checkout void not implemented');
     }
 
     async healthCheck(): Promise<boolean> {

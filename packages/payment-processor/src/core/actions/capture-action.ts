@@ -1,7 +1,6 @@
-import { Capture, CaptureStatus, FugataReference, PaymentStatus, ProviderCredential, SharedLogger } from "@fugata/shared";
+import { Capture, FugataReference, OperationStatus, PaymentStatus, SharedLogger } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
-import { v4 as uuidv4 } from 'uuid';
 import { extractAuthHeaders } from "src/clients/jwt.service";
 import { ActionRegistry } from "..";
 
@@ -12,22 +11,23 @@ export class CaptureAction extends BaseAction {
 
         if (!context.capture) {
             context.capture = new Capture({
-                captureId: FugataReference.generateReference(),
+                operationId: FugataReference.generateReference(),
                 paymentId: context.payment.paymentId,
                 amount: context.payment.amount,
-                status: CaptureStatus.INITIATED,
+                status: OperationStatus.INITIATED,
                 createdAt: new Date(),
                 updatedAt: new Date()
             });
         }
 
         this.handleInvalidPaymentStatus(context);
-        if (context.capture.status === CaptureStatus.FAILED) {
+        if (context.capture.status === OperationStatus.FAILED) {
             return context;
         }
-        if (context.payment.amount.value < context.capture.amount.value) {
-            this.log('Capture amount is greater than payment amount');
-            this.handleInvalidCaptureAmount(context);
+        if (this.getAmountCapturable(context) < context.capture.amount.value) {
+            this.log('Capture amount is too high');
+            context.capture.status = OperationStatus.FAILED;
+            context.capture.refusalReason = "Capture amount too high";
             return context;
         }
 
@@ -39,16 +39,18 @@ export class CaptureAction extends BaseAction {
             this.handlePartnerError(context);
         }
 
-        // TODO implement multipl partial captures
-        if (context.capture.status === CaptureStatus.SUCCEEDED) {
-            context.payment.status = PaymentStatus.CAPTURED;
+        if (context.capture.status === OperationStatus.SUCCEEDED) {
+            if ((this.getTotalAmountCaptured(context) + context.capture.amount.value) >= context.payment.amount.value) {
+                context.payment.status = PaymentStatus.CAPTURED;
+            } else {
+                context.payment.status = PaymentStatus.PARTIALLY_CAPTURED;
+            }
         }
 
         const paymentProducer = ActionRegistry.getPaymentProducer();
         if (paymentProducer) {
-            await paymentProducer.publishPaymentCaptured(context.payment);
+            await paymentProducer.publishPaymentCaptured(context.payment, context.capture);
         }
-        //Math.random() > 0.1 ? this.mockCaptureSuccess(context) : this.mockCaptureFailed(context);
         return context;
     }
 
@@ -68,63 +70,9 @@ export class CaptureAction extends BaseAction {
         );
     }
 
-    private async getPartnerConfig(context: PaymentContext) {
-        let providerCredential = context.providerCredential;
-        if (!this.isProviderCredentialValid(providerCredential)) {
-            if (providerCredential && providerCredential.id) {
-                providerCredential = await ActionRegistry.getSettingsClient().getProviderCredential(
-                    extractAuthHeaders(context.request), providerCredential.id);
-            } else {
-                providerCredential = await ActionRegistry.getSettingsClient().getProviderCredentialForMerchant(
-                    extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
-            }
-        }
-        if (!providerCredential) {
-            throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
-        }
-        context.providerCredential = providerCredential;
-        return { ...providerCredential.provider.settings, ...providerCredential.settings };
-    }
-
-    private isProviderCredentialValid(providerCredential: Partial<ProviderCredential>) {
-        if (!providerCredential) {
-            return false;
-        }
-        if (!providerCredential.id || !providerCredential.accountCode) {
-            return false;
-        }
-        if (!providerCredential.provider || !providerCredential.settings) {
-            return false;
-        }
-        return true;
-    }
-
-    private mockCaptureSuccess(context: PaymentContext) {
-        context.payment.status = PaymentStatus.CAPTURED;
-        context.capture = new Capture({
-            captureId: uuidv4(),
-            paymentId: context.payment.paymentId,
-            amount: context.payment.amount,
-            status: CaptureStatus.SUCCEEDED,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-    }
-
-    private mockCaptureFailed(context: PaymentContext) {
-        context.capture = {
-            captureId: uuidv4(),
-            paymentId: context.payment.paymentId,
-            amount: context.payment.amount,
-            status: CaptureStatus.FAILED,
-            refusalReason: "Network Error",
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-    }
 
     private handlePartnerError(context: PaymentContext) {
-        context.capture.status = CaptureStatus.FAILED;
+        context.capture.status = OperationStatus.FAILED;
         context.capture.refusalReason = "Partner communication failed";
     }
 
@@ -135,41 +83,36 @@ export class CaptureAction extends BaseAction {
             case PaymentStatus.PARTIALLY_CAPTURED:
                 break;
             case PaymentStatus.CAPTURED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment already captured";
                 break;
             case PaymentStatus.VOIDED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment voided";
                 break;
             case PaymentStatus.REFUSED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment refused";
                 break;
             case PaymentStatus.REFUNDED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Cannot capture a refunded payment";
                 break;
             case PaymentStatus.REVERSED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Cannot capture a reversed payment";
                 break;
             case PaymentStatus.INITIATED:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment not yet authorized";
                 break;
             case PaymentStatus.AUTHORIZATION_PENDING:
-                context.capture.status = CaptureStatus.FAILED;
+                context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment not yet authorized";
                 break;
             default:
                 break;
         }
-    }
-
-    private handleInvalidCaptureAmount(context: PaymentContext) {
-        context.capture.status = CaptureStatus.FAILED;
-        context.capture.refusalReason = "Capture amount is greater than payment amount";
     }
 
 } 

@@ -49,16 +49,6 @@ export class AuthorizeAction extends BaseAction {
         );
     }
 
-    private async getPartnerConfig(context: PaymentContext) {
-        const providerCredential = await ActionRegistry.getSettingsClient().getProviderCredentialForMerchant(
-            extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
-        if (!providerCredential) {
-            throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
-        }
-        context.providerCredential = providerCredential;
-        return { ...providerCredential.provider.settings, ...providerCredential.settings };
-    }
-
     private handlePartnerError(context: PaymentContext) {
         context.payment.status = PaymentStatus.REFUSED;
         context.payment.refusalReason = "Partner communication failed";

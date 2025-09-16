@@ -3,10 +3,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PaymentStreamService } from './payment-stream.service';
 import { PaymentsModule } from '../payments/payments.module';
 import { PaymentEventsModule } from '../payment-events/payment-events.module';
+import { OperationsModule } from '../operations/operations.module';
 
 @Module({
   imports: [
-    PaymentsModule, PaymentEventsModule,
+    PaymentsModule, PaymentEventsModule, OperationsModule,
     ClientsModule.register([
       {
         name: 'KAFKA_SERVICE',

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CaptureStatus, PaymentStatus, SharedLogger } from '@fugata/shared';
+import { OperationStatus, PaymentStatus, SharedLogger } from '@fugata/shared';
 import { extractAuthHeaders } from '../clients/jwt.service';
 import {
   PaymentContext,
@@ -11,7 +11,7 @@ import {
 import { ActionRegistry, ActionsType } from './actions/action-registry';
 import { WorkflowConditionEvaluator } from './condition-evaluator';
 import { DEFAULT_WORKFLOW } from './workflow-definition';
-import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient, TokenVaultClient, PaymentDataClient, Capture } from '@fugata/shared';
+import { getMerchant, Payment, SettingsClient, PartnerCommunicatorClient, TokenVaultClient, PaymentDataClient, Capture, Refund, Void } from '@fugata/shared';
 import { Inject } from '@nestjs/common';
 import { PaymentProducerService } from '../kafka/payment-producer.service';
 import { TokenizationUtils } from './tokenization.utils';
@@ -93,18 +93,22 @@ export class WorkflowOrchestrationService {
       // Extract authorization headers from the request
       const authHeaders = extractAuthHeaders(request);
 
-      // Retrieve the payment from the payment data service
+      // Retrieve the payment and operations from the payment data service
       const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
 
       if (!payment) {
         throw new Error(`Payment with ID ${paymentId} not found`);
       }
 
+      // Retrieve existing operations for the payment
+      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
+
       // Initialize payment context for capture
       const context: PaymentContext = {
         payment,
         request,
-        capture
+        capture,
+        operations: operationsResponse.operations
       };
 
       const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
@@ -118,7 +122,7 @@ export class WorkflowOrchestrationService {
       const result = await this.executeAction(ActionsType.Capture, context);
 
       // If this is the final capture and the capture was successful, and the payment is partially captured, void the remaining amount
-      if (finalCapture && context.capture.status === CaptureStatus.SUCCEEDED && context.payment.status === PaymentStatus.PARTIALLY_CAPTURED) {
+      if (finalCapture && context.capture.status === OperationStatus.SUCCEEDED && context.payment.status === PaymentStatus.PARTIALLY_CAPTURED) {
         await this.executeAction(ActionsType.Void, context);
       }
       return {
@@ -127,6 +131,98 @@ export class WorkflowOrchestrationService {
       };
     } catch (error) {
       SharedLogger.error('Capture execution failed:', error, WorkflowOrchestrationService.name);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute refund for an existing payment
+   */
+  async executeRefund(paymentId: string, refund: Refund, request: any): Promise<WorkflowResult> {
+    try {
+      // Extract authorization headers from the request
+      const authHeaders = extractAuthHeaders(request);
+
+      // Retrieve the payment and operations from the payment data service
+      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
+
+      if (!payment) {
+        throw new Error(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Retrieve existing operations for the payment
+      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
+
+      // Initialize payment context for refund
+      const context: PaymentContext = {
+        payment,
+        request,
+        refund,
+        operations: operationsResponse.operations
+      };
+
+      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+      if (merchantId) {
+        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
+      } else {
+        throw new Error('Merchant not found');
+      }
+
+      // Execute the refund action directly
+      const result = await this.executeAction(ActionsType.Refund, context);
+
+      return {
+        success: true,
+        context: result
+      };
+    } catch (error) {
+      SharedLogger.error('Refund execution failed:', error, WorkflowOrchestrationService.name);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute void for an existing payment
+   */
+  async executeVoid(paymentId: string, voidOperation: Void, request: any): Promise<WorkflowResult> {
+    try {
+      // Extract authorization headers from the request
+      const authHeaders = extractAuthHeaders(request);
+
+      // Retrieve the payment and operations from the payment data service
+      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
+
+      if (!payment) {
+        throw new Error(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Retrieve existing operations for the payment
+      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
+
+      // Initialize payment context for void
+      const context: PaymentContext = {
+        payment,
+        request,
+        void: voidOperation,
+        operations: operationsResponse.operations
+      };
+
+      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+      if (merchantId) {
+        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
+      } else {
+        throw new Error('Merchant not found');
+      }
+
+      // Execute the void action directly
+      const result = await this.executeAction(ActionsType.Void, context);
+
+      return {
+        success: true,
+        context: result
+      };
+    } catch (error) {
+      SharedLogger.error('Void execution failed:', error, WorkflowOrchestrationService.name);
       throw error;
     }
   }

@@ -1,6 +1,8 @@
 import { AuthorizePaymentRequestDto } from '../dto/authorize-payment-request.dto';
 import { CapturePaymentRequestDto } from '../dto/capture-payment-request.dto';
-import { Capture, Payment } from '@fugata/shared';
+import { RefundPaymentRequestDto } from '../dto/refund-payment-request.dto';
+import { VoidPaymentRequestDto } from '../dto/void-payment-request.dto';
+import { Capture, Payment, Refund, Void } from '@fugata/shared';
 
 export interface PartnerInterface {
   readonly partnerName: string;
@@ -11,6 +13,8 @@ export interface PartnerInterface {
    */
   authorizePayment(request: AuthorizePaymentRequestDto): Promise<Payment>;
   capturePayment(request: CapturePaymentRequestDto): Promise<Capture>;
+  refundPayment(request: RefundPaymentRequestDto): Promise<Refund>;
+  voidPayment(request: VoidPaymentRequestDto): Promise<Void>;
   
   /**
    * Check if the partner is available and healthy

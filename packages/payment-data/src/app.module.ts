@@ -4,6 +4,7 @@ import { PaymentStreamModule } from './payment-stream/payment-stream.module';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentsModule } from './payments/payments.module';
 import { PaymentEventsModule } from './payment-events/payment-events.module';
+import { OperationsModule } from './operations/operations.module';
 import { ServiceAuthGuard } from '@fugata/shared';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -18,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ScheduleModule.forRoot(),
     PaymentsModule,
     PaymentEventsModule,
+    OperationsModule,
     PaymentStreamModule
   ],
   providers: [

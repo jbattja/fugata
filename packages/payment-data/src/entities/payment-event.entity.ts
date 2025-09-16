@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
-import { PaymentEvent, PaymentEventType } from '@fugata/shared';
+import { PaymentEvent, PaymentEventType, PaymentEventData } from '@fugata/shared';
 
 @Entity('payment_events')
 @Index(['paymentId', 'timestamp']) // Index for efficient querying by payment and time
@@ -34,7 +34,7 @@ export class PaymentEventEntity {
       eventType: this.eventType,
       paymentId: this.paymentId,
       timestamp: this.timestamp.toISOString(),
-      data: this.data,
+      data: this.data as PaymentEventData,
       metadata: this.metadata
     };
   }

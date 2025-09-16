@@ -30,7 +30,6 @@ export class FraudScoreAction extends BaseAction {
             context.payment.status = PaymentStatus.REFUSED;
             context.payment.refusalReason = "Fraud";
         }
-        this.log('Fraudscore action completed', context.fraud);
         return context;
     }
 } 
