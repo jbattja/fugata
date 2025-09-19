@@ -86,6 +86,9 @@ export class PaymentEntity {
   @Column({ name: 'session_id', nullable: true })
   sessionId: string;
 
+  @Column({ name: 'partner_reference', nullable: true })
+  partnerReference: string;
+
   @CreateDateColumn({ name: 'created_at', type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
   createdAt: Date;
 
@@ -116,6 +119,7 @@ export class PaymentEntity {
       refusalReason: this.refusalReason,
       metadata: this.metadata,
       sessionId: this.sessionId,
+      partnerReference: this.partnerReference,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     });

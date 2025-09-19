@@ -56,6 +56,7 @@ export class StripePaymentIntentAuthorize {
             authorizationData: {
                 acquirerReference: stripeResponse.id,
             },
+            partnerReference: stripeResponse.id,
             status: this.mapStripeStatusToPaymentStatus(stripeResponse.status),
         });
 

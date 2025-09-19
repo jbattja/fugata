@@ -72,7 +72,7 @@ export class PaymentsController {
       operationId: FugataReference.generateReference(),
       paymentId: paymentId,
       amount: captureData.amount,
-      reference: captureData.captureReference,
+      reference: captureData.reference,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -100,7 +100,7 @@ export class PaymentsController {
       operationId: FugataReference.generateReference(),
       paymentId: paymentId,
       amount: refundData.amount,
-      reference: refundData.refundReference,
+      reference: refundData.reference,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -127,7 +127,7 @@ export class PaymentsController {
     const voidOperation = new Void({
       operationId: FugataReference.generateReference(),
       paymentId: paymentId,
-      reference: voidData.voidReference,
+      reference: voidData.reference,
       createdAt: new Date(),
       updatedAt: new Date()
     });

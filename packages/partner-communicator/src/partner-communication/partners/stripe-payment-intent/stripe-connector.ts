@@ -98,4 +98,61 @@ export class StripeConnector {
             };
         }
     }
+
+    static async capturePaymentIntent(paymentIntentId: string, request: any, secretKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/v1/payment_intents/${paymentIntentId}/capture`, request, {
+                headers: {
+                    'Authorization': `Bearer ${secretKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Stripe capture API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.error?.message || 'Failed to capture payment with Stripe',
+                details: error.response?.data?.error
+            };
+        }
+    }
+
+    static async createRefund(request: any, secretKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/v1/refunds`, request, {
+                headers: {
+                    'Authorization': `Bearer ${secretKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Stripe refund API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.error?.message || 'Failed to create refund with Stripe',
+                details: error.response?.data?.error
+            };
+        }
+    }
+
+    static async cancelPaymentIntent(paymentIntentId: string, secretKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/v1/payment_intents/${paymentIntentId}/cancel`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${secretKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Stripe cancel API error: ${error.response?.data?.error?.message || error.message}`, error, StripeConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.error?.message || 'Failed to cancel payment with Stripe',
+                details: error.response?.data?.error
+            };
+        }
+    }
 } 

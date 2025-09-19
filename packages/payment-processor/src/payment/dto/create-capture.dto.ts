@@ -14,7 +14,7 @@ export class CreateCaptureDto {
   @ApiProperty({ description: 'Reference for the capture', required: false })
   @IsString()
   @IsOptional()
-  captureReference?: string;
+  reference?: string;
 
   @ApiProperty({ description: 'Indicates if this is the final capture', required: false })
   @IsBoolean()

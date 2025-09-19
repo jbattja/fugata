@@ -65,6 +65,7 @@ export class AdyenCheckoutAuthorize {
             authorizationData: {
                 acquirerReference: adyenResponse.pspReference,
             },
+            partnerReference: adyenResponse.pspReference,
             status: this.mapAdyenResultCodeToPaymentStatus(adyenResponse.resultCode),
         });
         if (payment.status == PaymentStatus.REFUSED) {

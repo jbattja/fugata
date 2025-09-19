@@ -46,6 +46,10 @@ export abstract class Operation {
     @IsOptional()
     refusalReason?: string;
 
+    @IsString()
+    @IsOptional()
+    partnerReference?: string;
+
     @IsDate()
     @IsOptional()
     createdAt?: Date;

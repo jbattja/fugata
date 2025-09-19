@@ -14,6 +14,6 @@ export class CreateRefundDto {
   @ApiProperty({ description: 'Reference for the refund', required: false })
   @IsString()
   @IsOptional()
-  refundReference?: string;
+  reference?: string;
 
 }

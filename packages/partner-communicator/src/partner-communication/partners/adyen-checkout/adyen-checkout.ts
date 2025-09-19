@@ -2,9 +2,11 @@ import { Capture, PartnerIntegrationClass, Payment, Refund, Void } from "@fugata
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { AdyenCheckoutAuthorize } from "./adyen-checkout-authorize";
+import { AdyenCheckoutCapture } from "./adyen-checkout-capture";
+import { AdyenCheckoutRefund } from "./adyen-checkout-refund";
+import { AdyenCheckoutCancel } from "./adyen-checkout-cancel";
 import { Logger } from "@nestjs/common";
 import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
-import { UnsupportedOperationError } from "src/partner-communication/exceptions/unsupported-operation-error.filter";
 import { RefundPaymentRequestDto } from "src/partner-communication/dto/refund-payment-request.dto";
 import { VoidPaymentRequestDto } from "src/partner-communication/dto/void-payment-request.dto";
 
@@ -21,15 +23,27 @@ export class AdyenCheckout extends BasePartner {
     }
 
     async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
-        throw new UnsupportedOperationError('Adyen checkout capture not implemented');
+        try {
+            return await AdyenCheckoutCapture.capture(request);
+        } catch (error) {
+            return this.createConnectionFailedCapture(request.capture, error.message || 'Adyen checkout capture failed');
+        }
     }
 
     async refundPayment(request: RefundPaymentRequestDto): Promise<Refund> {
-        throw new UnsupportedOperationError('Adyen checkout refund not implemented');
+        try {
+            return await AdyenCheckoutRefund.refund(request);
+        } catch (error) {
+            return this.createConnectionFailedRefund(request.refund, error.message || 'Adyen checkout refund failed');
+        }
     }
 
     async voidPayment(request: VoidPaymentRequestDto): Promise<Void> {
-        throw new UnsupportedOperationError('Adyen checkout void not implemented');
+        try {
+            return await AdyenCheckoutCancel.cancel(request);
+        } catch (error) {
+            return this.createConnectionFailedVoid(request.voidOperation, error.message || 'Adyen checkout void failed');
+        }
     }
 
     async healthCheck(): Promise<boolean> {

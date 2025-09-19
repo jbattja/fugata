@@ -6,6 +6,6 @@ export class CreateVoidDto {
   @ApiProperty({ description: 'Reference for the void', required: false })
   @IsString()
   @IsOptional()
-  voidReference?: string;
+  reference?: string;
 
 }

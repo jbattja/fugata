@@ -2,10 +2,12 @@ import { Capture, Payment, Refund, Void } from "@fugata/shared";
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
 import { StripePaymentIntentAuthorize } from "./stripe-payment-intent-authorize";
+import { StripePaymentIntentCapture } from "./stripe-payment-intent-capture";
+import { StripePaymentIntentRefund } from "./stripe-payment-intent-refund";
+import { StripePaymentIntentCancel } from "./stripe-payment-intent-cancel";
 import { SharedLogger } from '@fugata/shared';
 import { PartnerIntegrationClass } from "@fugata/shared";
 import { CapturePaymentRequestDto } from "src/partner-communication/dto/capture-payment-request.dto";
-import { UnsupportedOperationError } from "src/partner-communication/exceptions/unsupported-operation-error.filter";
 import { VoidPaymentRequestDto } from "src/partner-communication/dto/void-payment-request.dto";
 import { RefundPaymentRequestDto } from "src/partner-communication/dto/refund-payment-request.dto";
 
@@ -22,14 +24,27 @@ export class StripePaymentIntent extends BasePartner {
     }
 
     async capturePayment(request: CapturePaymentRequestDto): Promise<Capture> {
-        throw new UnsupportedOperationError('Stripe payment intent capture not implemented');
+        try {
+            return await StripePaymentIntentCapture.capture(request);
+        } catch (error) {
+            return this.createConnectionFailedCapture(request.capture, error.message || 'Stripe payment intent capture failed');
+        }
     }
+
     async refundPayment(request: RefundPaymentRequestDto): Promise<Refund> {
-        throw new UnsupportedOperationError('Adyen checkout refund not implemented');
+        try {
+            return await StripePaymentIntentRefund.refund(request);
+        } catch (error) {
+            return this.createConnectionFailedRefund(request.refund, error.message || 'Stripe payment intent refund failed');
+        }
     }
 
     async voidPayment(request: VoidPaymentRequestDto): Promise<Void> {
-        throw new UnsupportedOperationError('Adyen checkout void not implemented');
+        try {
+            return await StripePaymentIntentCancel.cancel(request);
+        } catch (error) {
+            return this.createConnectionFailedVoid(request.voidOperation, error.message || 'Stripe payment intent void failed');
+        }
     }
 
     async healthCheck(): Promise<boolean> {

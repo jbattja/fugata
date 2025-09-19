@@ -23,4 +23,61 @@ export class AdyenConnector {
             };
         }
     }
+
+    static async capturePayment(paymentPspReference: string, request: any, apiKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/payments/${paymentPspReference}/captures`, request, {
+                headers: {
+                    'x-API-key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Adyen capture API error: ${error.response?.data?.message || error.message}`, error, AdyenConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.message || 'Failed to capture payment with Adyen',
+                details: error.response?.data
+            };
+        }
+    }
+
+    static async refundPayment(paymentPspReference: string, request: any, apiKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/payments/${paymentPspReference}/refunds`, request, {
+                headers: {
+                    'x-API-key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Adyen refund API error: ${error.response?.data?.message || error.message}`, error, AdyenConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.message || 'Failed to refund payment with Adyen',
+                details: error.response?.data
+            };
+        }
+    }
+
+    static async cancelPayment(paymentPspReference: string, request: any, apiKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/payments/${paymentPspReference}/cancels`, request, {
+                headers: {
+                    'x-API-key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Adyen cancel API error: ${error.response?.data?.message || error.message}`, error, AdyenConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.message || 'Failed to cancel payment with Adyen',
+                details: error.response?.data
+            };
+        }
+    }
 } 

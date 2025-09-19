@@ -165,6 +165,10 @@ export class Payment {
     @IsOptional()
     sessionId?: string;
 
+    @IsString()
+    @IsOptional()
+    partnerReference?: string;
+
     @IsDate()
     @IsOptional()
     createdAt?: Date;

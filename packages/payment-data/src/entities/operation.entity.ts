@@ -37,6 +37,9 @@ export class OperationEntity {
   @Column({ name: 'refusal_reason', nullable: true })
   refusalReason: string;
 
+  @Column({ name: 'partner_reference', nullable: true })
+  partnerReference: string;
+
   @CreateDateColumn({ name: 'created_at', type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
   createdAt: Date;
 
