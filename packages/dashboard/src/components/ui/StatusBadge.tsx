@@ -10,6 +10,7 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.VOIDED]: 'bg-yellow-100 text-yellow-800',
   [PaymentStatus.REVERSED]: 'bg-red-100 text-red-800',
   [PaymentStatus.REFUNDED]: 'bg-red-100 text-red-800',
+  [PaymentStatus.ERROR]: 'bg-red-100 text-red-800',
 };
 
 const sessionStatusColors: Record<SessionStatus, string> = {

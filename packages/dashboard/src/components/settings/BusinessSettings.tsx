@@ -7,6 +7,7 @@ import { CancelButton, SubmitButton } from '@/components/ui/Button';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useMerchantContext } from '@/contexts/MerchantContext';
 import { callApi } from '@/lib/api/api-caller';
+import { AccountType } from '@fugata/shared';
 
 interface BusinessSettingsProps {
   merchantId: string;
@@ -79,6 +80,8 @@ export function BusinessSettings({ merchantId, initialData, availableSettings }:
           label="Settings"
           pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value: String(value) }))}
           availableKeys={availableSettings}
+          accountType={AccountType.MERCHANT}
+          useToggleForBoolean={true}
           onChange={(values) => setFormData((prev: any) => ({ ...prev, settings: values }))}
         />
       </div>

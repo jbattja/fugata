@@ -1,5 +1,6 @@
 import { FormInput } from '@/components/ui/forms/FormInput';
 import { KeyValueInput } from '@/components/ui/forms/KeyValueInput';
+import { AccountType } from '@fugata/shared';
 
 interface ProviderGeneralSettingsProps {
   formData: {
@@ -37,6 +38,8 @@ export function ProviderGeneralSettings({ formData, setFormData, availableSettin
           label="Settings"
           pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
           availableKeys={availableSettings}
+          accountType={AccountType.PROVIDER}
+          useToggleForBoolean={true}
           onChange={(values) => setFormData((prev: any) => ({ ...prev, settings: values }))}
         />
       </div>

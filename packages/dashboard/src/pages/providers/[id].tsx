@@ -115,6 +115,8 @@ export default function EditProvider() {
             pairs={Object.entries(formData.settings).map(([key, value]) => ({ key, value }))}
             onChange={(values) => setFormData(prev => ({ ...prev, settings: values }))}
             availableKeys={availableSettings}
+            accountType={AccountType.PROVIDER}
+            useToggleForBoolean={true}
           />
 
           <div className="flex justify-end space-x-4">
