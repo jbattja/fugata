@@ -24,6 +24,10 @@ export interface PaymentContext {
   void?: Void;
   voidAttempts?: number;
   operations?: Operation[];
+  confirmPayment?:{
+    partnerName: string;
+    urlParams?: Record<string, any>;
+  }
   config?: {
     maxAuthorizeAttempts?: number;
     maxCaptureAttempts?: number;

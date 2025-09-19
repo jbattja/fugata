@@ -7,6 +7,7 @@ import { AuthorizeAction } from './authorize-action';
 import { CaptureAction } from './capture-action';
 import { VoidAction } from './void-action';
 import { RefundAction } from './refund-action';
+import { ConfirmPaymentAction } from './confirm-payment-action';
 import { PartnerCommunicatorClient, SettingsClient, TokenVaultClient } from '@fugata/shared';
 import { PaymentProducerService } from '../../kafka/payment-producer.service';
 
@@ -18,7 +19,8 @@ export enum ActionsType {
   Authorize = 'Authorize',
   Capture = 'Capture',
   Void = 'Void',
-  Refund = 'Refund'
+  Refund = 'Refund',
+  ConfirmPayment = 'ConfirmPayment'
 }
 
 export class ActionRegistry {
@@ -38,6 +40,7 @@ export class ActionRegistry {
     ActionRegistry.register(ActionsType.Capture, () => new CaptureAction());
     ActionRegistry.register(ActionsType.Void, () => new VoidAction());
     ActionRegistry.register(ActionsType.Refund, () => new RefundAction());
+    ActionRegistry.register(ActionsType.ConfirmPayment, () => new ConfirmPaymentAction());
   }
 
   static register(action: ActionsType, actionFactory: () => ActionInterface): void {

@@ -6,6 +6,7 @@ import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { CreateCaptureDto } from "./dto/create-capture.dto";
 import { CreateRefundDto } from "./dto/create-refund.dto";
 import { CreateVoidDto } from "./dto/create-void.dto";
+import { ConfirmPaymentDto } from "./dto/confirm-payment.dto";
 import { WorkflowOrchestrationService } from "src/core/workflow-orchestration.service";
 import { ValidationException } from "src/exceptions/validation.exception";
 
@@ -134,5 +135,16 @@ export class PaymentsController {
 
     const workflowResult = await this.workflowOrchestrationService.executeVoid(paymentId, voidOperation, request);
     return workflowResult.context.void;
+  }
+
+  @Post('confirm')
+  @RequirePermissions('payments:write')
+  @ApiOperation({ summary: 'Confirm payment after partner redirect' })
+  @ApiResponse({ status: 200, description: 'Payment confirmed successfully', type: Payment })
+  async confirmPayment(@Body() confirmData: ConfirmPaymentDto, @Req() request: any): Promise<Payment> {
+    SharedLogger.log(`Confirming payment ${confirmData.paymentId}`, undefined, PaymentsController.name);
+    
+    const workflowResult = await this.workflowOrchestrationService.executeConfirmPayment(confirmData.paymentId, confirmData.partnerName, confirmData.urlParams, request);
+    return workflowResult.context.payment;
   }
 }

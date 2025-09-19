@@ -80,4 +80,27 @@ export class AdyenConnector {
             };
         }
     }
+
+    /**
+     * Get payment details after redirect from Adyen
+     */
+    static async getPaymentDetails(request: any, apiKey: string): Promise<any> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/payments/details`, request, {
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            SharedLogger.error(`Adyen getPaymentDetails API error: ${error.response?.data?.message || error.message}`, error, AdyenConnector.name);
+            throw {
+                statusCode: error.response?.status || 500,
+                message: error.response?.data?.message || 'Failed to get payment details from Adyen',
+                details: error.response?.data
+            };
+        }
+    }
 } 

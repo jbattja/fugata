@@ -67,7 +67,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "fraud.advice",
                 operator: "in",
-                value: ["APPROVE", "UNKNOWN"]
+                value: ["APPROVE"]
               },
               {
                 path: "payment.status",
@@ -85,7 +85,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "fraud.advice",
                 operator: "in",
-                value: ["APPROVE", "UNKNOWN"]
+                value: ["APPROVE"]
               },
               {
                 path: "payment.status",

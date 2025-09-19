@@ -72,7 +72,7 @@ export class CaptureAction extends BaseAction {
 
 
     private handlePartnerError(context: PaymentContext) {
-        context.capture.status = OperationStatus.FAILED;
+        context.capture.status = OperationStatus.ERROR;
         context.capture.refusalReason = "Partner communication failed";
     }
 

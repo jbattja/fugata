@@ -313,6 +313,51 @@ export class WorkflowOrchestrationService {
   }
 
   /**
+   * Execute confirm payment workflow
+   */
+  async executeConfirmPayment(paymentId: string, partnerName: string, urlParams: Record<string, any>, request: any): Promise<WorkflowResult> {
+
+    
+    try {
+      // Extract authorization headers from the request
+      const authHeaders = extractAuthHeaders(request);
+
+      // Retrieve the payment and operations from the payment data service
+      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
+      if (!payment) {
+        throw new Error(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Initialize payment context
+      const context: PaymentContext = {
+        payment,
+        request,
+        confirmPayment: {
+          partnerName: partnerName,
+          urlParams: urlParams
+        }
+      };
+      
+      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+      if (merchantId) {
+        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
+      } else {
+        throw new Error('Merchant not found');
+      }
+
+      const result = await this.executeAction(ActionsType.ConfirmPayment, context);
+
+      return {
+        success: true,
+        context: result
+      };
+    } catch (error) {
+      SharedLogger.error('Confirm payment workflow execution failed:', error, WorkflowOrchestrationService.name);
+      throw error;
+    }
+  }
+
+  /**
    * Find a workflow action by name
    */
   private findWorkflowAction(actionName: string): WorkflowAction | undefined {

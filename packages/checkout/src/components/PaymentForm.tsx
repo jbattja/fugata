@@ -119,7 +119,39 @@ export function PaymentForm({ sessionId, sessionData }: PaymentFormProps) {
       };
       localStorage.setItem(`payment_${paymentData.paymentId}`, JSON.stringify(paymentData));
       
-      // Redirect based on payment status
+      // Check for redirect actions first
+      if (paymentData.actions && paymentData.actions.length > 0) {
+        const redirectAction = paymentData.actions.find((action: any) => action.actionType === 'REDIRECT');
+        if (redirectAction) {
+          // Perform redirect based on the action
+          if (redirectAction.redirectMethod === 'POST' && redirectAction.data) {
+            // Create a form for POST redirect
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = redirectAction.redirectUrl;
+            form.style.display = 'none';
+
+            // Add form data
+            Object.entries(redirectAction.data).forEach(([key, value]) => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = String(value);
+              form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            return; // Exit early since we're redirecting
+          } else {
+            // GET redirect
+            window.location.href = redirectAction.redirectUrl;
+            return; // Exit early since we're redirecting
+          }
+        }
+      }
+
+      // Redirect based on payment status (only if no redirect actions)
       switch (paymentData.status) {
         case PaymentStatus.CAPTURED:
         case PaymentStatus.AUTHORIZED:

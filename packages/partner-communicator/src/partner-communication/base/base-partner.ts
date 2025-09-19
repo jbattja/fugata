@@ -1,5 +1,7 @@
 import { PartnerInterface } from '../interfaces/partner.interface';
 import { AuthorizePaymentRequestDto } from '../dto/authorize-payment-request.dto';
+import { AuthenticatePaymentRequestDto } from '../dto/authenticate-payment-request.dto';
+import { ConfirmPaymentRequestDto } from '../dto/confirm-payment-request.dto';
 import { Capture, PartnerIntegrationClass, Payment, PaymentStatus, Refund, Void, OperationStatus } from '@fugata/shared';
 import { CapturePaymentRequestDto } from '../dto/capture-payment-request.dto';
 import { RefundPaymentRequestDto } from '../dto/refund-payment-request.dto';
@@ -10,6 +12,8 @@ export abstract class BasePartner implements PartnerInterface {
   abstract readonly version: string;
 
   abstract authorizePayment(request: AuthorizePaymentRequestDto): Promise<Payment>;
+  abstract authenticatePayment(request: AuthenticatePaymentRequestDto): Promise<Payment>;
+  abstract confirmPayment(request: ConfirmPaymentRequestDto): Promise<Payment>;
   abstract capturePayment(request: CapturePaymentRequestDto): Promise<Capture>;
   abstract refundPayment(request: RefundPaymentRequestDto): Promise<Refund>;
   abstract voidPayment(request: VoidPaymentRequestDto): Promise<Void>;

@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, ValidateNested, IsObject } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, ValidateNested, IsObject, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MissingFieldsError } from '../../../exceptions/missing-fields-error.filter';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +26,24 @@ export enum AdyenActionMethod {
 
 export enum AdyenActionType {
   REDIRECT = 'redirect',
+}
+
+export enum AdyenAttemptAuthentication {
+  ALWAYS = 'always',
+  NEVER = 'never'
+}
+
+export enum AdyenChallengeWindowSize {
+  WINDOW_SIZE_250x400 = '01',
+  WINDOW_SIZE_390x400 = '02',
+  WINDOW_SIZE_500x600 = '03',
+  WINDOW_SIZE_600x400 = '04',
+  WINDOW_SIZE_FULLSCREEN = '05'
+}
+
+export enum AdyenNativeThreeDS {
+  PREFERRED = 'preferred',
+  DISABLED = 'disabled'
 }
 
 export class AdyenShopper {
@@ -95,6 +113,41 @@ export class AdyenPaymentMethod {
   cvc?: string;
 }
 
+export class AdyenThreeDSRequestData {
+
+  @IsEnum(AdyenChallengeWindowSize)
+  @IsOptional()
+  challengeWindowSize?: AdyenChallengeWindowSize;
+
+  @IsOptional()
+  @IsBoolean()
+  dataOnly?: boolean;
+
+  @IsEnum(AdyenNativeThreeDS)
+  @IsOptional()
+  nativeThreeDS?: AdyenNativeThreeDS;
+
+  @IsString()
+  @IsOptional()
+  threeDSVersion?: string;
+}
+
+export class AdyenAuthenticationData {
+
+  @IsEnum(AdyenAttemptAuthentication)
+  @IsOptional()
+  attemptAuthentication?: AdyenAttemptAuthentication;
+
+  @IsOptional()
+  @IsBoolean()
+  authenticationOnly?: boolean;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdyenThreeDSRequestData)
+  threeDSRequestData?: AdyenThreeDSRequestData;
+}
+
 export class AdyenPaymentRequest {
   @ValidateNested()
   @Type(() => AdyenAmount)
@@ -132,6 +185,11 @@ export class AdyenPaymentRequest {
 
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdyenAuthenticationData)
+  authenticationData?: AdyenAuthenticationData;
 
   constructor(partial: Partial<AdyenPaymentRequest>) {
     Object.assign(this, partial);
@@ -243,6 +301,11 @@ export class AdyenPaymentRequestBuilder {
 
   withMetadata(metadata?: Record<string, any>): AdyenPaymentRequestBuilder {
     this.paymentRequest.metadata = metadata;
+    return this;
+  }
+
+  withAuthenticationData(authenticationData?: Record<string, any>): AdyenPaymentRequestBuilder {
+    this.paymentRequest.authenticationData = authenticationData;
     return this;
   }
 

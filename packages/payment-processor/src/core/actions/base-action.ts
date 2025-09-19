@@ -33,13 +33,13 @@ export abstract class BaseAction implements ActionInterface {
       if (providerCredential && providerCredential.id) {
         providerCredential = await ActionRegistry.getSettingsClient().getProviderCredential(
           extractAuthHeaders(context.request), providerCredential.id);
-      } else {
+      } else if (context.merchant && context.merchant.id && context.payment && context.payment.paymentInstrument && context.payment.paymentInstrument.paymentMethod) {
         providerCredential = await ActionRegistry.getSettingsClient().getProviderCredentialForMerchant(
           extractAuthHeaders(context.request), context.merchant.id, context.payment.paymentInstrument.paymentMethod);
       }
     }
     if (!providerCredential) {
-      throw new Error(`No provider credential found for merchant ${context.merchant.id} with payment method ${context.payment.paymentInstrument.paymentMethod}`);
+      throw new Error(`No provider credential found for merchant ${context.merchant?.id} with payment method ${context.payment?.paymentInstrument?.paymentMethod}`);
     }
     context.providerCredential = providerCredential;
     return { ...providerCredential.provider.settings, ...providerCredential.settings };

@@ -1,13 +1,14 @@
-import { Payment, PaymentStatus, Amount, PaymentMethod, ActionType, RedirectMethod, Action, PaymentInstrument, CardDetails } from "@fugata/shared";
+import { Payment, PaymentStatus, Amount, PaymentMethod, ActionType, RedirectMethod, Action, PaymentInstrument, CardDetails, AuthenticationData, ThreeDSecureMode } from "@fugata/shared";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
+import { ConfirmPaymentRequestDto } from "../../dto/confirm-payment-request.dto";
 import { AdyenConnector } from "./adyen-connector";
-import { AdyenPaymentRequest, AdyenPaymentResponse, AdyenAmount, AdyenPaymentMethod, AdyenPaymentResultCode, AdyenShopper, AdyenActionMethod, AdyenActionType, AdyenAction, AdyenPaymentRequestBuilder } from "./types/adyen-payment";
+import { AdyenPaymentRequest, AdyenPaymentResponse, AdyenAmount, AdyenPaymentMethod, AdyenPaymentResultCode, AdyenShopper, AdyenActionMethod, AdyenActionType, AdyenAction, AdyenPaymentRequestBuilder, AdyenAuthenticationData, AdyenAttemptAuthentication } from "./types/adyen-payment";
 import { getAdyenPaymentMethod } from "./types/adyen-payment-method";
 import { SharedLogger } from "@fugata/shared";
 
 export class AdyenCheckoutAuthorize {
 
-    static async authorize(request: AuthorizePaymentRequestDto): Promise<Payment> {
+    static async authorize(request: AuthorizePaymentRequestDto, authenticationRequest: boolean): Promise<Payment> {
         try {
             // Get partner configuration
             const partnerConfig = request.partnerConfig || {};
@@ -19,21 +20,21 @@ export class AdyenCheckoutAuthorize {
             }
 
             // Transform payment to Adyen request
-            const adyenRequest = this.transformPaymentToAdyenRequest(request.payment, merchantAccount);
-            
+            const adyenRequest = this.transformPaymentToAdyenRequest(request.payment, merchantAccount, authenticationRequest);
+
             // Call Adyen API
             const adyenResponse = await AdyenConnector.createPayment(adyenRequest, apiKey);
-            
+
             // Transform Adyen response back to payment
             return this.transformAdyenResponseToPayment(request.payment, adyenResponse);
-            
+
         } catch (error) {
             SharedLogger.error(`Adyen authorization failed: ${error.message}`, AdyenCheckoutAuthorize.name);
             throw error;
         }
     }
 
-    private static transformPaymentToAdyenRequest(payment: Payment, merchantAccount: string): AdyenPaymentRequest {
+    private static transformPaymentToAdyenRequest(payment: Payment, merchantAccount: string, authenticationRequest: boolean): AdyenPaymentRequest {
         const adyenRequest = new AdyenPaymentRequestBuilder()
             .withAmount(this.mapAmountToAdyenAmount(payment.amount))
             .withMerchantAccount(merchantAccount)
@@ -48,7 +49,7 @@ export class AdyenCheckoutAuthorize {
             adyenRequest.shopperReference = payment.customer.id;
             adyenRequest.shopperEmail = payment.customer.customerEmail;
             adyenRequest.shopperLocale = payment.customer.customerLocale;
-            
+
             if (payment.customer.customerName) {
                 const shopperName = payment.customer.customerName.split(' ');
                 if (shopperName.length === 2) {
@@ -56,6 +57,12 @@ export class AdyenCheckoutAuthorize {
                 }
             }
         }
+
+        // Add authentication data if available
+        if (payment.authenticationData) {
+            adyenRequest.authenticationData = this.mapAuthenticationDataToAdyen(payment.authenticationData, authenticationRequest);
+        }
+
         return adyenRequest;
     }
 
@@ -84,23 +91,9 @@ export class AdyenCheckoutAuthorize {
         return {
             actionType: ActionType.REDIRECT,
             redirectUrl: adyenAction.url,
-            redirectMethod: adyenAction.method === AdyenActionMethod.POST ? RedirectMethod.POST : RedirectMethod.GET
+            redirectMethod: adyenAction.method === AdyenActionMethod.POST ? RedirectMethod.POST : RedirectMethod.GET,
+            data: adyenAction.data
         };
-    }
-
-    private static createFailedPayment(payment: Payment, errorMessage: string): Payment {
-        return new Payment({
-            ...payment,
-            status: PaymentStatus.REFUSED,
-            refusalReason: errorMessage,
-            authorizationData: {
-                responseMessage: 'Error',
-                networkResponseCode: '99',
-                acquirerReference: `error_${Date.now()}`,
-                avsResult: 'N',
-                authCode: '0000000000',
-            }
-        });
     }
 
     private static mapAmountToAdyenAmount(amount: Amount): AdyenAmount {
@@ -138,23 +131,84 @@ export class AdyenCheckoutAuthorize {
 
     private static mapAdyenResultCodeToPaymentStatus(resultCode: AdyenPaymentResultCode): PaymentStatus {
         switch (resultCode) {
-            // TODO: Check if we need to map all the result codes to the correct payment status
+            case AdyenPaymentResultCode.AUTHENTICATION_FINISHED:
+                return PaymentStatus.AUTHORIZATION_PENDING;
+            case AdyenPaymentResultCode.AUTHENTICATION_NOT_REQUIRED:
+                return PaymentStatus.AUTHORIZATION_PENDING;
             case AdyenPaymentResultCode.AUTHORISED:
                 return PaymentStatus.AUTHORIZED;
-            case AdyenPaymentResultCode.AUTHENTICATION_FINISHED:
-                return PaymentStatus.AUTHORIZED;
-            case AdyenPaymentResultCode.AUTHENTICATION_NOT_REQUIRED:
-                return PaymentStatus.AUTHORIZED;
-            case AdyenPaymentResultCode.PARTIALLY_AUTHORISED:
-                return PaymentStatus.AUTHORIZED;
-            case AdyenPaymentResultCode.REFUSED:
-                return PaymentStatus.REFUSED;
             case AdyenPaymentResultCode.CANCELLED:
                 return PaymentStatus.REFUSED;
+            case AdyenPaymentResultCode.CHALLENGE_SHOPPER:
+                return PaymentStatus.INITIATED;
             case AdyenPaymentResultCode.ERROR:
                 return PaymentStatus.REFUSED;
+            case AdyenPaymentResultCode.IDENTIFY_SHOPPER:
+                return PaymentStatus.INITIATED;
+            // TODO: Implement partial authorizations or have an error state? 
+            case AdyenPaymentResultCode.PARTIALLY_AUTHORISED:
+                return PaymentStatus.AUTHORIZED;
+            case AdyenPaymentResultCode.PENDING:
+                return PaymentStatus.INITIATED;
+            case AdyenPaymentResultCode.PRESENT_TO_SHOPPER:
+                return PaymentStatus.INITIATED;
+            case AdyenPaymentResultCode.RECEIVED:
+                return PaymentStatus.INITIATED;
+            case AdyenPaymentResultCode.REDIRECT_SHOPPER:
+                return PaymentStatus.INITIATED;
+            case AdyenPaymentResultCode.REFUSED:
+                return PaymentStatus.REFUSED;
+
             default:
                 return PaymentStatus.REFUSED;
+        }
+    }
+
+    private static mapAuthenticationDataToAdyen(authenticationData: AuthenticationData, authenticationRequest: boolean): AdyenAuthenticationData {
+        const adyenAuthData: AdyenAuthenticationData = new AdyenAuthenticationData();
+
+        if (authenticationRequest) {
+            adyenAuthData.attemptAuthentication = AdyenAttemptAuthentication.ALWAYS;
+        } else if (authenticationData.threeDSecureMode) {
+            switch (authenticationData.threeDSecureMode) {
+                case ThreeDSecureMode.THREE_DS_SKIP:
+                    adyenAuthData.attemptAuthentication = AdyenAttemptAuthentication.NEVER;
+                    break;
+                case ThreeDSecureMode.THREE_DS_REQUIRE:
+                    adyenAuthData.attemptAuthentication = AdyenAttemptAuthentication.ALWAYS;
+                    break;
+            }
+        }
+        return adyenAuthData;
+    }
+
+    /**
+     * Confirm payment after redirect from partner
+     */
+    static async confirm(request: ConfirmPaymentRequestDto): Promise<Payment> {
+        try {
+            // Get partner configuration
+            const partnerConfig = request.partnerConfig || {};
+            const apiKey = partnerConfig.apiKey;
+
+            if (!apiKey) {
+                throw new Error('Adyen configuration missing: apiKey is required');
+            }
+
+            // For Adyen, we need to call the payments/details endpoint with the redirect parameters
+            const detailsRequest = {
+                details: request.urlParams || {}
+            };
+
+            // Call Adyen payments/details endpoint
+            const adyenResponse = await AdyenConnector.getPaymentDetails(detailsRequest, apiKey);
+                        
+            // Transform the response back to our Payment object
+            return this.transformAdyenResponseToPayment(request.payment, adyenResponse);
+            
+        } catch (error) {
+            SharedLogger.error(`Adyen confirmation failed: ${error.message}`, error, AdyenCheckoutAuthorize.name);
+            throw error;
         }
     }
 

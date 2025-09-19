@@ -40,8 +40,6 @@ export class VoidAction extends BaseAction {
         if (paymentProducer) {
             await paymentProducer.publishPaymentVoided(context.payment, context.void);
         }
-
-        this.log('Void action completed');
         return context;
     }
 
@@ -63,7 +61,7 @@ export class VoidAction extends BaseAction {
 
 
     private handlePartnerError(context: PaymentContext) {
-        context.void.status = OperationStatus.FAILED;
+        context.void.status = OperationStatus.ERROR;
         context.void.refusalReason = "Partner communication failed";
     }
 

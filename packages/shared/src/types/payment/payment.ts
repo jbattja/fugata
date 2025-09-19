@@ -16,7 +16,8 @@ export enum PaymentStatus {
     CAPTURED = 'CAPTURED',
     VOIDED = 'VOIDED',
     REVERSED = 'REVERSED',
-    REFUNDED = 'REFUNDED'
+    REFUNDED = 'REFUNDED',
+    ERROR = 'ERROR'
 }
 
 export enum PaymentSettlementStatus {
@@ -64,6 +65,10 @@ export class Action {
     @IsString()
     @IsOptional()
     paymentCode?: string;
+
+    @IsObject()
+    @IsOptional()
+    data?: Record<string, any>;
 }
 
 export class Payment {
@@ -122,7 +127,8 @@ export class Payment {
     @IsOptional()
     deviceFingerprint?: string;
 
-    @IsString()
+    @ValidateNested()
+    @Type(() => AuthenticationData)
     @IsOptional()
     authenticationData?: AuthenticationData;
 

@@ -1,52 +1,65 @@
-import { Action, ActionType, addActionToPayment, AuthenticationData, AuthenticationFlow, PaymentStatus, RedirectMethod } from "@fugata/shared";
+import { AuthenticationData, PaymentStatus, SharedLogger } from "@fugata/shared";
 import { PaymentContext } from "../types/workflow.types";
 import { BaseAction } from "./base-action";
-import { v4 as uuidv4 } from 'uuid';
-import { ActionRegistry } from "..";
+import { extractAuthHeaders } from "src/clients/jwt.service";
+import { ActionRegistry } from "./action-registry";
+import { RedirectWrapperService } from "../services/redirect-wrapper.service";
 
 export class AuthenticateAction extends BaseAction {
     async execute(context: PaymentContext): Promise<PaymentContext> {
         this.log('Executing Authenticate action');
-        // TODO: Call authentication service
+        
         let authenticationData = context.payment.authenticationData;
         if (!authenticationData) {
             authenticationData = new AuthenticationData();
         }
         context.payment.authenticationData = authenticationData;
 
-        if (context.payment.customer?.customerName?.toLowerCase() === 'challenge') {
-            this.mockAuthenticationChallenge(context);
-        } else {
-            this.mockAuthenticationFrictionless(context);
+        try {
+            // Call partner communicator for authentication
+            context.payment = await this.authenticateWithPartner(context);
+
+            // Wrap any redirect actions to use our checkout redirect page
+            if (context.payment.actions && context.payment.actions.length > 0) {
+                context.payment.actions = RedirectWrapperService.wrapPaymentRedirects(context.payment.actions, context.payment.paymentId);
+            }
+        } catch (error) {
+            this.error('Partner communication failed', error);
+            this.handlePartnerError(context);
         }
 
-        this.log('Authenticate action completed', context.payment.authenticationData);
         // Publish payment authenticated event
         const paymentProducer = ActionRegistry.getPaymentProducer();
         if (paymentProducer) {
             await paymentProducer.publishPaymentAuthenticated(context.payment);
             this.log('Published PAYMENT_AUTHENTICATED event');
         }
+
         return context;
     }
 
-    private mockAuthenticationChallenge(context: PaymentContext) { 
-        context.payment.authenticationData.authenticationFlow = AuthenticationFlow.CHALLENGE;
-        const redirectLinkUrl = process.env.PAYMENT_LINK_URL || 'http://localhost:8081';
-        const action = new Action();
-        action.actionType = ActionType.REDIRECT;
-        action.redirectUrl = `${redirectLinkUrl}/redirect/${context.payment.paymentId}`;
-        action.redirectMethod = RedirectMethod.GET;
-        addActionToPayment(context.payment, action);
+    private async authenticateWithPartner(context: PaymentContext) {
+        const headers = extractAuthHeaders(context.request);
+
+        const partnerConfig = await this.getPartnerConfig(context);
+        context.payment.providerCredential = {id: context.providerCredential.id, accountCode: context.providerCredential.accountCode};
+        const orignalReturnUrl = context.payment.returnUrl;
+        context.payment.returnUrl = RedirectWrapperService.createPartnerReturnUrl(context.payment.paymentId, partnerConfig?.partnerIntegrationClass);
+
+        SharedLogger.log('Authenticating payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, AuthenticateAction.name);
+
+        context.payment = await ActionRegistry.getPartnerCommunicatorClient().authenticatePayment(
+            headers,
+            partnerConfig.partnerIntegrationClass,
+            context.payment,
+            partnerConfig
+        );
+        context.payment.returnUrl = orignalReturnUrl;
+        return context.payment;
     }
 
-    private mockAuthenticationFrictionless(context: PaymentContext) { 
-        context.payment.authenticationData.authenticationFlow = AuthenticationFlow.FRICTIONLESS;
-        context.payment.authenticationData.eci = "7";
-        context.payment.authenticationData.liabilityShifted = "Y";
-        context.payment.authenticationData.version = "2.1.0";
-        context.payment.authenticationData.transactionId = uuidv4();
-        context.payment.authenticationData.cavv = "1234567890";
-        context.payment.status = PaymentStatus.AUTHORIZATION_PENDING;
-        }
+    private handlePartnerError(context: PaymentContext) {
+        context.payment.status = PaymentStatus.ERROR;
+        context.payment.refusalReason = "Partner authentication failed";
+    }
 } 

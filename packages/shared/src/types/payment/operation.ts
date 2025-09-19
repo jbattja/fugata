@@ -13,7 +13,8 @@ export enum OperationStatus {
     SUCCEEDED = 'SUCCEEDED',
     FAILED = 'FAILED',
     SETTLED = 'SETTLED',
-    REVERSED = 'REVERSED'
+    REVERSED = 'REVERSED',
+    ERROR = 'ERROR'
 }
 
 export abstract class Operation {
@@ -27,7 +28,7 @@ export abstract class Operation {
 
     @IsString()
     @IsNotEmpty()
-    paymentId: string;
+    paymentId!: string;
 
     @ValidateNested()
     @Type(() => Amount)

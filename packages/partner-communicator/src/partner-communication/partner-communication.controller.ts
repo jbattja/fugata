@@ -1,10 +1,12 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { PartnerCommunicationService } from './partner-communication.service';
 import { AuthorizePaymentRequestDto } from './dto/authorize-payment-request.dto';
+import { AuthenticatePaymentRequestDto } from './dto/authenticate-payment-request.dto';
 import { SharedLogger } from '@fugata/shared';
 import { CapturePaymentRequestDto } from './dto/capture-payment-request.dto';
 import { RefundPaymentRequestDto } from './dto/refund-payment-request.dto';
 import { VoidPaymentRequestDto } from './dto/void-payment-request.dto';
+import { ConfirmPaymentRequestDto } from './dto/confirm-payment-request.dto';
 
 @Controller('partner-communication')
 export class PartnerCommunicationController {
@@ -17,6 +19,13 @@ export class PartnerCommunicationController {
   async authorizePayment(@Body() request: AuthorizePaymentRequestDto) {
     SharedLogger.log('Authorize payment request' + (request?.payment?.paymentId ? ', payment id: ' + request?.payment?.paymentId : ''), undefined, PartnerCommunicationController.name);
     return this.partnerCommunicationService.authorizePayment(request);
+  }
+
+  @Post('authenticate-payment')
+  @HttpCode(HttpStatus.OK)
+  async authenticatePayment(@Body() request: AuthenticatePaymentRequestDto) {
+    SharedLogger.log('Authenticate payment request' + (request?.payment?.paymentId ? ', payment id: ' + request?.payment?.paymentId : ''), undefined, PartnerCommunicationController.name);
+    return this.partnerCommunicationService.authenticatePayment(request);
   }
 
   @Post('capture-payment')
@@ -38,5 +47,12 @@ export class PartnerCommunicationController {
   async voidPayment(@Body() request: VoidPaymentRequestDto) {
     SharedLogger.log('Void payment request' + (request?.voidOperation?.operationId ? ', operation id: ' + request?.voidOperation?.operationId : '') + (request?.payment?.paymentId ? ', payment id: ' + request?.payment?.paymentId : ''), undefined, PartnerCommunicationController.name);
     return this.partnerCommunicationService.voidPayment(request);
+  }
+
+  @Post('confirm-payment')
+  @HttpCode(HttpStatus.OK)
+  async confirmPayment(@Body() request: ConfirmPaymentRequestDto) {
+    SharedLogger.log('Confirm payment request' + (request?.payment?.paymentId ? ', payment id: ' + request?.payment?.paymentId : ''), undefined, PartnerCommunicationController.name);
+    return this.partnerCommunicationService.confirmPayment(request);
   }
 } 

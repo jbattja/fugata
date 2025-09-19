@@ -19,6 +19,14 @@ export class PartnerCommunicatorClient {
     return response.data;
   }
 
+  async authenticatePayment(headers: Record<string, string>, partnerName: string, 
+    payment: Payment, partnerConfig?: Record<string, any>): Promise<Payment> {
+    const response = await this.httpClient.post('partner-communication/authenticate-payment', 
+      { partnerName, payment, partnerConfig }, { headers: headers }
+    );
+    return response.data;
+  }
+
   async capturePayment(headers: Record<string, string>, partnerName: string, capture: Capture,
     payment: Payment, partnerConfig?: Record<string, any>): Promise<Capture> {
     const response = await this.httpClient.post('partner-communication/capture-payment', 
@@ -39,6 +47,14 @@ export class PartnerCommunicatorClient {
     payment: Payment, partnerConfig?: Record<string, any>): Promise<Capture> {
     const response = await this.httpClient.post('partner-communication/void-payment', 
       { partnerName, voidOperation, payment, partnerConfig }, { headers: headers }
+    );
+    return response.data;
+  }
+
+  async confirmPayment(headers: Record<string, string>, partnerName: string, 
+    payment: Payment, urlParams: Record<string, any>, partnerConfig?: Record<string, any>): Promise<Payment> {
+    const response = await this.httpClient.post('partner-communication/confirm-payment', 
+      { partnerName, payment, urlParams, partnerConfig }, { headers: headers }
     );
     return response.data;
   }

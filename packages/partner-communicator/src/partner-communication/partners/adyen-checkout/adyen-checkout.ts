@@ -1,6 +1,8 @@
 import { Capture, PartnerIntegrationClass, Payment, Refund, Void } from "@fugata/shared";
 import { BasePartner } from "../../base/base-partner";
 import { AuthorizePaymentRequestDto } from "../../dto/authorize-payment-request.dto";
+import { AuthenticatePaymentRequestDto } from "../../dto/authenticate-payment-request.dto";
+import { ConfirmPaymentRequestDto } from "../../dto/confirm-payment-request.dto";
 import { AdyenCheckoutAuthorize } from "./adyen-checkout-authorize";
 import { AdyenCheckoutCapture } from "./adyen-checkout-capture";
 import { AdyenCheckoutRefund } from "./adyen-checkout-refund";
@@ -16,9 +18,25 @@ export class AdyenCheckout extends BasePartner {
 
     async authorizePayment(request: AuthorizePaymentRequestDto): Promise<Payment> {
         try {
-            return AdyenCheckoutAuthorize.authorize(request);
+            return AdyenCheckoutAuthorize.authorize(request, false);
         } catch (error) {
             return this.createConnectionFailedPayment(request.payment, error.message || 'Adyen checkout authorization failed');
+        }
+    }
+
+    async authenticatePayment(request: AuthenticatePaymentRequestDto): Promise<Payment> {
+        try {
+            return AdyenCheckoutAuthorize.authorize(request, true);
+        } catch (error) {
+            return this.createConnectionFailedPayment(request.payment, error.message || 'Adyen checkout authentication failed');
+        }
+    }
+
+    async confirmPayment(request: ConfirmPaymentRequestDto): Promise<Payment> {
+        try {
+            return AdyenCheckoutAuthorize.confirm(request);
+        } catch (error) {
+            return this.createConnectionFailedPayment(request.payment, error.message || 'Adyen checkout confirmation failed');
         }
     }
 

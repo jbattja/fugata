@@ -16,20 +16,36 @@
     "@typescript-eslint"
   ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "no-console": "warn",
     "prefer-const": "error"
   },
   "overrides": [
     {
-      "files": ["packages/dashboard/**/*.ts", "packages/dashboard/**/*.tsx"],
+      "files": [
+        "packages/dashboard/**/*.ts",
+        "packages/dashboard/**/*.tsx"
+      ],
       "env": {
         "browser": true,
         "node": false
       },
       "rules": {
         "no-undef": "off",
-        "@typescript-eslint/no-unused-vars": "error"
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+          }
+        ]
       }
     }
   ],
@@ -40,4 +56,4 @@
     "*.js",
     "packages/*/node_modules/"
   ]
-} 
+}

@@ -1,6 +1,8 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { PaymentSession } from '@fugata/shared';
+import PaymentStatusCard from '@/components/PaymentStatusCard';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface PaymentData {
   paymentId: string;
@@ -56,53 +58,18 @@ export default function PaymentSuccess() {
   }, [paymentId, sessionId, returnUrl]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading payment details..." />;
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-center items-center py-8">
-      <div className="w-full max-w-md flex flex-col gap-4">
-        {/* Success Card */}
-        <div className="bg-white rounded-xl shadow p-8 text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-          <p className="text-gray-600 mb-4">
-            Your payment has been processed successfully.
-          </p>
-          {payment && (
-            <div className="text-sm text-gray-500 space-y-1">
-              <p>Reference: {payment.reference}</p>
-              <p>Amount: {payment.amount?.value} {payment.amount?.currency}</p>
-            </div>
-          )}
-        </div>
-        
-        <div className="text-center space-y-2">
-          {payment?.returnUrl && (
-            <button
-              onClick={() => window.location.href = payment.returnUrl!}
-              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 font-medium"
-            >
-              Return to Merchant
-            </button>
-          )}
-          <button
-            onClick={() => window.close()}
-            className="text-indigo-600 hover:text-indigo-500 font-medium"
-          >
-            Close this window
-          </button>
-        </div>
-      </div>
-      <div className="text-xs text-gray-400 text-center mt-8 select-none">Powered by Fugata</div>
-    </div>
+    <PaymentStatusCard
+      status="success"
+      title="Payment Successful!"
+      message="Your payment has been processed successfully."
+      paymentId={payment?.paymentId}
+      amount={payment?.amount}
+      returnUrl={payment?.returnUrl}
+      onClose={() => window.close()}
+    />
   );
 }

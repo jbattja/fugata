@@ -50,4 +50,11 @@ export class PaymentProcessorClient {
       paymentInstrument: paymentInstrument
     });
   }
+
+  async confirmPayment(headers: Record<string, string>, paymentId: string, partnerName: string, urlParams: Record<string, any>): Promise<Payment> {
+    const response = await this.httpClient.post('payments/confirm', 
+      { paymentId, partnerName, urlParams }, { headers: headers }
+    );
+    return response.data;
+  }
 }

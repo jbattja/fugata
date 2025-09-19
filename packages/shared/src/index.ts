@@ -38,3 +38,4 @@ export * from './auth/types';
 // Export utilities
 export * from './utils/logger';
 export * from './utils/card-validation';
+export * from './utils/redirect-encryption.util';

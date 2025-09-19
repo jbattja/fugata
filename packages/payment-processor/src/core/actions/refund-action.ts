@@ -53,8 +53,6 @@ export class RefundAction extends BaseAction {
         if (paymentProducer) {
             await paymentProducer.publishPaymentRefunded(context.payment, context.refund);
         }
-
-        this.log('Refund action completed', context.refund);
         return context;
     }
 
@@ -76,7 +74,7 @@ export class RefundAction extends BaseAction {
 
 
     private handlePartnerError(context: PaymentContext) {
-        context.refund.status = OperationStatus.FAILED;
+        context.refund.status = OperationStatus.ERROR;
         context.refund.refusalReason = "Partner communication failed";
     }
 
