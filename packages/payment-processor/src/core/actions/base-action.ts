@@ -1,6 +1,6 @@
 import { ActionInterface, PaymentContext } from '../types/workflow.types';
 import { Logger } from '@nestjs/common';
-import { ProviderCredential, Operation, OperationType, OperationStatus } from '@fugata/shared';
+import { ProviderCredential, Operation, OperationType, OperationStatus, PaymentStatus } from '@fugata/shared';
 import { extractAuthHeaders } from 'src/clients/jwt.service';
 
 export abstract class BaseAction implements ActionInterface {
@@ -24,7 +24,7 @@ export abstract class BaseAction implements ActionInterface {
     }
   }
 
-  protected async getPartnerConfig(context: PaymentContext) {
+  protected async getPartnerConfig(context: PaymentContext) : Promise<Record<string, any>> {
     // Import ActionRegistry dynamically to avoid circular dependency
     const { ActionRegistry } = await import('./action-registry');
     
@@ -39,11 +39,25 @@ export abstract class BaseAction implements ActionInterface {
       }
     }
     if (!providerCredential) {
-      throw new Error(`No provider credential found for merchant ${context.merchant?.id} with payment method ${context.payment?.paymentInstrument?.paymentMethod}`);
+      const error = new Error(`No provider credential found for merchant ${context.merchant?.id} with payment method ${context.payment?.paymentInstrument?.paymentMethod}`);
+      this.error('Partner configuration failed', error);
+      this.handlePartnerConfigurationError(context);
+      return null;
     }
     context.providerCredential = providerCredential;
     return { ...providerCredential.provider.settings, ...providerCredential.settings };
   }
+
+  protected handlePartnerError(context: PaymentContext) {
+    context.payment.status = PaymentStatus.ERROR;
+    context.payment.refusalReason = "Partner authentication failed";
+}
+
+protected handlePartnerConfigurationError(context: PaymentContext) {
+    context.payment.status = PaymentStatus.ERROR;
+    context.payment.refusalReason = "No valid partner configuration found for this payment method";
+} 
+
 
   protected isProviderCredentialValid(providerCredential: Partial<ProviderCredential>) {
     if (!providerCredential) {

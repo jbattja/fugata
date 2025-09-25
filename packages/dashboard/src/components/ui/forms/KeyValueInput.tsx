@@ -121,7 +121,16 @@ export function KeyValueInput({
         return (
           <BooleanToggle
             value={boolValue}
-            onChange={(value) => handleValueChange(key, value.toString())}
+            onChange={(value) => {
+              handleValueChange(key, value.toString());
+              // Immediately update the parent component for boolean toggles
+              const currentValues = pairsToValues(pairs);
+              const updatedValues = {
+                ...currentValues,
+                [key]: value.toString()
+              };
+              onChange?.(updatedValues);
+            }}
             disabled={disabled}
           />
         );

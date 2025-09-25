@@ -43,7 +43,7 @@ export class AuthenticationData {
     @IsString()
     @IsOptional()
     @IsBoolean()
-    liabilityShifted?: string;
+    liabilityShifted?: boolean;
 
     @IsString()
     @IsOptional()

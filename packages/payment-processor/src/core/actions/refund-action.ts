@@ -37,12 +37,10 @@ export class RefundAction extends BaseAction {
             return context;
         }
 
-        try {
+        const partnerConfig = await this.getPartnerConfig(context);
+        if (partnerConfig) {
             // Call partner communicator for refund
-            context.refund = await this.refundWithPartner(context);
-        } catch (error) {
-            this.error('Partner communication failed', error);
-            this.handlePartnerError(context);
+            context.capture = await this.refundWithPartner(context, partnerConfig);
         }
 
         if (context.refund.status === OperationStatus.SUCCEEDED) {
@@ -56,26 +54,23 @@ export class RefundAction extends BaseAction {
         return context;
     }
 
-    private async refundWithPartner(context: PaymentContext) {
+    private async refundWithPartner(context: PaymentContext, partnerConfig: Record<string, any>) {
         const headers = extractAuthHeaders(context.request);
-
-        const partnerConfig = await this.getPartnerConfig(context);
 
         SharedLogger.log('Refund payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, RefundAction.name);
 
-        return await ActionRegistry.getPartnerCommunicatorClient().refundPayment(
-            headers,
-            partnerConfig.partnerIntegrationClass,
-            context.refund,
-            context.payment,
-            partnerConfig
-        );
-    }
-
-
-    private handlePartnerError(context: PaymentContext) {
-        context.refund.status = OperationStatus.ERROR;
-        context.refund.refusalReason = "Partner communication failed";
+        try {
+            return await ActionRegistry.getPartnerCommunicatorClient().refundPayment(
+                headers,
+                partnerConfig.partnerIntegrationClass,
+                context.refund,
+                context.payment,
+                partnerConfig
+            );
+        } catch (error) {
+            this.error('Partner communication failed', error);
+            this.handlePartnerError(context);
+        }
     }
 
     private handleInvalidPaymentStatus(context: PaymentContext) {
@@ -103,10 +98,6 @@ export class RefundAction extends BaseAction {
                 context.refund.refusalReason = "Cannot refund a reversed payment";
                 break;
             case PaymentStatus.INITIATED:
-                context.refund.status = OperationStatus.FAILED;
-                context.refund.refusalReason = "Payment not yet authorized";
-                break;
-            case PaymentStatus.AUTHORIZATION_PENDING:
                 context.refund.status = OperationStatus.FAILED;
                 context.refund.refusalReason = "Payment not yet authorized";
                 break;

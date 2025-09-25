@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OperationStatus, PaymentStatus, SharedLogger } from '@fugata/shared';
+import { AccountSettingKey, OperationStatus, PaymentStatus, SharedLogger, ThreeDSecureMode } from '@fugata/shared';
 import { extractAuthHeaders } from '../clients/jwt.service';
 import {
   PaymentContext,
@@ -58,20 +58,9 @@ export class WorkflowOrchestrationService {
   async executePayment(payment: Payment, request: any, sessionId?: string): Promise<WorkflowResult> {
     try {
       // Initialize payment context
-      const context: PaymentContext = {
-        payment,
-        request,
-        sessionId,
-      };
+      const context = await this.buildPaymentContext(payment, null, request, false);
+      context.sessionId = sessionId;
 
-      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
-      if (merchantId) {
-        // Extract authorization headers from the request
-        const authHeaders = extractAuthHeaders(request);
-        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
-      } else {
-        throw new Error('Merchant not found');
-      }
       // Start with the first action (InitiatePayment)
       const result = await this.executeWorkflow(context, ActionsType.InitiatePayment);
 
@@ -90,33 +79,9 @@ export class WorkflowOrchestrationService {
    */
   async executeCapture(paymentId: string, capture: Capture, request: any, finalCapture: boolean): Promise<WorkflowResult> {
     try {
-      // Extract authorization headers from the request
-      const authHeaders = extractAuthHeaders(request);
 
-      // Retrieve the payment and operations from the payment data service
-      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
-
-      if (!payment) {
-        throw new Error(`Payment with ID ${paymentId} not found`);
-      }
-
-      // Retrieve existing operations for the payment
-      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
-
-      // Initialize payment context for capture
-      const context: PaymentContext = {
-        payment,
-        request,
-        capture,
-        operations: operationsResponse.operations
-      };
-
-      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
-      if (merchantId) {
-        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
-      } else {
-        throw new Error('Merchant not found');
-      }
+      const context = await this.buildPaymentContext(null,paymentId, request, true);
+      context.capture = capture;
 
       // Execute the capture action directly
       const result = await this.executeAction(ActionsType.Capture, context);
@@ -140,33 +105,9 @@ export class WorkflowOrchestrationService {
    */
   async executeRefund(paymentId: string, refund: Refund, request: any): Promise<WorkflowResult> {
     try {
-      // Extract authorization headers from the request
-      const authHeaders = extractAuthHeaders(request);
 
-      // Retrieve the payment and operations from the payment data service
-      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
-
-      if (!payment) {
-        throw new Error(`Payment with ID ${paymentId} not found`);
-      }
-
-      // Retrieve existing operations for the payment
-      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
-
-      // Initialize payment context for refund
-      const context: PaymentContext = {
-        payment,
-        request,
-        refund,
-        operations: operationsResponse.operations
-      };
-
-      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
-      if (merchantId) {
-        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
-      } else {
-        throw new Error('Merchant not found');
-      }
+      const context = await this.buildPaymentContext(null,paymentId, request, true);
+      context.refund = refund;
 
       // Execute the refund action directly
       const result = await this.executeAction(ActionsType.Refund, context);
@@ -186,33 +127,8 @@ export class WorkflowOrchestrationService {
    */
   async executeVoid(paymentId: string, voidOperation: Void, request: any): Promise<WorkflowResult> {
     try {
-      // Extract authorization headers from the request
-      const authHeaders = extractAuthHeaders(request);
-
-      // Retrieve the payment and operations from the payment data service
-      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
-
-      if (!payment) {
-        throw new Error(`Payment with ID ${paymentId} not found`);
-      }
-
-      // Retrieve existing operations for the payment
-      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
-
-      // Initialize payment context for void
-      const context: PaymentContext = {
-        payment,
-        request,
-        void: voidOperation,
-        operations: operationsResponse.operations
-      };
-
-      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
-      if (merchantId) {
-        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
-      } else {
-        throw new Error('Merchant not found');
-      }
+      const context = await this.buildPaymentContext(null,paymentId, request, true);
+      context.void = voidOperation;
 
       // Execute the void action directly
       const result = await this.executeAction(ActionsType.Void, context);
@@ -226,6 +142,31 @@ export class WorkflowOrchestrationService {
       throw error;
     }
   }
+
+  /**
+ * Execute confirm payment workflow
+ */
+  async executeConfirmPayment(paymentId: string, partnerName: string, urlParams: Record<string, any>, request: any): Promise<WorkflowResult> {
+    try {
+      const context = await this.buildPaymentContext(null,paymentId, request, false);
+      context.confirmPayment = {
+        partnerName: partnerName,
+        urlParams: urlParams
+      };
+
+      const result = await this.executeWorkflow(context, ActionsType.ConfirmPayment);
+
+
+      return {
+        success: true,
+        context: result
+      };
+    } catch (error) {
+      SharedLogger.error('Confirm payment workflow execution failed:', error, WorkflowOrchestrationService.name);
+      throw error;
+    }
+  }
+
 
   /**
    * Execute workflow starting from a specific action
@@ -312,49 +253,64 @@ export class WorkflowOrchestrationService {
     return ActionsType.Terminate;
   }
 
-  /**
-   * Execute confirm payment workflow
-   */
-  async executeConfirmPayment(paymentId: string, partnerName: string, urlParams: Record<string, any>, request: any): Promise<WorkflowResult> {
+  private async buildPaymentContext(payment: Payment | null, paymentId: string, request: any, includeOperations: boolean = false): Promise<PaymentContext> {
+    // Extract authorization headers from the request
+    const authHeaders = extractAuthHeaders(request);
 
-    
-    try {
-      // Extract authorization headers from the request
-      const authHeaders = extractAuthHeaders(request);
-
+    if (!payment) {
       // Retrieve the payment and operations from the payment data service
-      const payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
+      payment = await this.paymentDataClient.getPayment(authHeaders, paymentId);
       if (!payment) {
         throw new Error(`Payment with ID ${paymentId} not found`);
       }
-
-      // Initialize payment context
-      const context: PaymentContext = {
-        payment,
-        request,
-        confirmPayment: {
-          partnerName: partnerName,
-          urlParams: urlParams
-        }
-      };
-      
-      const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
-      if (merchantId) {
-        context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
-      } else {
-        throw new Error('Merchant not found');
-      }
-
-      const result = await this.executeAction(ActionsType.ConfirmPayment, context);
-
-      return {
-        success: true,
-        context: result
-      };
-    } catch (error) {
-      SharedLogger.error('Confirm payment workflow execution failed:', error, WorkflowOrchestrationService.name);
-      throw error;
     }
+
+    const context: PaymentContext = {
+      payment,
+      request,
+    };
+    const merchantId = payment.merchant && payment.merchant.id ? payment.merchant.id : getMerchant(request)?.id;
+    if (merchantId) {
+      context.merchant = await this.settingsClient.getMerchant(authHeaders, merchantId);
+    } else {
+      throw new Error('Merchant not found');
+    }
+    if (includeOperations) {
+      const operationsResponse = await this.paymentDataClient.getOperationsForPayment(authHeaders, paymentId);
+      context.operations = operationsResponse.operations;
+    }
+
+    context.authorizeAttempts = 0;
+    context.captureAttempts = 0;
+    context.refundAttempts = 0;
+    context.voidAttempts = 0;
+    context.config = {
+      maxAuthorizeAttempts: 1,
+      maxCaptureAttempts: 5,
+      maxRefundAttempts: 5,
+      maxVoidAttempts: 5
+    };
+
+
+    context.authentication = {
+      skip: false,
+      done: false // Can extend in future if we allow third party authentication
+    };
+    if (context.merchant?.settings?.[AccountSettingKey.ALLOW_SKIP_3DS] === true && context.payment.authenticationData?.threeDSecureMode !== ThreeDSecureMode.THREE_DS_SKIP) {
+      context.authentication.skip = true;
+    }
+
+    context.fraud = { // Default risk settings: we only do pre-authentication and pre-authorization. Later to extend for different use cases or payment methods. 
+      requirePreAuthentication: true,
+      requirePreAuthorization: true,
+      requirePostAuthorization: false
+    };
+    if (context.merchant?.settings?.[AccountSettingKey.ALLOW_SKIP_RISK] === true) {
+      context.fraud.requirePreAuthentication = false;
+      context.fraud.requirePreAuthorization = false;
+      context.fraud.requirePostAuthorization = false;
+    }
+    return context;
   }
 
   /**

@@ -15,17 +15,6 @@ export class InitiatePaymentAction extends BaseAction {
 
     // Initialize payment status
     context.payment.status = PaymentStatus.INITIATED;
-    this.log(`Payment status set to ${PaymentStatus.INITIATED}`);
-    context.authorizeAttempts = 0;
-    context.captureAttempts = 0;
-    context.refundAttempts = 0;
-    context.voidAttempts = 0;
-    context.config = {
-      maxAuthorizeAttempts: 1,
-      maxCaptureAttempts: 5,
-      maxRefundAttempts: 5,
-      maxVoidAttempts: 5
-    };
 
     // Process payment instrument data if this is a card payment
     if (context.payment.paymentInstrument && context.merchant?.id) {
@@ -34,9 +23,9 @@ export class InitiatePaymentAction extends BaseAction {
         if (!tokenVaultClient) {
           throw new Error('Token vault client not available');
         }
-        
+
         const headers = extractAuthHeaders(context.request);
-        
+
         const updatedInstrument = await TokenizationUtils.processPaymentInstrumentData(
           context.payment.paymentInstrument,
           context.merchant.id,

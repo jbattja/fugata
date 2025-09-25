@@ -45,6 +45,7 @@ export class TokenizationUtils {
     if (!validationResult.isValid) {
       throw new ValidationException(`Invalid card number: ${validationResult.error || 'Card number validation failed'}`);
     }
+    cardDetails.number = validationResult.normalizedNumber;
     
     if (!cardDetails.expiryMonth || !cardDetails.expiryYear) {
       throw new ValidationException('Card expiry date (month and year) is required for card payments');

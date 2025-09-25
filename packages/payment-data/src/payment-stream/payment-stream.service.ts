@@ -143,9 +143,6 @@ export class PaymentStreamService implements OnModuleInit, OnModuleDestroy {
       case PaymentStatus.INITIATED:
         paymentSession.status = SessionStatus.PENDING;
         break;
-      case PaymentStatus.AUTHORIZATION_PENDING:
-        paymentSession.status = SessionStatus.PENDING;
-        break;
       case PaymentStatus.AUTHORIZED:
         paymentSession.status = SessionStatus.COMPLETED;
         break;

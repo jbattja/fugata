@@ -14,9 +14,16 @@ export interface PaymentContext {
   sessionId?: string;
   authorizeAttempts?: number;
   fraud?: {
-    score: number;
-    advice: FraudAdvice;
+    score?: number;
+    advice?: FraudAdvice;
+    requirePreAuthentication?: boolean;
+    requirePreAuthorization?: boolean;
+    requirePostAuthorization?: boolean;
   };
+  authentication?: {
+    done?: boolean;
+    skip?: boolean;
+  }
   capture?: Capture;
   captureAttempts?: number; 
   refund?: Refund;

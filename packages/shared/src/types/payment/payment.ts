@@ -9,7 +9,6 @@ import { AuthenticationData } from "./authentication";
 
 export enum PaymentStatus {
     INITIATED = 'INITIATED',
-    AUTHORIZATION_PENDING = 'AUTHORIZATION_PENDING',
     AUTHORIZED = 'AUTHORIZED',
     REFUSED = 'REFUSED',
     PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED',

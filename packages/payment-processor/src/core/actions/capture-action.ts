@@ -31,12 +31,9 @@ export class CaptureAction extends BaseAction {
             return context;
         }
 
-        try {
-            // Call partner communicator for capture
-            context.capture = await this.captureWithPartner(context);
-        } catch (error) {
-            this.error('Partner communication failed', error);
-            this.handlePartnerError(context);
+        const partnerConfig = await this.getPartnerConfig(context);
+        if (partnerConfig) {
+            context.capture = await this.captureWithPartner(context, partnerConfig);
         }
 
         if (context.capture.status === OperationStatus.SUCCEEDED) {
@@ -54,26 +51,22 @@ export class CaptureAction extends BaseAction {
         return context;
     }
 
-    private async captureWithPartner(context: PaymentContext) {
+    private async captureWithPartner(context: PaymentContext, partnerConfig: Record<string, any>) {
         const headers = extractAuthHeaders(context.request);
-
-        const partnerConfig = await this.getPartnerConfig(context);
-
         SharedLogger.log('Capture payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, CaptureAction.name);
 
-        return await ActionRegistry.getPartnerCommunicatorClient().capturePayment(
-            headers,
-            partnerConfig.partnerIntegrationClass,
-            context.capture,
-            context.payment,
-            partnerConfig
-        );
-    }
-
-
-    private handlePartnerError(context: PaymentContext) {
-        context.capture.status = OperationStatus.ERROR;
-        context.capture.refusalReason = "Partner communication failed";
+        try {
+            return await ActionRegistry.getPartnerCommunicatorClient().capturePayment(
+                headers,
+                partnerConfig.partnerIntegrationClass,
+                context.capture,
+                context.payment,
+                partnerConfig
+            );
+        } catch (error) {
+            this.error('Partner communication failed', error);
+            this.handlePartnerError(context);
+        }
     }
 
     private handleInvalidPaymentStatus(context: PaymentContext) {
@@ -103,10 +96,6 @@ export class CaptureAction extends BaseAction {
                 context.capture.refusalReason = "Cannot capture a reversed payment";
                 break;
             case PaymentStatus.INITIATED:
-                context.capture.status = OperationStatus.FAILED;
-                context.capture.refusalReason = "Payment not yet authorized";
-                break;
-            case PaymentStatus.AUTHORIZATION_PENDING:
                 context.capture.status = OperationStatus.FAILED;
                 context.capture.refusalReason = "Payment not yet authorized";
                 break;

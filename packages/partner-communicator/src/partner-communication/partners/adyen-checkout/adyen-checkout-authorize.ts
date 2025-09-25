@@ -21,9 +21,11 @@ export class AdyenCheckoutAuthorize {
 
             // Transform payment to Adyen request
             const adyenRequest = this.transformPaymentToAdyenRequest(request.payment, merchantAccount, authenticationRequest);
+            SharedLogger.log('Adyen request: ' + JSON.stringify(adyenRequest), undefined, AdyenCheckoutAuthorize.name);
 
             // Call Adyen API
             const adyenResponse = await AdyenConnector.createPayment(adyenRequest, apiKey);
+            SharedLogger.log('Adyen response: ' + JSON.stringify(adyenResponse), undefined, AdyenCheckoutAuthorize.name);
 
             // Transform Adyen response back to payment
             return this.transformAdyenResponseToPayment(request.payment, adyenResponse);
@@ -132,9 +134,9 @@ export class AdyenCheckoutAuthorize {
     private static mapAdyenResultCodeToPaymentStatus(resultCode: AdyenPaymentResultCode): PaymentStatus {
         switch (resultCode) {
             case AdyenPaymentResultCode.AUTHENTICATION_FINISHED:
-                return PaymentStatus.AUTHORIZATION_PENDING;
+                return PaymentStatus.INITIATED;
             case AdyenPaymentResultCode.AUTHENTICATION_NOT_REQUIRED:
-                return PaymentStatus.AUTHORIZATION_PENDING;
+                return PaymentStatus.INITIATED;
             case AdyenPaymentResultCode.AUTHORISED:
                 return PaymentStatus.AUTHORIZED;
             case AdyenPaymentResultCode.CANCELLED:

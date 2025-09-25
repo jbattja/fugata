@@ -161,9 +161,6 @@ export function PaymentForm({ sessionId, sessionData }: PaymentFormProps) {
           router.push(`/sessions/refused?paymentId=${paymentData.paymentId}`);
           break;
         case PaymentStatus.INITIATED:
-        case PaymentStatus.AUTHORIZATION_PENDING:
-          router.push(`/sessions/pending?paymentId=${paymentData.paymentId}`);
-          break;
         default:
           router.push(`/sessions/pending?paymentId=${paymentData.paymentId}`);
       }

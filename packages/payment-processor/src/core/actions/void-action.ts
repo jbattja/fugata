@@ -24,12 +24,10 @@ export class VoidAction extends BaseAction {
             return context;
         }
 
-        try {
+        const partnerConfig = await this.getPartnerConfig(context);
+        if (partnerConfig) {
             // Call partner communicator for void
-            context.void = await this.voidWithPartner(context);
-        } catch (error) {
-            this.error('Partner communication failed', error);
-            this.handlePartnerError(context);
+            context.void = await this.voidWithPartner(context, partnerConfig);
         }
 
         if (context.void.status === OperationStatus.SUCCEEDED) {
@@ -43,26 +41,23 @@ export class VoidAction extends BaseAction {
         return context;
     }
 
-    private async voidWithPartner(context: PaymentContext) {
+    private async voidWithPartner(context: PaymentContext, partnerConfig: Record<string, any>) {
         const headers = extractAuthHeaders(context.request);
-
-        const partnerConfig = await this.getPartnerConfig(context);
 
         SharedLogger.log('Void payment with partner ' + partnerConfig?.partnerIntegrationClass, undefined, VoidAction.name);
 
-        return await ActionRegistry.getPartnerCommunicatorClient().voidPayment(
-            headers,
-            partnerConfig.partnerIntegrationClass,
-            context.void,
-            context.payment,
-            partnerConfig
-        );
-    }
-
-
-    private handlePartnerError(context: PaymentContext) {
-        context.void.status = OperationStatus.ERROR;
-        context.void.refusalReason = "Partner communication failed";
+        try {
+            return await ActionRegistry.getPartnerCommunicatorClient().voidPayment(
+                headers,
+                partnerConfig.partnerIntegrationClass,
+                context.void,
+                context.payment,
+                partnerConfig
+            );
+        } catch (error) {
+            this.error('Partner communication failed', error);
+            this.handlePartnerError(context);
+        }
     }
 
     private handleInvalidPaymentStatus(context: PaymentContext) {
@@ -92,10 +87,6 @@ export class VoidAction extends BaseAction {
                 context.void.refusalReason = "Cannot void a reversed payment";
                 break;
             case PaymentStatus.INITIATED:
-                context.void.status = OperationStatus.FAILED;
-                context.void.refusalReason = "Payment not yet authorized";
-                break;
-            case PaymentStatus.AUTHORIZATION_PENDING:
                 context.void.status = OperationStatus.FAILED;
                 context.void.refusalReason = "Payment not yet authorized";
                 break;

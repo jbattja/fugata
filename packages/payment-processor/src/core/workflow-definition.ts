@@ -1,35 +1,26 @@
-import { AccountSettingKey, ThreeDSecureMode } from '@fugata/shared';
 import { WorkflowDefinition } from './types/workflow.types';
 
 export const DEFAULT_WORKFLOW: WorkflowDefinition = {
   actions: [
+
+    // InitiatePayment action
     {
       actionName: "InitiatePayment",
       nextActions: [
         {
           action: "FraudScore",
           conditions: {
-            path: "merchant.settings." + AccountSettingKey.ALLOW_SKIP_RISK,
-            operator: "notEquals",
+            path: "fraud.requirePreAuthentication",
+            operator: "equals",
             value: true
           }
         },
         {
           action: "Authenticate",
           conditions: {
-            operator: "AND",
-            conditions: [
-              {
-                path: "merchant.settings." + AccountSettingKey.ALLOW_SKIP_3DS,
-                operator: "notEquals",
-                value: true
-              },
-              {
-                path: "payment.authenticationData.threeDSecureMode",
-                operator: "notEquals",
-                value: ThreeDSecureMode.THREE_DS_SKIP
-              }
-            ]
+            path: "authentication.skip",
+            operator: "equals",
+            value: true
           }
         },
         {
@@ -38,6 +29,8 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // FraudScore action
     {
       actionName: "FraudScore",
       nextActions: [
@@ -47,9 +40,34 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
             operator: "AND",
             conditions: [
               {
-                path: "fraud.advice",
+                operator: "OR",
+                conditions: [
+                  {
+                    path: "fraud.advice",
+                    operator: "equals",
+                    value: "CHALLENGE"
+                  },
+                  {
+                    operator: "AND",
+                    conditions: [
+                      {
+                        path: "fraud.advice",
+                        operator: "equals",
+                        value: "APPROVE"
+                      },
+                      {
+                        path: "authentication.skip",
+                        operator: "equals",
+                        value: false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                path: "authentication.done",
                 operator: "equals",
-                value: "CHALLENGE"
+                value: false
               },
               {
                 path: "payment.status",
@@ -65,9 +83,24 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
             operator: "AND",
             conditions: [
               {
+                operator: "OR",
+                conditions: [
+                  {
+                    path: "authentication.skip",
+                    operator: "equals",
+                    value: true
+                  },
+                  {
+                    path: "authentication.done",
+                    operator: "equals",
+                    value: true
+                  }
+                ],
+              },
+              {
                 path: "fraud.advice",
                 operator: "in",
-                value: ["APPROVE"]
+                value: ["APPROVE", "CHALLENGE"]
               },
               {
                 path: "payment.status",
@@ -85,7 +118,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
               {
                 path: "fraud.advice",
                 operator: "in",
-                value: ["APPROVE"]
+                value: ["APPROVE", "CHALLENGE"]
               },
               {
                 path: "payment.status",
@@ -142,15 +175,45 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // Authenticate action
     {
       actionName: "Authenticate",
       nextActions: [
         {
+          action: "FraudScore",
+          conditions: {
+            operator: "AND",
+            conditions: [
+              {
+                path: "fraud.requirePreAuthorization",
+                operator: "equals",
+                value: true
+              },
+              {
+                path: "authentication.done",
+                operator: "equals",
+                value: true
+              }
+            ]
+          }
+        },
+        {
           action: "Authorize",
           conditions: {
-            path: "payment.status",
-            operator: "equals",
-            value: "AUTHORIZATION_PENDING"
+            operator: "AND",
+            conditions: [
+              {
+                path: "fraud.requirePreAuthorization",
+                operator: "equals",
+                value: false
+              },
+              {
+                path: "authentication.done",
+                operator: "equals",
+                value: true
+              }
+            ]
           }
         },
         {
@@ -159,6 +222,8 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // Authorize action
     {
       actionName: "Authorize",
       nextActions: [
@@ -191,19 +256,9 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
                 value: "AUTHORIZED"
               },
               {
-                operator: "OR",
-                conditions: [
-                  {
-                    path: "merchant.settings.mandatePostAuthFraud",
-                    operator: "equals",
-                    value: true
-                  },
-                  {
-                    path: "payment.flags.mandatePostauthFraud",
-                    operator: "in",
-                    value: ["mandatePostauthFraud"]
-                  }
-                ]
+                path: "fraud.requirePostAuthorization",
+                operator: "equals",
+                value: true
               }
             ]
           }
@@ -232,6 +287,8 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // Capture action
     {
       actionName: "Capture",
       nextActions: [
@@ -259,6 +316,8 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // Void action
     {
       actionName: "Void",
       nextActions: [
@@ -286,6 +345,8 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         }
       ]
     },
+
+    // Refund action
     {
       actionName: "Refund",
       nextActions: [
@@ -309,6 +370,17 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         },
         {
           action: "Terminate",
+          conditions: null
+        }
+      ]
+    },
+
+    // ConfirmPayment action
+    {
+      actionName: "ConfirmPayment",
+      nextActions: [
+        {
+          action: "Authorize",
           conditions: null
         }
       ]

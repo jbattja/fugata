@@ -2,7 +2,6 @@ import { PaymentStatus, AccountStatus, SessionStatus } from "@fugata/shared";
 
 const paymentStatusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.INITIATED]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.AUTHORIZATION_PENDING]: 'bg-yellow-100 text-yellow-800',
   [PaymentStatus.AUTHORIZED]: 'bg-green-100 text-green-800',
   [PaymentStatus.REFUSED]: 'bg-red-100 text-red-800',
   [PaymentStatus.PARTIALLY_CAPTURED]: 'bg-green-100 text-green-800',

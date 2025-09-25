@@ -69,12 +69,12 @@ export default function PaymentsPage() {
             ),
           },
           {
-            header: 'Settlement Status',
-            accessor: (payment) => payment.settlementStatus || '-',
+            header: 'Reason',
+            accessor: (payment) => payment.refusalReason || '-',
           },
           {
-            header: 'Chargeback Status',
-            accessor: (payment) => payment.chargebackStatus || '-',
+            header: 'Payment Method',
+            accessor: (payment) => payment.paymentInstrument?.paymentMethod || '-',
           },
           { header: 'Reference', accessor: 'reference' },
           {
